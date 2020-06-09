@@ -3,7 +3,7 @@ SQL database implemented in C#
 
 Guide to implementation source files:
 
-Public.cs = this file : public interface.
+Public.cs = public interface.
 WebServer.cs = main program, http web server ( example client ).
 Init.cs = SQL initialisation script.
 
