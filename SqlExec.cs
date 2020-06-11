@@ -1134,7 +1134,6 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       }
       else if ( Test("RENAME") )
       {
-        Read( "COLUMN" ); // Also may need to look at renaming table.
         action.Operation = Action.ColumnRename;
         action.Name = Name();
         Read( "TO" );

@@ -1214,7 +1214,7 @@ CREATE PROCEDURE [handler].[/Manual]() AS BEGIN
 
    SELECT '<p>The actions are as follows:<ul>
 <li>ADD Colname Coltype : a new column is added to the table.
-<li>RENAME COLUMN Colname TO NewColname : the column is renamed.
+<li>RENAME Colname TO NewColname : the column is renamed.
 <li>MODIFY Colname Coltype : the datatype of an existing column is changed. The only changes allowed are between the different sizes of integers, between float and double, and decimals with the same scale.
 <li>DROP Colname : the column is removed from the table.
 </ul>'
