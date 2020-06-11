@@ -151,7 +151,7 @@ class PARSEDECIMAL : StdExp
     }
     catch ( System.Exception )
     {
-      throw new System.Exception( "Error converting [" + s + "] to integer" );
+      throw new System.Exception( "Error converting [" + s + "] to decimal" );
     }
   }
 } // end class PARSEDECIMAL
