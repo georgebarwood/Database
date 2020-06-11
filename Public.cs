@@ -25,7 +25,7 @@ public abstract class ResultSet
   public virtual  void EndTable(){} // Called when all rows have been sent ( or sending is aborted ).
 
   /* As well as accepting SELECT results, ResultSet is also be used to pass parameters in, via the pre-defined functions ARG,FILEATTR,FILECONTENT. */
-  public virtual string Arg( int kind, string name ){ return ""; }
+  public virtual string Arg( int kind, string name ){ throw new System.Exception("ARG not available"); }
   public virtual string ArgName( int kind, int ix ){ return ""; } /* Can be used to obtain names of unknown fields */
 
   /* FileAttr and FileContent give access to uploaded files. */

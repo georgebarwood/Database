@@ -14,6 +14,7 @@ INSERT INTO [sys].[Schema](Id,[Name]) VALUES
 (4,'htm')
 (5,'browse')
 (6,'dbo')
+(7,'ft')
 INSERT INTO [sys].[Table](Id,[Schema],[Name],[IsView],[Definition]) VALUES 
 (8,3,'File',0,'')
 (9,5,'Table',0,'')
@@ -27,6 +28,7 @@ INSERT INTO [sys].[Table](Id,[Schema],[Name],[IsView],[Definition]) VALUES
   MAX(Total) AS Max
 FROM dbo.Order 
 GROUP BY Cust')
+(14,7,'Person',0,'')
 INSERT INTO [sys].[Column](Id,[Table],[Name],[Type]) VALUES 
 (21,8,'Path',2)
 (22,8,'ContentType',2)
@@ -53,6 +55,18 @@ INSERT INTO [sys].[Column](Id,[Table],[Name],[Type]) VALUES
 (47,11,'Postcode',2)
 (48,12,'Cust',5)
 (49,12,'Total',2255)
+(50,14,'Male',9)
+(51,14,'Mother',5)
+(52,14,'Father',5)
+(53,14,'Surname',2)
+(54,14,'Firstname',2)
+(55,14,'BirthYear',7)
+(56,14,'BirthMonth',8)
+(57,14,'BirthDay',8)
+(58,14,'DeathYear',5)
+(59,14,'DeathMonth',5)
+(60,14,'DeathDay',5)
+(61,14,'Notes',2)
 ", null );
 
     d.Sql( @"
@@ -65,6 +79,7 @@ INSERT INTO [browse].[Table](Id,[NameFunction],[SelectFunction],[DefaultOrder],[
 (10,'browse.BrowseColumnName','','','BrowseColumn','',0)
 (11,'dbo.CustName','dbo.CustSelect','','Customer','',0)
 (12,'','','','','',0)
+(14,'ft.PersonName','','BirthYear, BirthMonth, BirthDay','','',0)
 INSERT INTO [browse].[Column](Id,[Position],[Label],[Description],[RefersTo],[Default],[InputCols],[InputFunction],[InputRows],[Style]) VALUES 
 (2,0,'','',1,'',0,'',0,0)
 (6,0,'','',2,'',0,'',0,0)
@@ -78,6 +93,18 @@ INSERT INTO [browse].[Column](Id,[Position],[Label],[Description],[RefersTo],[De
 (25,0,'','',0,'',0,'',0,0)
 (38,0,'','',2,'',0,'',0,0)
 (48,0,'','',11,'',0,'',0,0)
+(50,-8,'','',0,'',0,'',0,0)
+(51,16,'','',14,'',0,'ft.MotherSelect',0,0)
+(52,15,'','',14,'',0,'ft.FatherSelect',0,0)
+(53,1,'','',0,'',0,'',0,0)
+(54,0,'','',0,'',0,'',0,0)
+(55,2,'Birth Y','',0,'',0,'',0,0)
+(56,3,'M','',0,'',0,'',0,0)
+(57,4,'D','',0,'',0,'',0,0)
+(58,7,'Death Y','',0,'',0,'',0,0)
+(59,8,'M','',0,'',0,'',0,0)
+(60,9,'D','',0,'',0,'',0,0)
+(61,100,'','',0,'',100,'',10,0)
 INSERT INTO [dbo].[Cust](Id,[FirstName],[LastName],[Age],[Postcode]) VALUES 
 (1,'Mary','Poppins',62,'EC4 2NX')
 (2,'Clare','Smith',27,'GL3')
@@ -173,6 +200,12 @@ BEGIN
 
   RETURN '(' | list | ')'
 END
+CREATE FUNCTION [sys].[ColumnLevel]( column int ) returns int AS 
+BEGIN
+  DECLARE table int
+  SET table = Table FROM sys.Column WHERE Id = column
+  RETURN sys.TableLevel( table )
+END
 CREATE FUNCTION [sys].[ColValues]( table int ) RETURNS string AS
 BEGIN
   DECLARE result string, col string
@@ -241,6 +274,20 @@ BEGIN
  
   RETURN ''
 END
+CREATE FUNCTION [sys].[SchemaLevel]( schema int ) returns int AS 
+BEGIN
+  /* This controls what is dumped by handler.Dump. Levels are 
+     3 = Everything ( code and data )
+     2 = Code and config only
+     1 = Nothing.
+  */
+  RETURN 
+  CASE WHEN schema <= 5 THEN 3 -- ""System"" schemas sys, handler, web, htm, browse
+       WHEN schema = 6 THEN 3 -- dbo
+       WHEN schema = 7 THEN 2 -- ft
+       ELSE 1
+  END
+END
 CREATE FUNCTION [sys].[SchemaName]( schema int) RETURNS string AS 
 BEGIN 
   DECLARE s string
@@ -250,6 +297,12 @@ END
 CREATE FUNCTION [sys].[SingleQuote]( s string ) RETURNS string AS
 BEGIN
   RETURN '''' | REPLACE( s, '''', '''''' ) | ''''
+END
+CREATE FUNCTION [sys].[TableLevel]( table int ) returns int AS 
+BEGIN
+  DECLARE schema int
+  SET schema = Schema FROM sys.Table WHERE Id = table
+  RETURN sys.SchemaLevel( schema )
 END
 CREATE FUNCTION [sys].[TableName]( table int ) returns string as
 begin
@@ -329,16 +382,18 @@ BEGIN
   FROM sys.Column where Table = table AND Id != colId
   ORDER BY browse.ColPos(Id), Id
   BEGIN
-    DECLARE ref int, nf string SET ref = 0, nf = ''
-    SET ref = RefersTo FROM browse.Column WHERE Id = colid
+    DECLARE ref int, nf string, ob string, label string
+    SET ref = 0, nf = ''
+    SET ref = RefersTo, label = Label FROM browse.Column WHERE Id = colid
     IF ref > 0 SET nf = NameFunction FROM browse.Table WHERE Id = ref
+    SET ob = DefaultOrder FROM browse.Table WHERE Id = ref
 
     SET result = result | '|''<TD' | CASE WHEN type != 2 THEN ' align=right' ELSE '' END | '>''|'
       | CASE WHEN nf != '' 
         THEN '''<a href=""/ShowRow?t=' | ref | '&k=''|' | col | '|''"">''|' | nf | '(' | col | ')' | '|''</a>''' 
         ELSE col
         END,
-        th = th | '<TH>' | colName
+        th = th | '<TH>' | CASE WHEN label != '' THEN label ELSE colName END
 
   END
   DECLARE kcol string SET kcol = sys.QuoteName(Name) FROM sys.Column WHERE Id = colId
@@ -346,7 +401,7 @@ BEGIN
    'SELECT ''<TABLE><TR><TH>' | th | ''' '
 
    | 'SELECT ' | '''<TR><TD><a href=""ShowRow?t=' | table | '&k=''| Id | ''"">Show</a> '''
-     | result | ' FROM ' | sys.TableName( table ) | ' WHERE ' | kcol | ' = ' | k
+     | result | ' FROM ' | sys.TableName( table ) | ' WHERE ' | kcol | ' = ' | k | CASE WHEN ob != '' THEN ' ORDER BY ' | ob ELSE '' END
 
    | ' SELECT ''</TABLE>'''
 END
@@ -398,6 +453,7 @@ BEGIN
   RETURN CASE
     WHEN type = 2 THEN ''''''
     WHEN type = 1 THEN '0x'
+    WHEN type = 9 THEN 'false'
     ELSE '0'
     END
 END
@@ -407,6 +463,7 @@ BEGIN
   WHEN type = 3 OR type = 5 OR type = 7 OR type = 8 THEN 'browse.InputInt'
   WHEN type = 1 THEN 'browse.InputBinary'
   WHEN type = 4 OR type = 6 THEN 'browse.InputDouble'
+  WHEN type = 9 THEN 'browse.InputBool'
   ELSE 'browse.InputString'
   END
 END
@@ -421,9 +478,9 @@ BEGIN
     DECLARE ref int, inf string, default string
     SET ref = 0, inf = '', default = ''
 
-    SET ref = RefersTo, default = Default FROM browse.Column WHERE Id = colId
+    SET ref = RefersTo,  inf = InputFunction, default = Default FROM browse.Column WHERE Id = colId
 
-    IF ref > 0 SET inf = SelectFunction FROM browse.Table WHERE Id = ref
+    IF ref > 0 AND inf = '' SET inf = SelectFunction FROM browse.Table WHERE Id = ref
 
     IF inf = '' SET inf = browse.DefaultInput( type )
     IF default = '' SET default = browse.DefaultDefault( type, ref )
@@ -444,8 +501,9 @@ BEGIN
   BEGIN
     DECLARE ref int, inf string
     SET ref = 0, inf = ''
-    SET ref = RefersTo FROM browse.Column WHERE Id = colId
-    IF ref > 0 SET inf = SelectFunction FROM browse.Table WHERE Id = ref
+    SET ref = RefersTo, inf = InputFunction FROM browse.Column WHERE Id = colId
+
+    IF ref > 0 AND inf = '' SET inf = SelectFunction FROM browse.Table WHERE Id = ref
 
     IF inf = '' SET inf = browse.DefaultInput( type )
 
@@ -466,6 +524,12 @@ BEGIN
   IF size = 0 SET size = 50
 
   RETURN '<input id=""' | cn | '"" name=""' | cn | '"" size=' | size | ' value=""' | value | '"">'
+END
+CREATE FUNCTION [browse].[InputBool]( colId int, value bool ) RETURNS string AS
+BEGIN
+  DECLARE cn string 
+  SET cn = Name FROM sys.Column WHERE Id = colId
+  RETURN '<input type=checkbox id=""' | cn | '"" name=""' | cn | '""' | CASE WHEN value THEN ' checked' ELSE '' END | '>'
 END
 CREATE FUNCTION [browse].[InputDouble]( colId int, value double ) RETURNS string AS 
 BEGIN 
@@ -501,7 +565,7 @@ BEGIN
   IF cols = 0 SET cols = 50
 
   IF rows > 0
-    RETURN '<textarea id=""' | cn | '"" name=' | cn | '"" cols=""' | cols | '""' | '"" rows=""' | rows |'""'
+    RETURN '<textarea id=""' | cn | '"" name=""' | cn | '"" cols=""' | cols | '""' | '"" rows=""' | rows |'""'
       | CASE WHEN value = '' THEN 'placeholder=' | htm.Attr(description) ELSE '' END
       | '"">' | htm.Encode(value) | '</textarea>'
   ELSE
@@ -529,11 +593,16 @@ BEGIN
     WHEN colId = pc THEN '' | p
     WHEN type = 3 OR type = 5 OR type = 7 OR type = 8 THEN 'PARSEINT(' | f | ')'
     WHEN type = 4 OR type = 6 THEN 'PARSEDOUBLE(' | f | ')'
+    WHEN type = 9 THEN 'browse.ParseBool(' | f | ')'
     WHEN type >= 15 THEN 'PARSEDECIMAL(' | f | ',' | type | ')'
     ELSE f
     END
 
   RETURN 'INSERT INTO ' | sys.TableName( table ) | browse.InsertNames( table ) | ' VALUES ( ' | vlist | ')'
+END
+CREATE FUNCTION [browse].[ParseBool]( s string ) returns bool AS
+BEGIN
+  return s = 'on'
 END
 CREATE FUNCTION [browse].[SchemaSelect]( colId int, sel int ) RETURNS string AS
 BEGIN
@@ -646,12 +715,10 @@ BEGIN
     SET alist = CASE WHEN alist = '' THEN '' ELSE alist | ' , ' END
       | sys.QuoteName(col) | ' = ' | 
       CASE 
-      WHEN type = 3 OR type = 5 OR type = 7 OR type = 8 
-      THEN 'PARSEINT(' | f |')'
-      WHEN type = 4 OR type = 6
-      THEN 'PARSEDOUBLE(' | f | ')'
-      WHEN type >= 15
-      THEN 'PARSEDECIMAL(' | f | ',' | type | ')'
+      WHEN type = 3 OR type = 5 OR type = 7 OR type = 8  THEN 'PARSEINT(' | f |')'
+      WHEN type = 4 OR type = 6  THEN 'PARSEDOUBLE(' | f | ')'
+      WHEN type = 9 THEN 'browse.ParseBool(' | f | ')'
+      WHEN type >= 15 THEN 'PARSEDECIMAL(' | f | ',' | type | ')'
       ELSE f
       END
   END
@@ -679,6 +746,55 @@ BEGIN
   return '<select id=""' | col | '"" name=""' | col | '"">' | options 
     | '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
     | '</select>'
+END
+CREATE FUNCTION [ft].[FatherSelect]( colId int, sel int ) RETURNS string AS
+BEGIN
+  DECLARE col string SET col = Name FROM sys.Column where Id = colId
+  DECLARE opt string, options string
+
+  DECLARE by int, k int, ks string SET ks = web.Query( 'k' )
+  IF ks != '' SET k = Id, by = BirthYear FROM ft.Person WHERE Id = PARSEINT(ks)  
+  
+  FOR opt = '<option ' | CASE WHEN Id = sel THEN ' selected' else '' END 
+  | ' value=' | Id | '>' | htm.Encode( ft.PersonName(Id) ) | '</option>'
+  FROM ft.Person
+  WHERE Male AND Id != k AND ( BirthYear < by - 10 OR by = 0 )
+  ORDER BY Surname, Firstname, BirthYear,  BirthMonth, BirthDay
+  SET options = options + opt
+
+  return '<select id=""' | col | '"" name=""' | col | '"">' | options 
+    | '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
+    | '</select>'
+END
+CREATE FUNCTION [ft].[MotherSelect]( colId int, sel int ) RETURNS string AS
+BEGIN
+  DECLARE col string SET col = Name FROM sys.Column where Id = colId
+  DECLARE opt string, options string
+
+  DECLARE by int, k int, ks string SET ks = web.Query( 'k' )
+  IF ks != '' SET k = Id, by = BirthYear FROM ft.Person WHERE Id = PARSEINT(ks)  
+  
+
+  FOR opt = '<option ' | CASE WHEN Id = sel THEN ' selected' else '' END 
+  | ' value=' | Id | '>' | htm.Encode( ft.PersonName(Id) ) | '</option>'
+  FROM ft.Person
+  WHERE ( NOT Male ) AND Id != k AND ( BirthYear < by - 10 OR by = 0 )
+  ORDER BY Surname, Firstname, BirthYear,  BirthMonth, BirthDay
+  SET options = options + opt
+
+  return '<select id=""' | col | '"" name=""' | col | '"">' | options 
+    | '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
+    | '</select>'
+END
+CREATE FUNCTION [ft].[PersonName]( id int ) returns string AS
+BEGIN
+  DECLARE result string
+  SET result = Firstname | ' ' | Surname | ' ' 
+   | CASE WHEN BirthYear > 0 THEN ''|BirthYear ELSE '' END 
+   | '-' 
+   | CASE WHEN DeathYear > 0 THEN ''| DeathYear ELSE '' END
+  FROM ft.Person WHERE Id = id
+  RETURN result
 END
 CREATE PROCEDURE [sys].[DroppedColumn]( t int, colId int ) AS 
 BEGIN 
@@ -841,7 +957,7 @@ END
 CREATE PROCEDURE [handler].[/Dump]() AS 
 BEGIN 
 
-  EXEC web.SetContentType( 'text/plain' )
+  EXEC web.SetContentType( 'text/plain;charset=utf-8' )
 
   DECLARE ins string, val string
   FOR 
@@ -851,12 +967,15 @@ BEGIN
 ''' | ' FROM ' | sys.TableName(Id)
 
     | CASE 
-      WHEN Id = 1 THEN ' WHERE Id > 1' -- Schema
-      WHEN Id = 2 THEN ' WHERE Id > 7' -- Table
-      WHEN Id = 3 THEN ' WHERE Id > 20' -- Column
+      WHEN Id = 1  THEN ' WHERE Id > 1 AND sys.SchemaLevel(Id) > 1'     -- sys.Schema
+      WHEN Id = 2  THEN ' WHERE Id > 7 AND sys.SchemaLevel(Schema) > 1' -- sys.Table
+      WHEN Id = 3  THEN ' WHERE Id > 20 AND sys.TableLevel(Table) > 1'  -- sys.Column
+      WHEN Id = 9  THEN ' WHERE sys.TableLevel(Id) > 1'   -- browse.Table
+      WHEN Id = 10 THEN ' WHERE sys.ColumnLevel(Id) > 1' -- browe.Column
       ELSE ''
       END
   FROM sys.Table WHERE IsView = 0 AND ( Id < 4 OR Id > 7 ) -- Exclude indexes, functions, procedures
+  AND sys.SchemaLevel( Schema ) = 3
   BEGIN
     SELECT ins
     EXECUTE( val )
@@ -866,10 +985,10 @@ BEGIN
 ' FROM sys.Index WHERE Id > 6
 
   SELECT 'CREATE FUNCTION ' | sys.Dot( sys.SchemaName(Schema),Name) | Definition | '
-' FROM sys.Function ORDER BY Schema, Name
+' FROM sys.Function  WHERE sys.SchemaLevel( Schema ) > 1 ORDER BY Schema, Name
 
   SELECT 'CREATE PROCEDURE ' | sys.Dot( sys.SchemaName(Schema),Name) | Definition | '
-' FROM sys.Procedure ORDER BY Schema, Name
+' FROM sys.Procedure WHERE sys.SchemaLevel( Schema ) > 1 ORDER BY Schema, Name
 END
 CREATE PROCEDURE [handler].[/EditFile]() AS
 BEGIN
@@ -1087,7 +1206,7 @@ CREATE PROCEDURE [handler].[/Manual]() AS BEGIN
 <li>bool : boolean ( true or false ).
 </ul>
 
-<p>Each data type has a default value : zero for numbers, a zero length string for string and binary, and false for the boolean type. The variable length data types are stored in special system tables, and are encoded so that only one copy of a given string or binary value is stored.'
+<p>Each data type has a default value : zero for numbers, a zero length string for string and binary, and false for the boolean type. The variable length data types are stored in special system tables, and are automatically encoded so that only one copy of a given string or binary value is stored.'
 
    SELECT '<h3>ALTER TABLE</h2>'
 
@@ -1190,23 +1309,24 @@ CREATE PROCEDURE [handler].[/Manual]() AS BEGIN
    <p>Returns a value from a stored function. RETURN with no expression returns from a stored procedure.'
 
    SELECT '<h2>Expressions</h2>'
-   SELECT '<p>Expressions are composed from literals, named local variables, local parameters and named columns from tables or views. These may be combined using operators, stored functions and pre-defined functions.'
+   SELECT '<p>Expressions are composed from literals, named local variables, local parameters and named columns from tables or views. These may be combined using operators, stored functions, pre-defined functions. There is also the CASE expression, which has syntax CASE WHEN bool1 THEN exp1 WHEN bool2 THEN exp2 .... ELSE exp END - the result is the expression associated with the first bool expression which evaluates to true.'
 
    SELECT '<h3>Literals</h3>'
-   SELECT '<p>String literals are written enclosed in single quotes. If a single quote is needed in a string literal, it is written as two single quotes. Binary literals are written in hexadecimal preceded by 0x. Integers are a list of digits (0-9), decimals have a decimal point.'
+   SELECT '<p>String literals are written enclosed in single quotes. If a single quote is needed in a string literal, it is written as two single quotes. Binary literals are written in hexadecimal preceded by 0x. Integers are a list of digits (0-9), decimals have a decimal point. The bool literals are true and false.'
 
    SELECT '<h3>Names</h3>' 
    SELECT '<p>Names are enclosed in square brackets and are case sensitive ( although language keywords such as CREATE SELECT are case insensitive, and are written without the square brackets, often in upper case only by convention ). The square brackets can be omitted if the name consists of only letters (A-Z,a-z).'
 
    SELECT '<h3>Operators</h3>'
-   SELECT 'The operators ( all binary, except for - which can be unary ) in order of precedence, high to low, are as follows:<ul>
+   SELECT 'The operators ( all binary, except for - which can be unary, and NOT which is only unary ) in order of precedence, high to low, are as follows:<ul>
    <li>*  / % : multiplication, division and remainder (after division) of numbers. Remainder only applies to integers.
    <li>+ - : addition, subtraction of numbers.
    <li>| : concatenation of strings. Other types are automatically converted to strings when an operand of the | operator.
    <li>= != > < >= <= : comparison of any data type.
    <li>IN : tests whether an expression in is in a set. The set may be a list of expressions or a select expression enclosed in brackets.
-   <li>AND : boolean operator
-   <li>OR : boolean operator
+   <li>NOT : boolean negation ( result is true if arg is false, false if operand is true ).
+   <li>AND : boolean operator ( result is true if both args are true )
+   <li>OR : boolean operator  ( result is true if either arg is true )
    </ul>
    <p>Brackets can be used where necessary, for example ( a + b ) * c.'
 
@@ -1287,6 +1407,7 @@ BEGIN
    EXEC web.Head('Menu')
 
    SELECT '
+<p><a href=""http://192.168.0.10:8080/ShowTable?k=14"">Family Tree</a>
 <p><a href=/OrderSummary>Order Summary</a>
 <h1>System</h1>
 <p><a href=/Execute>Execute SQL</a>
@@ -1386,14 +1507,18 @@ BEGIN
 END
 CREATE PROCEDURE [web].[Head]( title string ) AS 
 BEGIN 
-  EXEC web.SetContentType( 'text/html' )
+  EXEC web.SetContentType( 'text/html;charset=utf-8' )
 
   SELECT '<html>
 <head>
 <meta http-equiv=""Content-type"" content=""text/html;charset=UTF-8"">
+<meta name=""viewport"" content=""width=device-width, initial-scale=1"">
 <link rel=""shortcut icon"" href=""/img/fav.ico""/>
 <title>' | title | '</title>
-<style>body{font-family:sans-serif;}</style>
+<style>
+   body{font-family:sans-serif;}
+   body{ max-width:60em; }
+</style>
 </head>
 <body>
 <div style=""color:white;background:lightblue;padding:4px;"">

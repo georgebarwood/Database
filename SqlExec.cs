@@ -386,6 +386,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       else if ( name == "FILECONTENT" ) result = new FILECONTENT( parms, this );
       else Error( "Unknown function : " + name );
     }
+    else if ( name == "true" ) result = new ExpConstant(true);
+    else if ( name == "false" ) result = new ExpConstant(false);
     else
     {
       int i = B.Lookup( name );
@@ -406,7 +408,10 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     Exp result = null;
     if ( T == Token.Name )
     {
-      result = Test( "CASE" ) ? Case() : NameExp( AggAllowed );
+      result = 
+        Test( "CASE" ) ? Case() 
+        : Test( "NOT" ) ? new ExpNot( Exp(10) ) // Not sure about precedence here.
+        : NameExp( AggAllowed );
     }
     else if ( Test( Token.LBra ) )
     {
@@ -1281,7 +1286,7 @@ class Exception : System.Exception
     + ( t == Token.Eof ? "" : " at Line " + line + " Col " + col + " Token=" + token 
     // + "(" + t + ")"
     )
-    // + " source=" + src // May help when debugging dynamic SQL    
+    + " source=" + src // May help when debugging dynamic SQL    
   )
   {
     Routine = routine;

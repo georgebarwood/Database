@@ -95,6 +95,7 @@ class ExpConstant : Exp
   public ExpConstant( long x, DataType t ){ Value.L = x; Type = t; }
   public ExpConstant( string x ){ Value.O = x; Type = DataType.String; }
   public ExpConstant( byte[] x ){ Value.O = x; Type = DataType.Binary; }
+  public ExpConstant( bool x ){ Value.B = x; Type = DataType.Bool; }
   public override Value Eval( EvalEnv e ){ return Value; }
   public override string ToString() { return Value.ToString( Type ); } // For debugging/error messages.
   public override bool IsConstant() { return true; } // Evaluation doesn't depend on table row.
@@ -150,6 +151,8 @@ class ExpBinary : Exp
         {
           case Token.And: lv.B = lv.B & rv.B; break;
           case Token.Or:  lv.B = lv.B | rv.B; break;
+          case Token.Equal: lv.B = lv.B == rv.B; break;
+          case Token.NotEqual: lv.B = lv.B != rv.B; break;
           default: throw new System.Exception( "Unexpected boolean operator " + Operator + " exp=" + this.ToString() );
         }
         break;
@@ -286,6 +289,11 @@ class ExpBinary : Exp
         Right = new BinaryToStringExp( Right );
         Type = DataType.String;
       }
+      else if ( tR == DataType.Bool && tL == DataType.String && Operator == Token.VBar )
+      { 
+        Right = new BoolToStringExp( Right );
+        Type = DataType.String;
+      }
       else e.Error( "Datatype error Operator is " + Operator + " tL=" + tL + " tR=" + tR + " exp=" + this.ToString() );
     }
     return Type;
@@ -394,7 +402,30 @@ class ExpMinus : UnaryExp
   {
     return "-(" + E.ToString() + " " + ")";
   }
-}
+} // end class ExpMinus
+
+class ExpNot : UnaryExp
+{
+  public ExpNot( Exp e )
+  {
+    E = e;
+    Type = DataType.Bool;
+  }
+
+  public override DataType Bind( SqlExec e )
+  {
+    if ( E.Bind( e ) != DataType.Bool )
+      e.Error( "NOT needs bool argument" );
+    return Type;
+  }
+
+  public override Value Eval( EvalEnv e )
+  {
+    Value v = E.Eval( e );
+    v.B = ! v.B;
+    return v;
+  }
+} // end class ExpNot
 
 class IntToStringExp : UnaryExp
 {
@@ -539,6 +570,22 @@ class BinaryToStringExp : UnaryExp
   {
     Value v = E.Eval( e );
     v.O = Util.ToString( (byte[])v._O );
+    return v;
+  }  
+}
+
+class BoolToStringExp : UnaryExp
+{
+  public BoolToStringExp( Exp e )
+  { 
+    E = e;
+    Type = DataType.String;
+  }
+
+  public override Value Eval( EvalEnv e )
+  {
+    Value v = E.Eval( e );
+    v.O = v.B.ToString();
     return v;
   }  
 }
