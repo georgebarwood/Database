@@ -24,7 +24,7 @@ public abstract class ResultSet
   public abstract bool NewRow( Value [] row ); // Called for each selected row. If result is false, sending is aborted ( no more rows are sent ).
   public virtual  void EndTable(){} // Called when all rows have been sent ( or sending is aborted ).
 
-  /* As well as accepting SELECT results, ResultSet is also be used to pass parameters in, via the pre-defined functions ARG,FILEATTR,FILECONTENT. */
+  /* As well as accepting SELECT results, ResultSet is also used to pass parameters in, via the pre-defined functions ARG,FILEATTR,FILECONTENT. */
   public virtual string Arg( int kind, string name ){ throw new System.Exception("ARG not available"); }
   public virtual string ArgName( int kind, int ix ){ return ""; } /* Can be used to obtain names of unknown fields */
 
