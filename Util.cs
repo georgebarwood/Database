@@ -103,7 +103,8 @@ class DTI // "Data Type Info"
 
   public static int Scale( DataType t )
   {
-    return ((int)t) / 1024;
+    if ( t >= DataType.Decimal ) return ((int)t) / 1024;
+    return -1;
   }
 
   public static int Precision( DataType t )

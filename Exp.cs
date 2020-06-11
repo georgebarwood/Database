@@ -239,10 +239,10 @@ class ExpBinary : Exp
       else if ( tR == DataType.Float ) { Right = Right.Convert( tL ); tR = tL; }
       else if ( tL == DataType.Float ) { Left = Left.Convert( tR ); tL = tR; }
 
-      // Probably should check here no non-numeric operands ( String, Binary )
-
       int sL = DTI.Scale(tL);
       int sR = DTI.Scale(tR);
+
+      if ( sL < 0 || sR < 0 ) e.Error( "Type error involving decimal" );
 
       switch( Operator )
       {
