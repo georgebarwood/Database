@@ -412,6 +412,8 @@ class ExpNot : UnaryExp
   }
 } // end class ExpNot
 
+// Conversions
+
 class IntToStringExp : UnaryExp
 {
   public IntToStringExp( Exp e )
@@ -574,6 +576,8 @@ class BoolToStringExp : UnaryExp
     return v;
   }  
 }
+
+// end conversions
 
 class OrderByExp
 {
