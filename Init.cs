@@ -577,7 +577,7 @@ BEGIN
   SET result = ''
   FOR col = Name FROM sys.Column where Table = table
     SET result = 
-       CASE WHEN result = '' THEN '' ELSE result + ',' END
+       CASE WHEN result = '' THEN '' ELSE result | ',' END
        | sys.QuoteName(col)
   RETURN '(' | result | ')'
 END
@@ -616,7 +616,7 @@ BEGIN
   | ' value=' | Id | '>' | htm.Encode( Name ) | '</option>'
   FROM sys.Schema
   ORDER BY Name
-  SET options = options + opt
+  SET options = options | opt
 
   return '<select id=""' | col | '"" name=""' | col | '"">' | options | 
      '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
@@ -686,7 +686,7 @@ BEGIN
   | ' value=' | Id | '>' | htm.Encode( sys.TableName(Id) ) | '</option>'
   FROM sys.Table
   ORDER BY sys.TableName(Id)
-  SET options = options + opt
+  SET options = options | opt
 
   return '<select id=""' | col | '"" name=""' | col | '"">' | options | 
      '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
@@ -723,7 +723,7 @@ BEGIN
       END
   END
 
-  RETURN 'UPDATE ' | sys.TableName( table ) | ' SET ' + alist | ' WHERE Id =' | k
+  RETURN 'UPDATE ' | sys.TableName( table ) | ' SET ' | alist | ' WHERE Id =' | k
 END
 CREATE FUNCTION [dbo].[CustName]( cust int ) returns string as 
 BEGIN
@@ -741,7 +741,7 @@ BEGIN
   | ' value=' | Id | '>' | htm.Encode( dbo.CustName(Id) ) | '</option>'
   FROM dbo.Cust
   ORDER BY LastName, FirstName
-  SET options = options + opt
+  SET options = options | opt
 
   return '<select id=""' | col | '"" name=""' | col | '"">' | options 
     | '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
@@ -760,7 +760,7 @@ BEGIN
   FROM ft.Person
   WHERE Male AND Id != k AND ( BirthYear < by - 10 OR by = 0 )
   ORDER BY Surname, Firstname, BirthYear,  BirthMonth, BirthDay
-  SET options = options + opt
+  SET options = options | opt
 
   return '<select id=""' | col | '"" name=""' | col | '"">' | options 
     | '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
@@ -780,7 +780,7 @@ BEGIN
   FROM ft.Person
   WHERE ( NOT Male ) AND Id != k AND ( BirthYear < by - 10 OR by = 0 )
   ORDER BY Surname, Firstname, BirthYear,  BirthMonth, BirthDay
-  SET options = options + opt
+  SET options = options | opt
 
   return '<select id=""' | col | '"" name=""' | col | '"">' | options 
     | '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
@@ -1158,7 +1158,7 @@ BEGIN
     DECLARE content binary SET content =  FILECONTENT(0)
     
     INSERT INTO web.File( Path, ContentType, ContentLength, Content )
-    VALUES ( '/Uploads/' + FILEATTR(0,2), FILEATTR(0,1), LEN(content), content )
+    VALUES ( '/Uploads/' | FILEATTR(0,2), FILEATTR(0,1), LEN(content), content )
   END
 
   SELECT '<form method=post enctype=""multipart/form-data""><p><Input name=file type=file><p><input type=submit value=Upload></form>'
