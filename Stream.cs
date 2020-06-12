@@ -13,8 +13,8 @@ class FullyBufferedStream : IO.Stream
   { 
     Log = log;
     FileId = fileId;
-    F = f; 
-    Len = F.Length;
+    BaseStream = f; 
+    Len = BaseStream.Length;
     Pos = 0;
     ReadAvail = 0;
     WriteAvail = 0;
@@ -22,23 +22,23 @@ class FullyBufferedStream : IO.Stream
 
   readonly Log Log; // Log file to ensure atomic updates.
   readonly long FileId; // For Log file.
-  readonly IO.Stream F; // Underlying stream.
+  readonly IO.Stream BaseStream; // Underlying stream.
+
+  long Len; // File length
+  long Pos; // Current position in the file
 
   readonly G.Dictionary<long,byte[]> Buffers = new G.Dictionary<long,byte[]>();
   readonly G.SortedSet<long> UnsavedPageNums = new G.SortedSet<long>();
 
   // Buffer size constants.
-  const int BufferShift = 12;
+  const int BufferShift = 12; // Log base 2 of BufferSize.
   const int BufferSize = 1 << BufferShift;
 
   byte [] CurBuffer; // The current buffer.
   long CurBufferNum = -1;  // The page number of the current buffer.
-  int CurIndex;      // Index into current buffer ( equal to Pos & (BufferSize - 1) ).
+  int CurIndex;      // Index into current buffer ( equal to Pos % BufferSize ).
   int WriteAvail;    // Number of bytes available for writing in CurBuffer ( from CurIndex ).
   int ReadAvail;     // Number of bytes available for reading in CurBuffer ( from CurIndex ).
-
-  long Len; // File length
-  long Pos; // Current position in the file
 
   bool UnsavedAdded; // Current buffer has been added to UnsavedPageNums.
 
@@ -178,22 +178,22 @@ class FullyBufferedStream : IO.Stream
     foreach ( long bufferNum in UnsavedPageNums )
     {
       byte [] b = GetBuffer( bufferNum );
-      long ppos = bufferNum << BufferShift;
-      long n = Len - ppos;
+      long pos = bufferNum << BufferShift;
+      long n = Len - pos;
       if ( n > BufferSize ) n = BufferSize;
-      if ( F.Position != ppos ) F.Seek( ppos, 0 );
-      F.Write( b, 0, (int)n );
+      if ( BaseStream.Position != pos ) BaseStream.Position = pos;
+      BaseStream.Write( b, 0, (int)n );
     }
     UnsavedPageNums.Clear();
     UnsavedAdded = false;
-    F.SetLength( Len );
-    F.Flush();
+    BaseStream.SetLength( Len );
+    BaseStream.Flush();
   }
 
   public override void Close()
   {
     Rollback();
-    F.Close();
+    BaseStream.Close();
   }
 
   public override void SetLength( long x )
@@ -239,12 +239,12 @@ class FullyBufferedStream : IO.Stream
     if ( Buffers.TryGetValue( bufferNum, out result ) ) return result;
     result = new byte[ BufferSize ];
     Buffers[ bufferNum ] = result;
-    long ppos = bufferNum << BufferShift;
-    if ( F.Position != ppos ) F.Seek( ppos, 0 );
+    long pos = bufferNum << BufferShift;
+    if ( BaseStream.Position != pos ) BaseStream.Position = pos;
     int i = 0;
     while ( i < BufferSize )
     {
-      int got = F.Read( result, i, BufferSize - i );
+      int got = BaseStream.Read( result, i, BufferSize - i );
       if ( got == 0 ) break;
       i += got;
     }
