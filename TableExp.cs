@@ -303,7 +303,7 @@ class DummyFrom : TableExpression // USed where there is a SELECT with no FROM c
 {
   public DummyFrom()
   {
-    Cols = new ColInfo( new G.List<string>(), new G.List<DataType>() );
+    Cols = new ColInfo( new string[0], new DataType[0] );
   }
   public override G.IEnumerable<bool> GetAll( Value[] row, bool [] used, EvalEnv ee )
   {

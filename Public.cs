@@ -41,21 +41,23 @@ public enum DataType : ushort { None=0, Binary=1, String=2, Bigint=3, Double=4, 
 
 public class ColInfo
 {
-  public readonly int Count;
   public readonly string [] Names;
   public readonly DataType [] Types;
+  public readonly int Count;
+  public readonly byte [] Sizes;
 
-  public ColInfo( G.List<string> names, G.List<DataType> types )
-  {
-    Names = names.ToArray();
-    Types = types.ToArray();
-    Count = Names.Length;
-  }
   public ColInfo( string [] names, DataType[] types )
   {
     Names = names; 
     Types = types; 
-    Count = Names.Length;
+    Count = Types.Length;
+    Sizes = new byte[ Count ];
+    for ( int i = 0; i < Count; i += 1 ) Sizes[ i ] = (byte)DTI.Size( Types[ i ] );  
+  }
+
+  public static ColInfo New( G.List<string> names, G.List<DataType> types )
+  {
+    return new ColInfo( names.ToArray(), types.ToArray() );
   }
 }
 

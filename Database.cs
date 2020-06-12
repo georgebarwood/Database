@@ -278,7 +278,7 @@ class DatabaseImp : Database
         else break;
       }
 
-      Table t = new Table( this, schema, name, new ColInfo(names,types), tid );
+      Table t = new Table( this, schema, name, ColInfo.New(names,types), tid );
       t.OpenIndexes();
       return t;
     }
@@ -330,7 +330,7 @@ class DatabaseImp : Database
           break;
       }
     }
-    var newcols = new ColInfo( names, types );
+    var newcols = ColInfo.New( names, types );
     t.AlterData( newcols, map.ToArray() );
     Sql( "EXEC sys.RecreateModifiedIndexes()" );
     t.OpenIndexes();
@@ -777,7 +777,7 @@ struct ColBuilder // Helper for creating system column definitions.
   }
   public ColInfo Get()
   {
-    ColInfo result = new ColInfo( Names, Types );
+    ColInfo result = ColInfo.New( Names, Types );
     Names = null;   
     return result;
   }

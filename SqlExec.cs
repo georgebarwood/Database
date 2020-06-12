@@ -924,7 +924,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       ReadToken();
     }
     string source = Source.Substring( sourceStart, TokenStart - sourceStart );
-    Add( () => Db.CreateTable( schema, tableName, new ColInfo( names, types ), source, false, false, this ) );
+    Add( () => Db.CreateTable( schema, tableName, ColInfo.New( names, types ), source, false, false, this ) );
   }
 
   void CreateView( bool alter )
@@ -993,7 +993,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     Read( "BEGIN" );
     Block();
     B.CheckLabelsDefined( this );
-    return new ColInfo( names, types );
+    return ColInfo.New( names, types );
   }
 
   void CreateIndex()

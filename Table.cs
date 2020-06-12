@@ -99,16 +99,17 @@ class Table : TableExpression // Represents a Database Table.
     if ( RB[ix++] == 0 ) return false; // Row has been deleted
     row[ 0 ].L = id;
     DataType [] types = Cols.Types;
+    byte [] sizes = Cols.Sizes;
     for ( int i=1; i < types.Length; i += 1 )
     {
-      DataType t = types[ i ];
-      int size = DTI.Size( t );
+      int size = sizes[ i ];
       if ( used != null && !used [ i ] ) // Skip this column
       { 
         ix += size;
       }
       else 
       {
+        DataType t = types[ i ];
         ulong x = Util.Get( RB, ix, size, t ); 
         ix += size;
         row[ i ].L = (long)x;
@@ -133,6 +134,7 @@ class Table : TableExpression // Represents a Database Table.
     else
     {
       DataType [] types = Cols.Types;
+      byte [] sizes = Cols.Sizes;
       RB[ 0 ] = 1;
       int ix = 1;
       for ( int i = 1; i < types.Length; i += 1 )
@@ -146,7 +148,7 @@ class Table : TableExpression // Represents a Database Table.
           row[ i ].L = (long) x;
         }
         else if ( t == DataType.Float ) x = Conv.PackFloat( x );
-        int size = DTI.Size( t );
+        int size = sizes[ i ];
         Util.Set( RB, ix, x, size );     
         ix += size;
       }
