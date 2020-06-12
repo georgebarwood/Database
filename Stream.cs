@@ -5,8 +5,7 @@ using G = System.Collections.Generic;
 
 class FullyBufferedStream : IO.Stream
 {
-  Log Log;
-  long FileId;
+  // Flush() must be called to write changes to the underlying stream, alternatively Rollback() may be called to discard changes.
 
   public FullyBufferedStream ( Log log, long fileId, IO.Stream f ) 
   { 
@@ -19,27 +18,26 @@ class FullyBufferedStream : IO.Stream
     WriteAvail = 0;
   }
 
-  // Note : Flush() must be called to write changes to the underlying stream, alternatively Rollback() may be called to discard changes.
+  readonly Log Log;
+  readonly long FileId;
+  readonly IO.Stream F; // Underlying stream.
+  readonly G.Dictionary<long,byte[]> Buffers = new G.Dictionary<long,byte[]>();
+  readonly G.SortedSet<long> UnsavedPageNums = new G.SortedSet<long>();
 
-  // Buffer size.
+  // Buffer size constants.
   const int BufferShift = 12;
   const int BufferSize = 1 << BufferShift;
-  const int BufferMask = BufferSize - 1;
 
   byte [] CurBuffer; // The current buffer.
-  long CurBufferNum = -1;  // The page bumber of the current buffer.
-  int CurIndex;      // Index into current buffer ( equal to Pos & BufferMask ).
+  long CurBufferNum = -1;  // The page number of the current buffer.
+  int CurIndex;      // Index into current buffer ( equal to Pos & (BufferSize - 1) ).
   int WriteAvail;    // Number of bytes available for writing in CurBuffer ( from CurIndex ).
   int ReadAvail;     // Number of bytes available for reading in CurBuffer ( from CurIndex ).
 
-  long Pos; // Current position in the file
   long Len; // File length
+  long Pos; // Current position in the file
 
-  readonly IO.Stream F; // Underlying stream.
-  readonly G.Dictionary<long,byte[]> Buffers = new G.Dictionary<long,byte[]>();
-  readonly G.SortedSet<long> UnsavedPageNums = new G.SortedSet<long>(); // Could used HashSet, but this can reduce seeks.
-
-  bool CurBufferSetUnsaved; // Current buffer has been marked as unsaved ( has been written )
+  bool UnsavedAdded; // Current buffer has been added to UnsavedPageNums.
 
   public override int Read( byte[] b, int off, int n )
   { 
@@ -69,7 +67,7 @@ class FullyBufferedStream : IO.Stream
   public byte[] FastRead( int n, out int ix )
   {
     if ( ReadAvail == 0 ) DoSeek( true );
-    if ( ReadAvail >= n ) // Common case.
+    if ( ReadAvail >= n )
     {
       ix = CurIndex;
       CurIndex += n;
@@ -77,7 +75,7 @@ class FullyBufferedStream : IO.Stream
       ReadAvail -= n;
       return CurBuffer;
     }
-    else // This should only happen rarely.
+    else
     {
       byte [] result = new byte[ n ];
       Read( result, 0, n );
@@ -97,10 +95,10 @@ class FullyBufferedStream : IO.Stream
       int got = n > WriteAvail ? WriteAvail : n;
       if ( got > 0 )
       {
-        if ( !CurBufferSetUnsaved )
+        if ( !UnsavedAdded )
         {
           UnsavedPageNums.Add( Pos >> BufferShift );
-          CurBufferSetUnsaved = true;
+          UnsavedAdded = true;
         }
         for ( int i = 0; i < got; i += 1 ) CurBuffer[ CurIndex + i ] = b[ off + i ];
         off += got;
@@ -132,10 +130,10 @@ class FullyBufferedStream : IO.Stream
           if ( CurBuffer[ CurIndex ] != 0 ) return false;
           checkFirstByteZero = false;
         }
-        if ( !CurBufferSetUnsaved )
+        if ( !UnsavedAdded )
         {
           UnsavedPageNums.Add( Pos >> BufferShift );
-          CurBufferSetUnsaved = true;
+          UnsavedAdded = true;
         }
         for ( int i = 0; i < got; i += 1 ) CurBuffer[ CurIndex + i ] = b[ off + i ];
         off += got;
@@ -156,9 +154,10 @@ class FullyBufferedStream : IO.Stream
   {
     Buffers.Clear();
     UnsavedPageNums.Clear();
-    CurBufferSetUnsaved = false;
+    UnsavedAdded = false;
     ReadAvail = 0;
-    WriteAvail = 0;      
+    WriteAvail = 0;   
+    CurBufferNum = -1;
   }
 
   public override void Flush()
@@ -173,7 +172,7 @@ class FullyBufferedStream : IO.Stream
       F.Write( b, 0, (int)n );
     }
     UnsavedPageNums.Clear();
-    CurBufferSetUnsaved = false;
+    UnsavedAdded = false;
     F.SetLength( Len );
     F.Flush();
   }
@@ -192,8 +191,8 @@ class FullyBufferedStream : IO.Stream
       CurBuffer = GetBuffer( CurBufferNum );
     }
 
-    CurIndex = (int) ( Pos & BufferMask );
-    CurBufferSetUnsaved = false;
+    CurIndex = (int) ( Pos & ( BufferSize - 1 ) );
+    UnsavedAdded = false;
     if ( read )
     {
       ReadAvail = BufferSize - CurIndex;
@@ -257,20 +256,11 @@ class FullyBufferedStream : IO.Stream
   public override long Length { get{ return Len; } }
   public override long Position { get{ return Pos; } set{ Seek(value,0); } }
 
-/* Optional overrides ( if ReadByte and WriteByte are used )
+/* Optional overrides ( if ReadByte and WriteByte are used ) */
 
   public override int ReadByte()
   {
-    if ( ReadAvail == 0 )
-    {
-      if ( Pos == Len ) return -1;
-      CurBuffer = GetBuffer( Pos >> BufferShift );
-      CurIndex = (int) ( Pos & BufferMask );
-      ReadAvail = BufferSize - CurIndex;    
-      if ( ReadAvail > Len - Pos ) ReadAvail = (int)( Len - Pos );
-      CurBufferSetUnsaved = false;
-      WriteAvail = 0;
-    }
+    if ( ReadAvail == 0 ) DoSeek( true );
     Pos += 1;
     ReadAvail -= 1;
     return CurBuffer[ CurIndex++ ];
@@ -279,24 +269,16 @@ class FullyBufferedStream : IO.Stream
   public override void WriteByte( byte b )
   {
     if ( Pos + 1 > Len ) Len = Pos + 1;
-    if ( WriteAvail == 0 )
+    if ( WriteAvail == 0 ) DoSeek( false );
+    if ( !UnsavedAdded )
     {
-      CurBuffer = GetBuffer( Pos >> BufferShift );
-      CurIndex = (int) ( Pos & BufferMask );
-      WriteAvail = BufferSize - CurIndex;
-      ReadAvail = 0;
-      CurBufferSetUnsaved = false;
-    }
-    if ( !CurBufferSetUnsaved )
-    {
-      Dirty.Add( Pos >> BufferShift );
-      CurBufferSetUnsaved = true;
+      UnsavedPageNums.Add( Pos >> BufferShift );
+      UnsavedAdded = true;
     }
     CurBuffer[ CurIndex++ ] = b;
     Pos += 1;
     WriteAvail -= 1;
   }
-*/
 
 } // end class FullyBufferedStream
 
