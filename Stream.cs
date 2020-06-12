@@ -27,6 +27,7 @@ class FullyBufferedStream : IO.Stream
   const int BufferMask = BufferSize - 1;
 
   byte [] CurBuffer; // The current buffer.
+  long CurBufferNum = -1;  // The page bumber of the current buffer.
   int CurIndex;      // Index into current buffer ( equal to Pos & BufferMask ).
   int WriteAvail;    // Number of bytes available for writing in CurBuffer ( from CurIndex ).
   int ReadAvail;     // Number of bytes available for reading in CurBuffer ( from CurIndex ).
@@ -57,48 +58,62 @@ class FullyBufferedStream : IO.Stream
       }
       else if ( Pos < Len )
       {
-        CurBuffer = GetBuffer( Pos >> BufferShift );
-        CurIndex = (int) ( Pos & BufferMask );
-        ReadAvail = BufferSize - CurIndex;
-        if ( ReadAvail > Len - Pos ) ReadAvail = (int)( Len - Pos );
-        WriteAvail = 0;
-        CurBufferSetUnsaved = false;
+        DoSeek( true );
       }
       else break;
     }
     return request - n;
   }
 
-  public void Rollback()
+  // Instead of copying bytes, if possible Fastread returns the underlying buffer and an index into it.
+  public byte[] FastRead( int n, out int ix )
   {
-    Buffers.Clear();
-    UnsavedPageNums.Clear();
-    CurBufferSetUnsaved = false;
-    ReadAvail = 0;
-    WriteAvail = 0;      
-  }
-
-  public override void Close()
-  {
-    Rollback();
-    F.Close();
-  }
-
-  public override void Flush()
-  {
-    foreach ( long bufferNum in UnsavedPageNums )
+    if ( ReadAvail == 0 ) DoSeek( true );
+    if ( ReadAvail >= n ) // Common case.
     {
-      byte [] b = GetBuffer( bufferNum );
-      long ppos = bufferNum << BufferShift;
-      long n = Len - ppos;
-      if ( n > BufferSize ) n = BufferSize;
-      if ( F.Position != ppos ) F.Seek( ppos, 0 );
-      F.Write( b, 0, (int)n );
+      ix = CurIndex;
+      CurIndex += n;
+      Pos += n;
+      ReadAvail -= n;
+      return CurBuffer;
     }
-    UnsavedPageNums.Clear();
-    CurBufferSetUnsaved = false;
-    F.SetLength( Len );
-    F.Flush();
+    else // This should only happen rarely.
+    {
+      byte [] result = new byte[ n ];
+      Read( result, 0, n );
+      ix = 0;
+      return result;
+    }
+  }  
+
+  public override void Write( byte[] b, int off, int n )
+  {
+    Log.LogWrite( FileId, Pos, b, off, n );
+
+    if ( Pos + n > Len ) Len = Pos + n;
+
+    while ( n > 0 )
+    {
+      int got = n > WriteAvail ? WriteAvail : n;
+      if ( got > 0 )
+      {
+        if ( !CurBufferSetUnsaved )
+        {
+          UnsavedPageNums.Add( Pos >> BufferShift );
+          CurBufferSetUnsaved = true;
+        }
+        for ( int i = 0; i < got; i += 1 ) CurBuffer[ CurIndex + i ] = b[ off + i ];
+        off += got;
+        n -= got;
+        Pos += got;
+        CurIndex += got;
+        WriteAvail -= got;
+      }
+      else
+      {
+        DoSeek( false );
+      }
+    }
   }
 
   public bool Write( byte[] b, int off, int n, bool checkFirstByteZero )
@@ -131,47 +146,64 @@ class FullyBufferedStream : IO.Stream
       }
       else
       {
-        CurBuffer = GetBuffer( Pos >> BufferShift );
-        CurIndex = (int) ( Pos & BufferMask );
-        WriteAvail = BufferSize - CurIndex;
-        ReadAvail = 0;
-        CurBufferSetUnsaved = false;
+        DoSeek( false );
       }
     }
     return true;
   }
 
-  public override void Write( byte[] b, int off, int n )
+  public void Rollback()
   {
-    Log.LogWrite( FileId, Pos, b, off, n );
+    Buffers.Clear();
+    UnsavedPageNums.Clear();
+    CurBufferSetUnsaved = false;
+    ReadAvail = 0;
+    WriteAvail = 0;      
+  }
 
-    if ( Pos + n > Len ) Len = Pos + n;
-
-    while ( n > 0 )
+  public override void Flush()
+  {
+    foreach ( long bufferNum in UnsavedPageNums )
     {
-      int got = n > WriteAvail ? WriteAvail : n;
-      if ( got > 0 )
-      {
-        if ( !CurBufferSetUnsaved )
-        {
-          UnsavedPageNums.Add( Pos >> BufferShift );
-          CurBufferSetUnsaved = true;
-        }
-        for ( int i = 0; i < got; i += 1 ) CurBuffer[ CurIndex + i ] = b[ off + i ];
-        off += got;
-        n -= got;
-        Pos += got;
-        CurIndex += got;
-        WriteAvail -= got;
-      }
-      else
-      {
-        CurBuffer = GetBuffer( Pos >> BufferShift );
-        CurIndex = (int) ( Pos & BufferMask );
-        WriteAvail = BufferSize - CurIndex;
-        ReadAvail = 0;
-        CurBufferSetUnsaved = false;
-      }
+      byte [] b = GetBuffer( bufferNum );
+      long ppos = bufferNum << BufferShift;
+      long n = Len - ppos;
+      if ( n > BufferSize ) n = BufferSize;
+      if ( F.Position != ppos ) F.Seek( ppos, 0 );
+      F.Write( b, 0, (int)n );
+    }
+    UnsavedPageNums.Clear();
+    CurBufferSetUnsaved = false;
+    F.SetLength( Len );
+    F.Flush();
+  }
+
+  public override void Close()
+  {
+    Rollback();
+    F.Close();
+  }
+
+  void DoSeek( bool read )
+  {
+    if ( CurBufferNum != ( Pos >> BufferShift ) )
+    {
+      CurBufferNum = Pos >> BufferShift;
+      CurBuffer = GetBuffer( CurBufferNum );
+    }
+
+    CurIndex = (int) ( Pos & BufferMask );
+    CurBufferSetUnsaved = false;
+    if ( read )
+    {
+      ReadAvail = BufferSize - CurIndex;
+      if ( ReadAvail > Len - Pos ) ReadAvail = (int)( Len - Pos );
+      WriteAvail = 0;
+    }
+    else
+    {
+      WriteAvail = BufferSize - CurIndex;
+      ReadAvail = 0;
     }
   }
 
@@ -206,7 +238,7 @@ class FullyBufferedStream : IO.Stream
     {
       Pos = newpos;
       WriteAvail = 0;
-      ReadAvail = 0; // Could optimise seeks within current page.
+      ReadAvail = 0;
     }
     return newpos;
   }
@@ -224,27 +256,6 @@ class FullyBufferedStream : IO.Stream
   public override bool CanSeek { get{ return true; } }
   public override long Length { get{ return Len; } }
   public override long Position { get{ return Pos; } set{ Seek(value,0); } }
-
-  // FastRead can be fast because if possible not bytes are copied, instead the underlying buffer (CurBuffer) and an index into it is returned.
-  // To be fast, n should be significantly smaller than BufferSize, and Seek must be used infrequently.
-  public byte[] FastRead( int n, out int ix )
-  {
-    if ( ReadAvail >= n ) // Common case.
-    {
-      ix = CurIndex;
-      CurIndex += n;
-      Pos += n;
-      ReadAvail -= n;
-      return CurBuffer;
-    }
-    else // This should only happen rarely ( but will always happen after a Seek ).
-    {
-      byte [] result = new byte[ n ];
-      Read( result, 0, n );
-      ix = 0;
-      return result;
-    }
-  }  
 
 /* Optional overrides ( if ReadByte and WriteByte are used )
 
