@@ -47,12 +47,11 @@ class TokenInfo
     if ( t >= DataType.Decimal ) t = DataType.Decimal;
     switch ( t )
     {
-      case DataType.String: return op == Token.Plus || op <= Token.NotEqual || op == Token.VBar ;
-      case DataType.Binary: return op == Token.Plus || op <= Token.NotEqual;
+      case DataType.String: return op <= Token.In || op == Token.VBar ;
+      case DataType.Binary: return op <= Token.In;
       case DataType.Bigint: 
       case DataType.Double:
-      case DataType.Decimal:
-        return op <= Token.NotEqual || op >= Token.Plus && op <= Token.Percent;
+      case DataType.Decimal: return op <= Token.Percent;
       case DataType.Bool:
         return op == Token.And || op == Token.Or || op == Token.Equal || op == Token.NotEqual;
    }
