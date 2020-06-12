@@ -1321,7 +1321,7 @@ CREATE PROCEDURE [handler].[/Manual]() AS BEGIN
    SELECT 'The operators ( all binary, except for - which can be unary, and NOT which is only unary ) in order of precedence, high to low, are as follows:<ul>
    <li>*  / % : multiplication, division and remainder (after division) of numbers. Remainder only applies to integers.
    <li>+ - : addition, subtraction of numbers.
-   <li>| : concatenation of strings. Other types are automatically converted to strings when an operand of the | operator.
+   <li>| : concatenation of strings. The second expression is automatically converted to string if necessary.
    <li>= != > < >= <= : comparison of any data type.
    <li>IN : tests whether an expression in is in a set. The set may be a list of expressions or a select expression enclosed in brackets.
    <li>NOT : boolean negation ( result is true if arg is false, false if operand is true ).

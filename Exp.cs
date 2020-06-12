@@ -267,35 +267,22 @@ class ExpBinary : Exp
           e.Error ( "Type error " + TokenInfo.Name(Operator) + " not valid for type " + tL );
       }
     }
-    else 
+    else if ( tL == DataType.String && Operator == Token.VBar )
     {
-      if ( tR == DataType.Bigint && tL == DataType.String && Operator == Token.VBar )
-      { 
-        Right = new IntToStringExp( Right );
-        Type = DataType.String;
+      Type = DataType.String;
+      switch ( tR )
+      {
+        case DataType.Bigint:   Right = new IntToStringExp( Right );  break;
+        case DataType.Double:   Right = new DoubleToStringExp( Right ); break;
+        case DataType.Binary:   Right = new BinaryToStringExp( Right ); break;
+        case DataType.Bool:     Right = new BoolToStringExp( Right ); break;
+        default: 
+          if ( tR >= DataType.Decimal ) Right = new DecimalToStringExp( Right ); 
+          else e.Error( "Vbar error"); // Should not get here
+          break;
       }
-      else if ( tR >= DataType.Decimal && tL == DataType.String && Operator == Token.VBar )
-      { 
-        Right = new DecimalToStringExp( Right );
-        Type = DataType.String;
-      }
-      else if ( tR == DataType.Double && tL == DataType.String && Operator == Token.VBar )
-      { 
-        Right = new DoubleToStringExp( Right );
-        Type = DataType.String;
-      }
-      else if ( tR == DataType.Binary && tL == DataType.String && Operator == Token.VBar )
-      { 
-        Right = new BinaryToStringExp( Right );
-        Type = DataType.String;
-      }
-      else if ( tR == DataType.Bool && tL == DataType.String && Operator == Token.VBar )
-      { 
-        Right = new BoolToStringExp( Right );
-        Type = DataType.String;
-      }
-      else e.Error( "Datatype error Operator is " + Operator + " tL=" + tL + " tR=" + tR + " exp=" + this.ToString() );
     }
+    else e.Error( "Datatype error Operator is " + Operator + " tL=" + tL + " tR=" + tR + " exp=" + this.ToString() );
     return Type;
   }
 
@@ -329,9 +316,7 @@ class ExpBinary : Exp
 
   public override string ToString() // For debugging/error messages.
   {
-    return "(" + Left.ToString() + " " + 
-     TokenInfo.Name(Operator) 
-     + " " + Right.ToString() + ")";
+    return "(" + Left.ToString() + " " + TokenInfo.Name(Operator) + " " + Right.ToString() + ")";
   }
 } // end class ExpBinary
 
