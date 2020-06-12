@@ -5,6 +5,8 @@ using G = System.Collections.Generic;
 
 class FullyBufferedStream : IO.Stream
 {
+  // Implementation of IO.Stream in which all writes are buffered, and buffers are kept for every page access ( unless Rollback is called ).
+  // Writes are recorded in the supplied log file, which ensures atomic updates.
   // Flush() must be called to write changes to the underlying stream, alternatively Rollback() may be called to discard changes.
 
   public FullyBufferedStream ( Log log, long fileId, IO.Stream f ) 
@@ -18,9 +20,10 @@ class FullyBufferedStream : IO.Stream
     WriteAvail = 0;
   }
 
-  readonly Log Log;
-  readonly long FileId;
+  readonly Log Log; // Log file to ensure atomic updates.
+  readonly long FileId; // For Log file.
   readonly IO.Stream F; // Underlying stream.
+
   readonly G.Dictionary<long,byte[]> Buffers = new G.Dictionary<long,byte[]>();
   readonly G.SortedSet<long> UnsavedPageNums = new G.SortedSet<long>();
 
@@ -39,6 +42,24 @@ class FullyBufferedStream : IO.Stream
 
   bool UnsavedAdded; // Current buffer has been added to UnsavedPageNums.
 
+  public override long Seek( long to, System.IO.SeekOrigin how )
+  { 
+    long newpos;
+    if ( how == System.IO.SeekOrigin.Begin )
+      newpos = to;
+    else if ( how == System.IO.SeekOrigin.End )
+      newpos = Len + to;
+    else // how == System.IO.SeekOrigin.Current
+      newpos = Pos + to;
+    if ( Pos != newpos )
+    {
+      Pos = newpos;
+      WriteAvail = 0;
+      ReadAvail = 0;
+    }
+    return newpos;
+  }
+
   public override int Read( byte[] b, int off, int n )
   { 
     int request = n;
@@ -54,10 +75,7 @@ class FullyBufferedStream : IO.Stream
         CurIndex += got;
         ReadAvail -= got;
       }
-      else if ( Pos < Len )
-      {
-        DoSeek( true );
-      }
+      else if ( Pos < Len ) DoSeek( true );
       else break;
     }
     return request - n;
@@ -97,7 +115,7 @@ class FullyBufferedStream : IO.Stream
       {
         if ( !UnsavedAdded )
         {
-          UnsavedPageNums.Add( Pos >> BufferShift );
+          UnsavedPageNums.Add( CurBufferNum );
           UnsavedAdded = true;
         }
         for ( int i = 0; i < got; i += 1 ) CurBuffer[ CurIndex + i ] = b[ off + i ];
@@ -107,13 +125,11 @@ class FullyBufferedStream : IO.Stream
         CurIndex += got;
         WriteAvail -= got;
       }
-      else
-      {
-        DoSeek( false );
-      }
+      else DoSeek( false );
     }
   }
 
+  // Version of Write which checks the first byte written is zero.
   public bool Write( byte[] b, int off, int n, bool checkFirstByteZero )
   {
     Log.LogWrite( FileId, Pos, b, off, n );
@@ -132,7 +148,7 @@ class FullyBufferedStream : IO.Stream
         }
         if ( !UnsavedAdded )
         {
-          UnsavedPageNums.Add( Pos >> BufferShift );
+          UnsavedPageNums.Add( CurBufferNum );
           UnsavedAdded = true;
         }
         for ( int i = 0; i < got; i += 1 ) CurBuffer[ CurIndex + i ] = b[ off + i ];
@@ -142,10 +158,7 @@ class FullyBufferedStream : IO.Stream
         CurIndex += got;
         WriteAvail -= got;
       }
-      else
-      {
-        DoSeek( false );
-      }
+      else DoSeek( false );
     }
     return true;
   }
@@ -183,16 +196,54 @@ class FullyBufferedStream : IO.Stream
     F.Close();
   }
 
+  public override void SetLength( long x )
+  {
+    Log.SetLength( FileId, x );
+    Len = x;
+    ReadAvail = 0;
+    WriteAvail = 0;
+  }
+
+  public override bool CanRead { get{ return true; } }
+  public override bool CanWrite { get{ return true; } }
+  public override bool CanSeek { get{ return true; } }
+  public override long Length { get{ return Len; } }
+  public override long Position { get{ return Pos; } set{ Seek(value,0); } }
+
+  /* Overrides for ReadByte and WriteByte ( not yet used in DBMS ) */
+
+  public override int ReadByte()
+  {
+    if ( ReadAvail == 0 ) DoSeek( true );
+    Pos += 1;
+    ReadAvail -= 1;
+    return CurBuffer[ CurIndex++ ];
+  }
+
+  public override void WriteByte( byte b )
+  {
+    if ( Pos + 1 > Len ) Len = Pos + 1;
+    if ( WriteAvail == 0 ) DoSeek( false );
+    if ( !UnsavedAdded )
+    {
+      UnsavedPageNums.Add( CurBufferNum );
+      UnsavedAdded = true;
+    }
+    CurBuffer[ CurIndex++ ] = b;
+    Pos += 1;
+    WriteAvail -= 1;
+  }
+
   void DoSeek( bool read )
   {
     if ( CurBufferNum != ( Pos >> BufferShift ) )
     {
       CurBufferNum = Pos >> BufferShift;
       CurBuffer = GetBuffer( CurBufferNum );
+      UnsavedAdded = false;
     }
 
     CurIndex = (int) ( Pos & ( BufferSize - 1 ) );
-    UnsavedAdded = false;
     if ( read )
     {
       ReadAvail = BufferSize - CurIndex;
@@ -222,62 +273,6 @@ class FullyBufferedStream : IO.Stream
       i += got;
     }
     return result;
-  }
-
-  public override long Seek( long to, System.IO.SeekOrigin how )
-  { 
-    long newpos;
-    if ( how == System.IO.SeekOrigin.Begin )
-      newpos = to;
-    else if ( how == System.IO.SeekOrigin.End )
-      newpos = Len + to;
-    else // how == System.IO.SeekOrigin.Current
-      newpos = Pos + to;
-    if ( Pos != newpos )
-    {
-      Pos = newpos;
-      WriteAvail = 0;
-      ReadAvail = 0;
-    }
-    return newpos;
-  }
-
-  public override void SetLength( long x )
-  {
-    Log.SetLength( FileId, x );
-    Len = x;
-    ReadAvail = 0;
-    WriteAvail = 0;
-  }
-
-  public override bool CanRead { get{ return true; } }
-  public override bool CanWrite { get{ return true; } }
-  public override bool CanSeek { get{ return true; } }
-  public override long Length { get{ return Len; } }
-  public override long Position { get{ return Pos; } set{ Seek(value,0); } }
-
-/* Optional overrides ( if ReadByte and WriteByte are used ) */
-
-  public override int ReadByte()
-  {
-    if ( ReadAvail == 0 ) DoSeek( true );
-    Pos += 1;
-    ReadAvail -= 1;
-    return CurBuffer[ CurIndex++ ];
-  }
-
-  public override void WriteByte( byte b )
-  {
-    if ( Pos + 1 > Len ) Len = Pos + 1;
-    if ( WriteAvail == 0 ) DoSeek( false );
-    if ( !UnsavedAdded )
-    {
-      UnsavedPageNums.Add( Pos >> BufferShift );
-      UnsavedAdded = true;
-    }
-    CurBuffer[ CurIndex++ ] = b;
-    Pos += 1;
-    WriteAvail -= 1;
   }
 
 } // end class FullyBufferedStream
