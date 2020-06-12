@@ -1025,7 +1025,7 @@ BEGIN
 
   EXEC web.Head( 'Edit ' | n )
 
-  IF ex != '' SELECT '<p>Error: ' + htm.Encode(ex)
+  IF ex != '' SELECT '<p>Error: ' | htm.Encode(ex)
 
   SELECT 
      '<form method=post>'
@@ -1081,7 +1081,7 @@ BEGIN
   END
  
   EXEC web.Head( 'Edit ' | browse.TableTitle( t ) )
-  IF ex != '' SELECT '<p>Error: ' + htm.Encode(ex)
+  IF ex != '' SELECT '<p>Error: ' | htm.Encode(ex)
 
   SELECT '<form method=post>' 
   EXECUTE( browse.FormUpdateSql( t, k ) )
@@ -1105,7 +1105,7 @@ BEGIN
 
   EXEC web.Head( 'Edit ' | n )
 
-  IF ex != '' SELECT '<p>Error :' + htm.Encode( ex )
+  IF ex != '' SELECT '<p>Error :' | htm.Encode( ex )
 
   SELECT 
      '<form method=post>'
