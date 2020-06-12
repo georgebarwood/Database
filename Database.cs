@@ -335,7 +335,6 @@ class DatabaseImp : Database
     Sql( "EXEC sys.RecreateModifiedIndexes()" );
     t.OpenIndexes();
     ResetCache();
-    // ToDo : Also need to uncache any views that depend on table.
   }
 
   // Indexes.
