@@ -210,30 +210,6 @@ class FullyBufferedStream : IO.Stream
   public override long Length { get{ return Len; } }
   public override long Position { get{ return Pos; } set{ Seek(value,0); } }
 
-  /* Overrides for ReadByte and WriteByte ( not yet used in DBMS ) */
-
-  public override int ReadByte()
-  {
-    if ( ReadAvail == 0 ) DoSeek( true );
-    Pos += 1;
-    ReadAvail -= 1;
-    return CurBuffer[ CurIndex++ ];
-  }
-
-  public override void WriteByte( byte b )
-  {
-    if ( Pos + 1 > Len ) Len = Pos + 1;
-    if ( WriteAvail == 0 ) DoSeek( false );
-    if ( !UnsavedAdded )
-    {
-      UnsavedPageNums.Add( CurBufferNum );
-      UnsavedAdded = true;
-    }
-    CurBuffer[ CurIndex++ ] = b;
-    Pos += 1;
-    WriteAvail -= 1;
-  }
-
   void DoSeek( bool read )
   {
     if ( CurBufferNum != ( Pos >> BufferShift ) )
