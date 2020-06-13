@@ -214,7 +214,7 @@ class DatabaseImp : Database
     Table t = GetTable( schemaName, tableName, e );    
     long tid = t.TableId;
     t.CloseAndDelete();
-    Sql( "EXEC sys.DropTable " + tid );
+    Sql( "EXEC sys.DropTable(" + tid + ")" );
     Schema s = GetSchema( schemaName, true, e );
     s.TableDict.Remove( tableName );
     ResetCache();
