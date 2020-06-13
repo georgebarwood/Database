@@ -22,6 +22,8 @@ Table.cs = implementation of TABLE.
 
 IndexFile.cs, IndexPage.cs = implementation of INDEX.
 
+Util.cs = various utility classes.
+
 SQL-specific ( namespace SQLNS )
 ================================
 
@@ -39,5 +41,4 @@ Sort.cs = implementation of ORDER BY.
 
 IdSet.cs = optimisation of WHERE.
 
-Util.cs = various utility classes.
 
