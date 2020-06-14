@@ -103,22 +103,15 @@ class Table : TableExpression // Represents a Database Table.
     for ( int i=1; i < types.Length; i += 1 )
     {
       int size = sizes[ i ];
-      if ( used != null && !used [ i ] ) // Skip this column
-      { 
-        ix += size;
-      }
-      else 
+      if ( used == null || used [ i ] ) // Column not skipped
       {
         DataType t = types[ i ];
-        ulong x = Util.Get( RB, ix, size, t ); 
-        ix += size;
-        row[ i ].L = (long)x;
-        if ( t <= DataType.String ) 
-        {
-          row[ i ]._O =       
-          ( t == DataType.Binary ? (object)Db.DecodeBinary( (long)x ): (object)Db.DecodeString( (long)x ) );
-        }
+        long x = (long)Util.Get( RB, ix, size, t ); 
+        row[ i ].L = x;
+        if ( t <= DataType.String ) row[ i ]._O =       
+          t == DataType.Binary ? (object)Db.DecodeBinary( x ): (object)Db.DecodeString( x );
       }
+      ix += size;
     }  
     return true;
   }
