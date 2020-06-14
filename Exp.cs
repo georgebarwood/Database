@@ -364,7 +364,7 @@ class ExpMinus : UnaryExp
   public override DataType Bind( SqlExec e )
   {
     Type = E.Bind( e );
-    if ( Type != DataType.Bigint && Type != DataType.Double )
+    if ( Type != DataType.Bigint && Type != DataType.Double && Type < DataType.Decimal )
       e.Error( "Unary minus needs numeric argument" );
     return Type;
   }
@@ -372,12 +372,7 @@ class ExpMinus : UnaryExp
   public override Value Eval( EvalEnv e )
   {
     Value v = E.Eval( e );
-    switch ( E.Type )
-    {
-      case DataType.Bigint: v.L = - v.L; break;
-      case DataType.Double: v.D = - v.D; break;
-      default: throw new System.Exception("Unexpected type in unary minus " + E.Type + this );
-    }
+    if ( E.Type == DataType.Double ) v.D = - v.D; else v.L = - v.L;
     return v;
   }
 
