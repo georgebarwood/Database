@@ -725,7 +725,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   {
     var locals = new G.List<int>();
     var te = Expressions( locals );
-    Add( () => B.ExecuteSelect( te, locals ) );
+    Add( () => B.ExecuteSelect( te, locals.ToArray() ) );
   }
 
   void Insert()

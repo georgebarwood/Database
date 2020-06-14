@@ -6,20 +6,6 @@ using DBNS;
 
 class Block : EvalEnv // Result of compiling a batch of statements or a routine (stored function or procedure) definition.
 {
-  public void Execute( Exp e )
-  {
-    string s = (string) ( e.Eval( this )._O );
-    try
-    {
-      Db.ExecuteSql( s, ResultSet );    
-    }
-    catch ( System.Exception exception )
-    {
-      Db.SetRollback();
-      ResultSet.Exception = exception;
-    }
-  }
-
   public Block( DatabaseImp d, bool isFunc )
   { Db = d; IsFunc = isFunc; }
 
@@ -27,7 +13,6 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   {
     ResultSet = rs;
     NextStatement = 0;
-    // Maybe could have try/catch in here, to allow source line and column of any exception that occurs to be reported.
     while ( NextStatement < Statements.Count )
     {
       Statements[ NextStatement++ ]();
@@ -191,6 +176,20 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     return FunctionResult;
   }
 
+  public void Execute( Exp e )
+  {
+    string s = (string) ( e.Eval( this )._O );
+    try
+    {
+      Db.ExecuteSql( s, ResultSet );    
+    }
+    catch ( System.Exception exception )
+    {
+      Db.SetRollback();
+      ResultSet.Exception = exception;
+    }
+  }
+
   public void ExecuteGoto( int jumpId )
   {
     NextStatement = Jump[ jumpId ];
@@ -212,7 +211,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     NextStatement = i;
   }
 
-  public void ExecuteSelect( TableExpression te, G.List<int> assigns )
+  public void ExecuteSelect( TableExpression te, int [] assigns )
   {
     if ( assigns != null ) // assigns is list of local variables to be assigned.
       te.FetchTo( new AssignResultSet( assigns, this ), this );
@@ -242,10 +241,10 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
 class AssignResultSet : ResultSet // Implements SET assignment of local variables.
 {
-  G.List<int> Assigns;
+  int [] Assigns;
   Block B;
 
-  public AssignResultSet( G.List<int> assigns, Block b )
+  public AssignResultSet( int [] assigns, Block b )
   {
     Assigns = assigns;
     B = b;
@@ -253,7 +252,7 @@ class AssignResultSet : ResultSet // Implements SET assignment of local variable
 
   public override bool NewRow( Value [] r )
   {
-    for ( int i=0; i < Assigns.Count; i += 1 ) B.Locals[ Assigns[ i ] ] = r[ i ];
+    for ( int i=0; i < Assigns.Length; i += 1 ) B.Locals[ Assigns[ i ] ] = r[ i ];
     return true;
   }  
 } // end class AssignResultSet
