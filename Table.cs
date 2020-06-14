@@ -91,11 +91,10 @@ class Table : TableExpression // Represents a Database Table.
 
   public override bool Get( long id, Value[] row, bool [] used )
   {
-    if ( id <= 0 ) return false;
-    // if ( id > RowCount() ) throw new System.Exception("Something is wrong" );
+    if ( id <= 0 || id > RowCount ) return false;
 
     DF.Position = (id-1) * RowSize;
-    int ix; byte [] RB = DF.FastRead( RowSize, out ix ); // DF.Read( RB, 0, RowSize ); ix = 0;
+    int ix; byte [] RB = DF.FastRead( RowSize, out ix );
     if ( RB[ix++] == 0 ) return false; // Row has been deleted
     row[ 0 ].L = id;
     DataType [] types = Cols.Types;
@@ -194,11 +193,9 @@ class Table : TableExpression // Represents a Database Table.
       // Check if new and old keys are the same to save work.
       if ( ixf.Root.Compare( ref ixd, ref ixn ) != 0 )
       {
-        // C.WriteLine( "Updating index id=" + id );
         ixf.Delete( ref ixd );
         ixf.Insert( ref ixn );
       }
-      // else C.WriteLine( "No change to index id=" + id );
     }     
   }
 
@@ -456,7 +453,7 @@ class Table : TableExpression // Represents a Database Table.
 class RowCursor
 {
   Table T;
-  public Value [] V; // Row IndexFileRecord
+  public Value [] V;
 
   public RowCursor( Table t )
   { 
