@@ -94,7 +94,7 @@ class Table : TableExpression // Represents a Database Table.
     if ( id <= 0 ) return false;
     // if ( id > RowCount() ) throw new System.Exception("Something is wrong" );
 
-    DF.Seek( (id-1) * RowSize, 0 );
+    DF.Position = (id-1) * RowSize;
     int ix; byte [] RB = DF.FastRead( RowSize, out ix ); // DF.Read( RB, 0, RowSize ); ix = 0;
     if ( RB[ix++] == 0 ) return false; // Row has been deleted
     row[ 0 ].L = id;
@@ -118,7 +118,7 @@ class Table : TableExpression // Represents a Database Table.
 
   void Save( long id, Value [] row, bool checkNew )
   { 
-    DF.Seek( (id-1) * RowSize, 0 );
+    DF.Position = (id-1) * RowSize;
 
     if ( row == null ) // Delete record
     {
@@ -396,7 +396,7 @@ class Table : TableExpression // Represents a Database Table.
     long n = RowCount;
     while ( n > 0 )
     {
-      DF.Seek( id * RowSize, 0 );
+      DF.Position = id * RowSize;
       bool ok = AlterRead( Cols.Types, oldRow );
 
       for ( int i = 0; i < newRow.Length; i += 1 )
@@ -405,7 +405,7 @@ class Table : TableExpression // Represents a Database Table.
         if ( m >= 0 ) newRow[ i ] = oldRow[ m ];
       }
 
-      DF.Seek( id * newRowSize, 0 );
+      DF.Position = id * newRowSize;
       if ( ok ) AlterWrite( newcols.Types, newRow, newRowSize );
       else DF.Write( blank, 0, blank.Length );
       n -= 1;
