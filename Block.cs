@@ -234,17 +234,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   public void ExecInsert( Table t, TableExpression te, int[] colIx, int idCol )
   {
     long lastId = t.ExecInsert( te, colIx, idCol, this );
-    if ( ResultSet != null ) ResultSet.LastIdInserted = lastId;
-  }
-
-  public void ExecUpdate( Table t, Assign[] a, Exp where, bool [] used, int idCol )
-  {
-    t.ExecUpdate( a, where, used, idCol, this );
-  }
-
-  public void ExecDelete( Table t, Exp where, bool[] used )
-  {
-    t.ExecDelete( where, used, this );
+    ResultSet.LastIdInserted = lastId;
   }
 
 } // end class Block

@@ -810,7 +810,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         Error( "WHERE expression must be boolean" );
 
       var used = Used; // Need to take a copy
-      Add( () => B.ExecUpdate( t, a, where, used, idCol ) ); 
+      Add( () => t.ExecUpdate( a, where, used, idCol, B ) ); 
 
       Used = save1; CI = save2; 
     }
@@ -835,7 +835,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       if ( where != null && where.Bind( this ) != DataType.Bool ) 
         Error( "WHERE expression must be boolean" );
       var used = Used; // Need to take a copy.
-      Add( () => B.ExecDelete( t, where, used ) );
+      Add( () => t.ExecDelete( where, used, B ) );
 
       Used = save1; CI = save2;
     }
