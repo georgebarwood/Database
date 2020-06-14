@@ -57,7 +57,7 @@ class TokenInfo
    }
    return false;
   }
-}
+} // end class TokenInfo
 
 class DTI // "Data Type Info"
 {
@@ -121,7 +121,7 @@ class DTI // "Data Type Info"
     if ( t < DataType.Decimal ) return Names[ (int)t ];
     return "decimal(" + Precision(t) + "," + Scale(t) + ")";
   }
-}
+} // end class DTI
 
 class Util
 {
@@ -189,7 +189,7 @@ class Util
     int scale = DTI.Scale( t );
     d = d / Util.PowerTen( scale );
     return d.ToString( "F" + scale, System.Globalization.CultureInfo.InvariantCulture );
- }
+  }
 
   public static int GetHashCode( byte [] a )
   {
@@ -226,17 +226,16 @@ class Util
   static byte GetHex( char c )
   {
     if ( c >= '0' && c <= '9' ) return (byte) ( c - '0' );
-    if ( c >= 'a' && c <= 'f' ) return (byte) ( 10 + ( c - 'a' ) );
-    if ( c >= 'A' && c <= 'F' ) return (byte) ( 10 + ( c - 'A' ) );
-    throw new System.Exception( "Unexpected character in hex constant" );
+    else if ( c >= 'a' && c <= 'f' ) return (byte) ( 10 + ( c - 'a' ) );
+    else /* ( c >= 'A' && c <= 'F' ) */ return (byte) ( 10 + ( c - 'A' ) );
   }
 
-  public static byte[] ParseHex( string s )
+  public static byte[] ParseHex( string s ) // First two chars are 0x, ignored.
   {
     byte [] result = new byte[ (s.Length-2) / 2 ];
-    for ( int i=0; i < result.Length; i += 1 )
+    for ( int i = 0; i < result.Length; i += 1 )
     {
-      result[i] = (byte) ( GetHex( s[i*2+2] ) * 16 + GetHex( s[i*2+3] ) );
+      result[ i ] = (byte) ( GetHex( s[i*2+2] ) * 16 + GetHex( s[i*2+3] ) );
     }
     return result;
   }
@@ -270,7 +269,8 @@ class Util
     }
     return x;
   }
-}
+
+} // end class Util
 
 class ValueStart
 {
@@ -371,7 +371,7 @@ public struct Conv
     c.F = (float)c.D;
     return c.U;
   }
-}
+} // end class Conv
 
 class StoredTable
 {
