@@ -18,8 +18,7 @@ struct AlterAction
 
 enum Token { 
   Less, LessEqual, GreaterEqual, Greater, Equal, NotEqual, In, /* Note: order is significant */
-  Plus, Minus, Times, Divide, Percent, VBar,
-  And, Or,
+  Plus, Minus, Times, Divide, Percent, VBar, And, Or,
   Name, Number, Decimal, Hex, String, LBra, RBra, Comma, Colon, Dot, Exclamation, Unknown, Eof }
 
 class TokenInfo
@@ -27,16 +26,13 @@ class TokenInfo
   public static int[] Precedence = new int[] 
   {
     10, 10, 10, 10, 10, 10, 10,
-    20, 20, 30, 30, 30, 15
-,
-    8, 5
+    20, 20, 30, 30, 30, 15, 8, 5
   };
 
   static string[] NameData = new string[]
   {
     "<", "<=", ">=", ">", "=", "!=", "IN",
-    "+", "-", "*", "/", "%", "|",
-    "AND", "OR", 
+    "+", "-", "*", "/", "%", "|", "AND", "OR", 
     "Name", "Number", "Decimal", "Hex", "String", "(", ")", ",", ":", ".", "!", "?", "End of File"
   };
 
@@ -63,7 +59,7 @@ class DTI // "Data Type Info"
 {
   /* None, Binary, String, Bigint, Double, Int, Float, Smallint, Tinyint, Bool, ScaledInt  */
 
-  static int[] SizeData = new int[]{ 0,8,8,8,8, 4, 4, 2, 1, 1 };
+  static int[] SizeData = new int[]{ 0, 8, 8, 8, 8, 4, 4, 2, 1, 1 };
 
   static string[] Names = new string[]{ "none", "binary", "string", "bigint", "double", "int", "float", "smallint", "tinyint", "bool", "scaledint" };
 
@@ -175,12 +171,12 @@ class Util
   {
     t = DTI.Base( t );
     return 
-        t == DataType.Bigint ? x.L.ToString()
-      : t == DataType.String ? "'" + (string)x._O + "'"
-      : t == DataType.Double ? x.D.ToString()
-      : t == DataType.Bool ? x.B.ToString()
-      : t == DataType.Binary ? Util.ToString( (byte[])x._O )
-      : DecimalString( x.L, t );
+      t == DataType.Bigint ? x.L.ToString()
+    : t == DataType.String ? "'" + (string)x._O + "'"
+    : t == DataType.Double ? x.D.ToString()
+    : t == DataType.Bool ? x.B.ToString()
+    : t == DataType.Binary ? Util.ToString( (byte[])x._O )
+    : DecimalString( x.L, t );
   }
 
   public static string DecimalString( long x, DataType t )
@@ -260,10 +256,10 @@ class Util
       if  ( t == DataType.Float ) x = Conv.UnpackFloat( (uint)x );
       else if ( t != DataType.Bool ) 
       {
-        ulong signBit = 1UL << (size*8 - 1 );
+        ulong signBit = 1UL << ( size * 8 - 1 );
         if ( ( signBit & x ) != 0 )
         {
-          x = x + ( 0xffffffffffffffffUL << ( size * 8 ) );
+          x += 0xffffffffffffffffUL << ( size * 8 );
         }
       }
     }
@@ -312,7 +308,6 @@ class BinaryStart
   public BinaryStart( byte [] k ) { K = k; }
   public int Compare( ref IndexFileRecord r )
   {
-
     int cf = Util.Compare( K, (byte[])r.Col[0]._O );
     return cf == 0 ? -1 : cf;
   }
