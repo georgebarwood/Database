@@ -692,7 +692,7 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
     {
       DataType dt = List[i].Bind( e );
       if ( i == 0 ) ElementType = dt;
-      else if ( dt != ElementType ) e.Error( "Tuple expressions must all have same type" );
+      else if ( dt != ElementType ) e.Error( "Tuple type error" ); // Maybe should apply Exp.Convert if possible.
     } 
     return Type;
   }

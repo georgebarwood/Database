@@ -147,7 +147,7 @@ class Util
     }
   }
 
-  public static int Compare( Value a, Value b, DataType t ) // Not used yet?
+  public static int Compare( Value a, Value b, DataType t )
   {
     switch ( t ) 
     { 
@@ -155,6 +155,7 @@ class Util
       case DataType.String: return string.Compare( (string)a._O, (string)b._O ); 
       case DataType.Float:
       case DataType.Double: return (a.D).CompareTo( b.D );
+      case DataType.Bool: return a.B == b.B ? 0 : a.B ? +1 : -1;
       default: return (a.L).CompareTo( b.L );
     }
   }
@@ -167,7 +168,7 @@ class Util
     : t == DataType.Double ? x.D == y.D
     : t == DataType.Bool   ? x.B == y.B
     : t == DataType.Binary ? Util.Compare( (byte[])x._O, (byte[])y._O ) == 0
-    : false; // Shouldn't get here.
+    : x.L == y.L; // Decimal
   }
 
   public static string ToString( Value x, DataType t ) // For debugging, error messages
