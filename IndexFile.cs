@@ -38,7 +38,7 @@ class IndexFile
       if ( !p.Saved )
       {
         p.WriteHeader();
-        F.Seek( (long)p.PageId * IndexPage.PageSize, 0 );
+        F.Position = (long)p.PageId * IndexPage.PageSize;
         
         // For last page, only write the amount actually used (so file size is minimised)
         F.Write( p.Data, 0, p.PageId == PageAlloc-1 ? p.Size() : IndexPage.PageSize );
@@ -111,7 +111,7 @@ class IndexFile
   byte[] ReadPage( long pageId ) // Reads a page from file as a byte array.
   {
     byte [] result = new byte[ IndexPage.PageSize ];
-    F.Seek( (long)pageId * IndexPage.PageSize, 0 );
+    F.Position = pageId * IndexPage.PageSize;
     int i = 0;
     while ( i < IndexPage.PageSize )
     {

@@ -24,7 +24,7 @@ class Log
       byte [] b = new byte[ 0x1000 ];
       var files = new G.Dictionary<long,IO.Stream>();
       
-      LF.Seek( 0, 0 ); // May be unecessary?
+      LF.Position = 0;
       var fr = new IO.BinaryReader( LF );
       while ( LF.Position < LF.Length )
       {
@@ -41,7 +41,7 @@ class Log
         {
           if ( size > b.Length ) b = new byte[ size ];
           LF.Read( b, 0, size );
-          f.Seek( fileOffset, 0 );
+          f.Position = fileOffset;
           f.Write( b, 0, size );
         }
         else f.SetLength( fileOffset );
@@ -91,7 +91,7 @@ class Log
   public void Reset()
   {
     LF.SetLength( 0 );
-    LF.Seek( 0, 0 );
+    LF.Position = 0;
     LF.Flush();
   }
 

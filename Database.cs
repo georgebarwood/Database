@@ -533,7 +533,7 @@ class DatabaseImp : Database
 
     // Save to file.
     long sid = SysString.Length;
-    SysString.Seek( sid, 0 );
+    SysString.Position = sid;
     SysStringWriter.Write( s );
 
     // Insert into the index
@@ -550,7 +550,7 @@ class DatabaseImp : Database
   public string DecodeString( long sid ) 
   { 
     if ( sid <= 0 ) return "";
-    SysString.Seek( sid-1, 0 );
+    SysString.Position = sid-1;
     string result = SysStringReader.ReadString();
     // System.Console.WriteLine( "Decoded string sid=" + sid + " string=" + result );
     return result;
@@ -569,7 +569,7 @@ class DatabaseImp : Database
 
     // Save to file.
     long sid = SysBinary.Length;
-    SysBinary.Seek( sid, 0 );
+    SysBinary.Position = sid;
     SysBinaryWriter.WriteBytes( data );
 
     // Insert into the index
@@ -583,7 +583,7 @@ class DatabaseImp : Database
   public byte[] DecodeBinary( long sid ) 
   { 
     if ( sid <= 0 ) return DTI.ZeroByte;
-    SysBinary.Seek( sid - 1, 0 );
+    SysBinary.Position = sid - 1;
     return SysBinaryReader.ReadBytes();
   }
 
