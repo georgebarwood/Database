@@ -42,22 +42,34 @@ class FullyBufferedStream : IO.Stream
 
   bool UnsavedAdded; // Current buffer has been added to UnsavedPageNums.
 
+  public override bool CanRead { get{ return true; } }
+  public override bool CanWrite { get{ return true; } }
+  public override bool CanSeek { get{ return true; } }
+
+  public override long Length { get{ return Len; } }
+
+  public override long Position 
+  { 
+     get{ return Pos; } 
+     
+     set
+     { 
+       if ( value != Pos )
+       {
+         Pos = value;
+         WriteAvail = 0;
+         ReadAvail = 0;
+       }
+     } 
+  }
+
   public override long Seek( long to, System.IO.SeekOrigin how )
   { 
-    long newpos;
-    if ( how == System.IO.SeekOrigin.Begin )
-      newpos = to;
-    else if ( how == System.IO.SeekOrigin.End )
-      newpos = Len + to;
-    else // how == System.IO.SeekOrigin.Current
-      newpos = Pos + to;
-    if ( Pos != newpos )
-    {
-      Pos = newpos;
-      WriteAvail = 0;
-      ReadAvail = 0;
-    }
-    return newpos;
+    Position = 
+      how == System.IO.SeekOrigin.Begin ? to
+      : how == System.IO.SeekOrigin.End ? Len + to
+      : Pos + to; // System.IO.SeekOrigin.Current
+    return Position;
   }
 
   public override int Read( byte[] b, int off, int n )
@@ -203,12 +215,6 @@ class FullyBufferedStream : IO.Stream
     ReadAvail = 0;
     WriteAvail = 0;
   }
-
-  public override bool CanRead { get{ return true; } }
-  public override bool CanWrite { get{ return true; } }
-  public override bool CanSeek { get{ return true; } }
-  public override long Length { get{ return Len; } }
-  public override long Position { get{ return Pos; } set{ Seek(value,0); } }
 
   void DoSeek( bool read )
   {
