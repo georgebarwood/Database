@@ -323,6 +323,8 @@ class DatabaseImp : Database
         case Action.Modify:
           if ( DTI.Base( aa.Type ) != DTI.Base( types[ ix ] ) )
             e.Error( "Modify cannot change base type" );
+          if ( DTI.Scale( aa.Type ) != DTI.Scale( types[ ix ] ) )
+            e.Error( "Modify cannot change scale" );
           types.RemoveAt( ix );
           types.Insert( ix, aa.Type );
           Sql( "UPDATE sys.Column SET Type = " + (int)aa.Type + " WHERE Table=" + t.TableId + " AND Name = " + Util.Quote(aa.Name) );
