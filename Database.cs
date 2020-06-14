@@ -147,8 +147,6 @@ class DatabaseImp : Database
     long fileId = ft == FileType.System ? id : 4 + id*2 + (long)ft;
     string filename = Name + fileId;
     return new FullyBufferedStream( Log, fileId, new IO.FileStream( filename, IO.FileMode.OpenOrCreate ) );
-    // return new IO.BufferedStream( new IO.FileStream( filename, IO.FileMode.OpenOrCreate ) );        
-    // return new IO.FileStream( filename, IO.FileMode.OpenOrCreate );
   }
 
   public void DeleteFile( FileType ft, long id )
@@ -544,8 +542,6 @@ class DatabaseImp : Database
     r.Col[ 0 ]._O = s;
     SysStringIndex.Insert( ref r );
 
-    // System.Console.WriteLine( "Encoded string sid=" + (sid+1) + " string=" + s );
-
     return sid + 1; // + 1 because zero indicates the encoding has not yet been done.
   }
 
@@ -554,7 +550,6 @@ class DatabaseImp : Database
     if ( sid <= 0 ) return "";
     SysString.Position = sid-1;
     string result = SysStringReader.ReadString();
-    // System.Console.WriteLine( "Decoded string sid=" + sid + " string=" + result );
     return result;
   }
 
