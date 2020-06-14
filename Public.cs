@@ -67,34 +67,11 @@ public class ColInfo
 public struct Value
 {
   [IOS.FieldOffset(0)] public bool B;     // Bool
-  [IOS.FieldOffset(0)] public long L;     // Tinyint, Smallint, Int, Bigint
+  [IOS.FieldOffset(0)] public long L;     // Tinyint, Smallint, Int, Bigint, Decimal
   [IOS.FieldOffset(0)] public double D;   // Float, Double
   [IOS.FieldOffset(8)] public object _O;  // Binary, String ( L holds an encoding, computed when the value is saved to disk )
 
   public object O { set { _O = value; L = 0; } } // Encoding needs to be be set to zero when _O is assigned.
-
-  public bool Equal( Value x, DataType t )
-  {
-    return 
-      t == DataType.Bigint ? L == x.L
-    : t == DataType.String ? (string)_O == (string)x._O
-    : t == DataType.Double ? D == x.D
-    : t == DataType.Bool   ? B == x.B
-    : t == DataType.Binary ? Util.Compare( (byte[])_O, (byte[])x._O ) == 0
-    : false; // Shouldn't get here.
-  }
-
-  public string ToString( DataType t ) // Only for debugging.
-  {
-    t = DTI.Base( t );
-    return 
-        t == DataType.Bigint ? L.ToString()
-      : t == DataType.String ? "'" + (string)_O + "'"
-      : t == DataType.Double ? D.ToString()
-      : t == DataType.Bool ? B.ToString()
-      : t == DataType.Binary ? Util.ToString( (byte[])_O )
-      : "??" + t + "??"; // Shouldn't get here.
-  }
 
 } // end struct Value
 
@@ -113,6 +90,7 @@ Log.cs = log file to ensure atomic updates.
 Stream.cs = fully buffered stream for Rollback/Commit.
 Table.cs = implementation of TABLE.
 IndexFile.cs, IndexPage.cs = implementation of INDEX.
+Util.cs = various utility classes.
 
 SQL-specific ( namespace SQLNS )
 ================================
@@ -123,6 +101,5 @@ TableExp.cs = table-valued expressions.
 Group.cs = implementation of GROUP BY.
 Sort.cs = implementation of ORDER BY.
 IdSet.cs = optimisation of WHERE.
-Util.cs = various utility classes.
 
 */

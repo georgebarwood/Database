@@ -14,8 +14,8 @@ class IndexFile
   {
     F = f; Inf = inf; Database = d; IndexId = indexId;
     Initialise();
-    // Console.WriteLine("New IndexFile " + " Root=" + Root + " PageAlloc=" + PageAlloc );
-    // Dump();
+    //System.Console.WriteLine("New IndexFile " + " Root=" + Root + " PageAlloc=" + PageAlloc );
+    //Dump();
   }
 
   public IO.Stream F; // The backing file.
@@ -182,12 +182,12 @@ struct IndexFileRecord
     return result;
   }
 
-  public string ToString( IndexFileInfo Inf ) // For debugging.
+  public string ToString( IndexFileInfo Inf ) // For debugging / testing only.
   {
     string s = "";
     for ( int i = 0 ; i < Inf.Types.Length; i+= 1 )
     {
-      s += Col[i].ToString( Inf.Types[i] ) + "|";
+      s += Util.ToString( Col[i], Inf.Types[i] ) + "|";
     }
     return s;
   }

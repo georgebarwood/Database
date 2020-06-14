@@ -97,7 +97,7 @@ class ExpConstant : Exp
   public ExpConstant( byte[] x ){ Value.O = x; Type = DataType.Binary; }
   public ExpConstant( bool x ){ Value.B = x; Type = DataType.Bool; }
   public override Value Eval( EvalEnv e ){ return Value; }
-  public override string ToString() { return Value.ToString( Type ); } // For debugging/error messages.
+  public override string ToString() { return Util.ToString( Value, Type ); } // For debugging/error messages.
   public override bool IsConstant() { return true; } // Evaluation doesn't depend on table row.
 }
 
@@ -702,7 +702,7 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
     for ( int i=0; i < List.Length; i += 1 )
     {
       Value y = List[i].Eval( e );
-      if ( y.Equal( x, ElementType ) ) return true;
+      if ( Util.Equal( x, y, ElementType ) ) return true;
     }
     return false;
   }
@@ -778,7 +778,7 @@ class TestInResultSet : ResultSet
   public TestInResultSet ( Value x, DataType t ) { X = x; Type = t; }
   public override bool NewRow( Value [] row )
   {
-    if ( X.Equal( row[0], Type ) ) { Found = true; return false; }
+    if ( Util.Equal( row[0], X, Type ) ) { Found = true; return false; }
     return true;
   }
 }

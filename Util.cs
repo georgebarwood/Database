@@ -159,6 +159,37 @@ class Util
     }
   }
 
+  public static bool Equal( Value x, Value y, DataType t )
+  {
+    return 
+      t == DataType.Bigint ? x.L == y.L
+    : t == DataType.String ? (string)x._O == (string)y._O
+    : t == DataType.Double ? x.D == y.D
+    : t == DataType.Bool   ? x.B == y.B
+    : t == DataType.Binary ? Util.Compare( (byte[])x._O, (byte[])y._O ) == 0
+    : false; // Shouldn't get here.
+  }
+
+  public static string ToString( Value x, DataType t ) // For debugging, error messages
+  {
+    t = DTI.Base( t );
+    return 
+        t == DataType.Bigint ? x.L.ToString()
+      : t == DataType.String ? "'" + (string)x._O + "'"
+      : t == DataType.Double ? x.D.ToString()
+      : t == DataType.Bool ? x.B.ToString()
+      : t == DataType.Binary ? Util.ToString( (byte[])x._O )
+      : DecimalString( x.L, t );
+  }
+
+  public static string DecimalString( long x, DataType t )
+  {
+    decimal d = x;
+    int scale = DTI.Scale( t );
+    d = d / Util.PowerTen( scale );
+    return d.ToString( "F" + scale, System.Globalization.CultureInfo.InvariantCulture );
+ }
+
   public static int GetHashCode( byte [] a )
   {
     int hash = a.Length;
