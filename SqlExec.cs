@@ -398,7 +398,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         else 
           Error( "Undeclared local : " + name ); 
       }
-      else result = new ExpLocalVar( i, B.LocalType[i], name );
+      else result = new ExpLocalVar( i, B.LocalType[i] );
     }
     return result;
   }
@@ -447,6 +447,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     }
     else if ( T == Token.Hex )
     {
+      if ( ( NS.Length & 1 ) != 0 ) Error( "Hex literal must have even number of characters" );
       result = new ExpConstant( Util.ParseHex(NS) );
       ReadToken();
     }
@@ -747,7 +748,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     }
 
     TableExpression src = InsertExpression();  
-    if ( src.ColumnCount != names.Count ) Error( "Insert count mismatch " + names.Count + " != " + src.ColumnCount );
+    if ( src.ColumnCount != names.Count ) Error( "Insert count mismatch" );
 
     if ( !ParseOnly )
     {

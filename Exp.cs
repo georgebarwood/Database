@@ -61,6 +61,8 @@ abstract class Exp
         : (Exp) new ExpScaleReduce( this, t, -amount );
       }
     }
+    else if ( Type == DataType.Binary && t == DataType.String )
+      return new BinaryToStringExp( this );
     else if ( Type == DataType.ScaledInt && t >= DataType.Decimal ) return this;
     return null;
   }
@@ -78,8 +80,7 @@ class UnaryExp : Exp
 class ExpLocalVar : Exp
 {
   int I;
-  string LocalName; // Only used for debugging / reporting errors.
-  public ExpLocalVar( int i, DataType t, string name ) { I = i; Type = t; LocalName = name; }
+  public ExpLocalVar( int i, DataType t ) { I = i; Type = t; }
   public override Value Eval( EvalEnv e ) 
   { 
     if ( Type <= DataType.String && e.Locals[I]._O == null )
@@ -89,7 +90,6 @@ class ExpLocalVar : Exp
     return e.Locals[I]; 
   }
   public override bool IsConstant() { return true; }
-  public override string ToString() { return LocalName; }
 }
 
 class ExpConstant : Exp
@@ -100,7 +100,6 @@ class ExpConstant : Exp
   public ExpConstant( byte[] x ){ Value.O = x; Type = DataType.Binary; }
   public ExpConstant( bool x ){ Value.B = x; Type = DataType.Bool; }
   public override Value Eval( EvalEnv e ){ return Value; }
-  public override string ToString() { return Util.ToString( Value, Type ); } // For debugging/error messages.
   public override bool IsConstant() { return true; } // Evaluation doesn't depend on table row.
 }
 
@@ -131,8 +130,6 @@ class ExpName : Exp
 
   public override Value Eval( EvalEnv e ) { return e.Row[ColIx]; }
 
-  public override string ToString() { return ColName; } // For debugging/error messages.
-
 } // end class ExpName
 
 
@@ -156,7 +153,7 @@ class ExpBinary : Exp
           case Token.Or:  lv.B = lv.B | rv.B; break;
           case Token.Equal: lv.B = lv.B == rv.B; break;
           case Token.NotEqual: lv.B = lv.B != rv.B; break;
-          default: throw new System.Exception( "Unexpected boolean operator " + Operator + " exp=" + this.ToString() );
+          default: throw new System.Exception( "Unexpected boolean operator" );
         }
         break;
       case DataType.Bigint:
@@ -285,7 +282,7 @@ class ExpBinary : Exp
           break;
       }
     }
-    else e.Error( "Datatype error Operator is " + Operator + " tL=" + tL + " tR=" + tR + " exp=" + this.ToString() );
+    else e.Error( "Binary operator datatype error");
     return Type;
   }
 
@@ -317,10 +314,6 @@ class ExpBinary : Exp
 
   public override bool IsConstant() { return Left.IsConstant() && Right.IsConstant(); }
 
-  public override string ToString() // For debugging/error messages.
-  {
-    return "(" + Left.ToString() + " " + TokenInfo.Name(Operator) + " " + Right.ToString() + ")";
-  }
 } // end class ExpBinary
 
 class ExpScale : UnaryExp
@@ -381,10 +374,6 @@ class ExpMinus : UnaryExp
 
   public override bool IsConstant() { return E.IsConstant(); }
 
-  public override string ToString() // For debugging/error messages.
-  {
-    return "-(" + E.ToString() + " " + ")";
-  }
 } // end class ExpMinus
 
 class ExpNot : UnaryExp
