@@ -265,7 +265,7 @@ class ExpBinary : Exp
       {
         Type = tL;
         if ( !TokenInfo.OperatorValid( Operator, tL ) ) 
-          e.Error ( "Type error " + TokenInfo.Name(Operator) + " not valid for type " + tL );
+          e.Error ( "Type error " + TokenInfo.Name(Operator) + " not valid for type " + DTI.Name(tL) );
       }
     }
     else if ( tL == DataType.String && Operator == Token.VBar )
@@ -603,8 +603,9 @@ class ExpFuncCall : Exp
       {
         Exp conv = Plist[i].Convert( B.Params.Types[i] );
         if ( conv != null ) Plist[i] = conv;
-        else e.Error( "Parameter Type Error calling function " + FuncName + " required type=" + B.Params.Types[i] + " supplied type=" +
-          DTI.Name( Plist[i].Type ) + " exp=" + Plist[i] );
+        else e.Error( "Parameter Type Error calling function " + FuncName 
+           + " required type=" + DTI.Name( B.Params.Types[i] ) 
+           + " supplied type=" + DTI.Name( Plist[i].Type ) + " exp=" + Plist[i] );
       }
     return Type;
   }
