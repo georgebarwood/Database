@@ -9,6 +9,8 @@ WebServer.cs = main program, http web server ( example client ).
 
 Init.cs = SQL initialisation script.
 
+Compile.bat is file to compile source ( will need editing depending on version of .NET you have installed ).
+
 SQL-independent ( namespace DBNS )
 ================================
 
