@@ -63,6 +63,8 @@ abstract class Exp
     }
     else if ( Type == DataType.Binary && t == DataType.String )
       return new BinaryToStringExp( this );
+    else if ( Type == DataType.Bool && t == DataType.String )
+      return new BoolToStringExp( this );
     else if ( Type == DataType.ScaledInt && t >= DataType.Decimal ) return this;
     return null;
   }
@@ -222,6 +224,7 @@ class ExpBinary : Exp
     DataType tL = Left.TypeCheck( e );
     DataType tR = Right.TypeCheck( e );
 
+    // Is logic below complete? Needs more thought/checking.
     if ( tL == DataType.Bigint && tR == DataType.Double )
     {
       Left = new IntToDoubleExp(Left);
@@ -270,17 +273,7 @@ class ExpBinary : Exp
     else if ( tL == DataType.String && Operator == Token.VBar )
     {
       Type = DataType.String;
-      switch ( tR )
-      {
-        case DataType.Bigint:   Right = new IntToStringExp( Right );  break;
-        case DataType.Double:   Right = new DoubleToStringExp( Right ); break;
-        case DataType.Binary:   Right = new BinaryToStringExp( Right ); break;
-        case DataType.Bool:     Right = new BoolToStringExp( Right ); break;
-        default: 
-          if ( tR >= DataType.Decimal ) Right = new DecimalToStringExp( Right ); 
-          else e.Error( "Vbar error"); // Should not get here
-          break;
-      }
+      Right = Right.Convert( DataType.String );
     }
     else e.Error( "Binary operator datatype error");
     return Type;
