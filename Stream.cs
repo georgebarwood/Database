@@ -9,7 +9,7 @@ class FullyBufferedStream : IO.Stream
   // Writes are recorded in the supplied log file, which ensures atomic updates.
   // Flush() must be called to write changes to the underlying stream, alternatively Rollback() may be called to discard changes.
 
-  public FullyBufferedStream ( Log log, long fileId, IO.Stream f ) 
+  public FullyBufferedStream ( Log log, long fileId, IO.FileStream f ) 
   { 
     Log = log;
     FileId = fileId;
@@ -22,7 +22,7 @@ class FullyBufferedStream : IO.Stream
 
   readonly Log Log; // Log file to ensure atomic updates.
   readonly long FileId; // For Log file.
-  readonly IO.Stream BaseStream; // Underlying stream.
+  readonly IO.FileStream BaseStream; // Underlying stream.
 
   long Len; // File length
   long Pos; // Current position in the file
@@ -199,7 +199,7 @@ class FullyBufferedStream : IO.Stream
     UnsavedPageNums.Clear();
     UnsavedAdded = false;
     BaseStream.SetLength( Len );
-    BaseStream.Flush();
+    BaseStream.Flush( true );
   }
 
   public override void Close()
