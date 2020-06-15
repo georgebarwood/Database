@@ -207,7 +207,7 @@ class Select : TableExpression
       {
         foreach ( long id in idSet.All( ee ) ) if ( TE.Get( id, tr, Used ) )
         {
-          if ( Where == null || ( Where.Eval( ee ).B ) )
+          if ( Where == null || Where.Eval( ee ).B )
           {
             for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Exps[ i ].Eval( ee );  
             srs.NewRow( outrow ); 
@@ -217,7 +217,7 @@ class Select : TableExpression
       else 
       {
         foreach ( bool ok in TE.GetAll( tr, Used, ee ) )
-        if ( Where == null || ( Where.Eval( ee ).B ) )
+        if ( Where == null || Where.Eval( ee ).B )
         {
           for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Exps[ i ].Eval( ee );  
           srs.NewRow( outrow ); 
@@ -248,7 +248,7 @@ class Select : TableExpression
     {
       foreach ( long id in idSet.All( ee ) ) if ( TE.Get( id, tr, Used ) )
       {
-        if ( Where == null || ( Where.Eval( ee ).B ) )
+        if ( Where == null || Where.Eval( ee ).B )
         {
           for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Exps[ i ].Eval( ee );   
           if ( !srs.NewRow( outrow ) ) break;
@@ -259,7 +259,7 @@ class Select : TableExpression
     // Fetch every record in source table, send it to output ( if it satisfies any WHERE clause )
     {
       foreach ( bool ok in TE.GetAll( tr, Used, ee ) )
-      if ( Where == null || ( Where.Eval( ee ).B ) )
+      if ( Where == null || Where.Eval( ee ).B )
       {
         for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Exps[ i ].Eval( ee );   
         if ( !srs.NewRow( outrow ) ) break;
