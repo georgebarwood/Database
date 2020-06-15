@@ -22,43 +22,46 @@ abstract class Exp
   public virtual IdSet GetIdSet(  TableExpression te, EvalEnv ee ) { return null; }
   public virtual bool IsConstant() { return false; } // Evaluation doesn't depend on table row ( so Eval() won't fail )
   public virtual DataType TypeCheck( SqlExec e ) { return Type; }
+
+  // Methods related to implementation of "IN".
   public virtual bool TestIn( Value x, EvalEnv e ){ return false; }
   public virtual DataType GetElementType() { return DataType.None; }
-  public virtual IdSet ListIdSet( EvalEnv e ){ return null; }
-  public virtual G.IEnumerable<Value> Values( EvalEnv ee ){ yield break; }
+
+  public virtual IdSet ListIdSet( EvalEnv e ){ return null; } // Index optimisation.
+  public virtual G.IEnumerable<Value> Values( EvalEnv ee ){ yield break; } // ScalarSelect implementation.
+
+  // Methods related to implementaiton of aggregates.
   public virtual AggOp GetAggOp(){ return AggOp.None; }
   public virtual void BindAgg( SqlExec e ){ }
 
   public Exp Convert( DataType t )
   {
     if ( t < DataType.Decimal ) t = DTI.Base( t );
+
     if ( Type == t ) return this;
-
-    if ( Type == DataType.ScaledInt && t >= DataType.Decimal ) return this;
-
-    if ( Type == DataType.Bigint && t == DataType.Double )
-      return new IntToDoubleExp( this );
-    else if ( Type == DataType.Double && t == DataType.Bigint )
-      return new DoubleToIntExp( this );   
-    else if ( Type >= DataType.Decimal && t == DataType.String )
-      return new DecimalToStringExp( this );
-    else if ( Type >= DataType.Decimal && t == DataType.Double )
-      return new DecimalToDoubleExp( this );
-    else if ( Type == DataType.Bigint && t == DataType.String )
-      return new IntToStringExp( this );
-    else if ( Type == DataType.Double && t >= DataType.Decimal )
-      return new DoubleToDecimalExp( this, t );
-    else if ( Type == DataType.Bigint && t >= DataType.Decimal )
-      return new IntToDecimalExp( this, t );
-    else if ( Type >= DataType.Decimal && t >= DataType.Decimal )
+    else if ( Type == DataType.Bigint ) return 
+        t == DataType.String ? (Exp) new IntToStringExp( this )
+      : t == DataType.Double ? (Exp) new IntToDoubleExp( this )
+      : t >= DataType.Decimal ? (Exp) new IntToDecimalExp( this, t )
+      : null;
+    else if ( Type == DataType.Double ) return 
+       t == DataType.String ? (Exp) new DoubleToStringExp( this )
+     : t == DataType.Bigint ? (Exp) new DoubleToIntExp( this )
+     : t >= DataType.Decimal ? (Exp) new DoubleToDecimalExp( this, t )
+     : null;
+    else if ( Type >= DataType.Decimal )
     {
-      int amount = DTI.Scale( t ) - DTI.Scale( Type );
-      if ( amount == 0 ) return this;
-      if ( amount > 0 ) 
-        return new ExpScale( this, t, amount );
-      else
-        return new ExpScaleReduce( this, t, -amount );
+      if ( t == DataType.String ) return new DecimalToStringExp( this );
+      else if ( t == DataType.Double ) return new DecimalToDoubleExp( this );
+      else if ( t >= DataType.Decimal )
+      {
+        int amount = DTI.Scale( t ) - DTI.Scale( Type );
+        return amount == 0 ? (Exp) this
+        : amount > 0 ? (Exp) new ExpScale( this, t, amount )
+        : (Exp) new ExpScaleReduce( this, t, -amount );
+      }
     }
+    else if ( Type == DataType.ScaledInt && t >= DataType.Decimal ) return this;
     return null;
   }
 }
