@@ -3,12 +3,12 @@ namespace SQLNS {
 using G = System.Collections.Generic;
 using DBNS;
 
-/* TableExpression is a little complex as tables arise in different ways:
+/* TableExpression is complex as tables arise in different ways:
 
-VALUES table0
+VALUES table.
 Base table ( which may not initially be actually defined and present in the database when parsing a view or function  or procedure definition ).
-View ( similar to Base table )
-expressions ... FROM
+View ( similar to Base table ).
+SELECT/SET/FOR expressions ... FROM.
 
 They are also used in different ways:
 
@@ -36,9 +36,9 @@ abstract class TableExpression
 
   public virtual void Convert( DataType [] types, Exec e ){} // Converts the expressions ready to be assigned
 
-  public virtual void FetchTo( ResultSet rs, EvalEnv ee ){}
+  public virtual void FetchTo( ResultSet rs, EvalEnv ee ){} // Fetchs the table to the specified ResultSet
 
-  public virtual G.IEnumerable<bool> GetAll( Value[] row, bool [] used, EvalEnv ee ){ yield return false; }
+  public virtual G.IEnumerable<bool> GetAll( Value[] row, bool [] used, EvalEnv ee ){ yield return false; } // Iterates through the table.
 
   // Index optimisation.
   public virtual IndexFile FindIndex( int colIx ){ return null; }
@@ -173,7 +173,7 @@ class Select : TableExpression
     IdSet idSet = Where == null ? null : Where.GetIdSet( TE, ee );
     if ( idSet != null ) idSet = new IdCopy( idSet, ee ); // Need to take a copy of the id values if an index is used.
 
-    StoredResultSet srs =  Order == null ? null : new Sorter( null, SortSpec );
+    StoredResultSet srs = Order == null ? null : new Sorter( null, SortSpec );
     srs = GroupSpec == null ? srs : new Grouper( srs, GroupSpec, AggSpec );
 
     Value [] outrow = srs != null ? new Value[ Exps.Count ] : null;
@@ -229,7 +229,7 @@ class Select : TableExpression
 
   public override void FetchTo( ResultSet rs, EvalEnv e )
   {
-    ResultSet srs =  Order == null ? rs : new Sorter( rs, SortSpec );
+    ResultSet srs = Order == null ? rs : new Sorter( rs, SortSpec );
     srs = GroupSpec == null ? srs : new Grouper( srs, GroupSpec, AggSpec );
 
     Value[] tr = new Value[ TE.Cols.Count ];
