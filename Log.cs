@@ -84,7 +84,7 @@ class Log
   public bool Commit()
   {
     if ( LF.Length == 0 ) return false;
-    LF.Flush();
+    LF.Flush( true );
     return true;
   }
 
