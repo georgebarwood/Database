@@ -92,7 +92,7 @@ class Log
   {
     LF.SetLength( 0 );
     LF.Position = 0;
-    LF.Flush();
+    LF.Flush( true );
   }
 
 } // end class Log
