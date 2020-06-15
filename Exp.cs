@@ -202,12 +202,11 @@ class ExpBinary : Exp
           case Token.GreaterEqual:  lv.B = string.Compare( (string)lv._O, (string)rv._O ) >= 0; break;
           case Token.Less:          lv.B = string.Compare( (string)lv._O, (string)rv._O ) < 0; break;
           case Token.LessEqual:     lv.B = string.Compare( (string)lv._O, (string)rv._O ) <= 0; break;
-          case Token.VBar:
-          case Token.Plus:          lv.O = (string)lv._O + (string)rv._O; break;
+          case Token.VBar:          lv.O = (string)lv._O + (string)rv._O; break;
           default: throw new System.Exception( "Unexpected string operator" );
         }
         break;
-      default: throw new System.Exception("Unexpected type " + Left.Type + " exp=" + this );
+      default: throw new System.Exception("Unexpected type");
     }
     return lv;
   }
@@ -224,7 +223,6 @@ class ExpBinary : Exp
     DataType tL = Left.TypeCheck( e );
     DataType tR = Right.TypeCheck( e );
 
-    // Is logic below complete? Needs more thought/checking.
     if ( tL == DataType.Bigint && tR == DataType.Double )
     {
       Left = new IntToDoubleExp(Left);
