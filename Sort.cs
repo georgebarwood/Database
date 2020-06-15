@@ -12,7 +12,12 @@ struct SortSpec
   public bool Desc;
 }
 
-class Sorter : ResultSet, G.IComparer<Value[]>
+abstract class StoredResultSet : ResultSet
+{
+  public abstract G.IEnumerable<bool> GetAll( Value[] outrow );
+}
+
+class Sorter : StoredResultSet, G.IComparer<Value[]>
 {
   ResultSet Output;
   SortSpec [] Spec;
@@ -37,6 +42,16 @@ class Sorter : ResultSet, G.IComparer<Value[]>
     foreach ( Value[] r in Rows ) 
       if ( !Output.NewRow( r ) ) break;
     Output.EndTable();
+  }
+
+  public override G.IEnumerable<bool> GetAll( Value[] outrow )
+  {
+    foreach ( Value[] r in Rows )
+    {
+      for ( int i = 0; i < outrow.Length; i += 1 )
+        outrow[ i ] = r[ i ];
+      yield return true;
+    }
   }
 
   public int Compare( Value[] a, Value[] b )

@@ -20,7 +20,7 @@ struct AggSpec
   public AggOp Op;
 }
 
-class Grouper : ResultSet, G.IEqualityComparer<Value[]>
+class Grouper : StoredResultSet, G.IEqualityComparer<Value[]>
 {
   ResultSet Output;
   GroupSpec [] Group;
@@ -77,6 +77,16 @@ class Grouper : ResultSet, G.IEqualityComparer<Value[]>
     foreach ( Value[] r in Rows ) 
       if ( !Output.NewRow( r ) ) break;
     Output.EndTable();
+  }
+
+  public override G.IEnumerable<bool> GetAll( Value[] outrow )
+  {
+    foreach ( Value[] r in Rows )
+    {
+      for ( int i = 0; i < outrow.Length; i += 1 )
+        outrow[ i ] = r[ i ];
+      yield return true;
+    }
   }
 
   public int GetHashCode( Value[] a )

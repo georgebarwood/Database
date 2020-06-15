@@ -165,21 +165,65 @@ class Select : TableExpression
     }
   }
 
-  public override G.IEnumerable<bool> GetAll( Value[] row, bool [] used, EvalEnv ee )
+  public override G.IEnumerable<bool> GetAll( Value[] final, bool [] used, EvalEnv e )
   {
-    var rs = new SingleResultSet();
-    FetchTo( rs, ee );
-    StoredTable t = rs.Table;
+    Value[] tr = new Value[ TE.Cols.Count ];
+    EvalEnv ee = new EvalEnv( e.Locals, tr, e.ResultSet );
 
-    for ( int i = 0; i < t.Rows.Count; i += 1 )
+    IdSet idSet = Where == null ? null : Where.GetIdSet( TE, ee );
+    if ( idSet != null ) idSet = new IdCopy( idSet, ee ); // Need to take a copy of the id values if an index is used.
+
+    StoredResultSet srs =  Order == null ? null : new Sorter( null, SortSpec );
+    srs = GroupSpec == null ? srs : new Grouper( srs, GroupSpec, AggSpec );
+
+    Value [] outrow = srs != null ? new Value[ Exps.Count ] : null;
+
+    if ( srs == null )
     {
-      Value [] r = t.Rows[i];
-
-      for ( int j = 0; j < row.Length; j += 1 )
+      if ( idSet != null ) 
       {
-        row[ j ] = r[ j ];
+        foreach ( long id in idSet.All( ee ) ) if ( TE.Get( id, tr, Used ) )
+        {
+          if ( Where == null || ( Where.Eval( ee ).B ) )
+          {
+            for ( int i = 0; i < final.Length; i += 1 ) final[ i ] = Exps[ i ].Eval( ee );  
+            yield return true;
+          }
+        }
       }
-      yield return true;
+      else 
+      {
+        foreach ( bool ok in TE.GetAll( tr, Used, ee ) )
+        if ( Where == null || ( Where.Eval( ee ).B ) )
+        {
+          for ( int i = 0; i < final.Length; i += 1 ) final[ i ] = Exps[ i ].Eval( ee );  
+          yield return true;
+        }
+      }
+    }
+    else
+    {
+      if ( idSet != null ) 
+      {
+        foreach ( long id in idSet.All( ee ) ) if ( TE.Get( id, tr, Used ) )
+        {
+          if ( Where == null || ( Where.Eval( ee ).B ) )
+          {
+            for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Exps[ i ].Eval( ee );  
+            srs.NewRow( outrow ); 
+          }
+        }
+      }
+      else 
+      {
+        foreach ( bool ok in TE.GetAll( tr, Used, ee ) )
+        if ( Where == null || ( Where.Eval( ee ).B ) )
+        {
+          for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Exps[ i ].Eval( ee );  
+          srs.NewRow( outrow ); 
+        }
+      }
+      foreach( bool b in srs.GetAll( final ) ) yield return true;
     }
   }
 
@@ -192,17 +236,17 @@ class Select : TableExpression
 
     EvalEnv ee = new EvalEnv( e.Locals, tr, e.ResultSet );
 
-    IdSet IdSet = Where == null ? null : Where.GetIdSet( TE, ee );
-    if ( IdSet != null ) IdSet = new IdCopy( IdSet, ee ); // Need to take a copy of the id values if an index is used.
+    IdSet idSet = Where == null ? null : Where.GetIdSet( TE, ee );
+    if ( idSet != null ) idSet = new IdCopy( idSet, ee ); // Need to take a copy of the id values if an index is used.
 
     rs.NewTable( Cols );
 
     Value [] outrow = new Value[ Exps.Count ]; 
 
-    if ( IdSet != null ) 
+    if ( idSet != null ) 
     // Fetch subset of source table using id values, send to ResultSet (if it satisfies any WHERE clause )
     {
-      foreach ( long id in IdSet.All( ee ) ) if ( TE.Get( id, tr, Used ) )
+      foreach ( long id in idSet.All( ee ) ) if ( TE.Get( id, tr, Used ) )
       {
         if ( Where == null || ( Where.Eval( ee ).B ) )
         {
