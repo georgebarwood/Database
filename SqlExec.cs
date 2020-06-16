@@ -856,9 +856,13 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
   void Exec()
   {
-    var schemaName = Name();
-    Read( Token.Dot );
-    var RoutineName = Name();
+    string name = Name();
+    string schema = null;
+    if ( Test( Token.Dot ) )
+    {
+      schema = name;
+      name = Name();
+    }
     Read( Token.LBra );
     var parms = new G.List<Exp>();
 
@@ -869,18 +873,28 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       Read( Token.RBra );
     }
 
-    if ( !ParseOnly )
+    if ( schema != null )
     {
-      var b = Db.GetRoutine( schemaName, RoutineName, false, this );
+      if ( !ParseOnly )
+      {
+        var b = Db.GetRoutine( schema, name, false, this );
 
-      // Check parameter types.
-      if ( b.Params.Count != parms.Count ) Error( "Param count error calling " + schemaName + "." + RoutineName );
-      for ( int i = 0;  i < parms.Count; i += 1 )
-        if ( parms[i].Type != b.Params.Types[i] ) 
-          Error( "Parameter Type Error calling procedure " + RoutineName );
+        // Check parameter types.
+        if ( b.Params.Count != parms.Count ) Error( "Param count error calling " + name + "." + name );
+        for ( int i = 0;  i < parms.Count; i += 1 )
+          if ( parms[i].Type != b.Params.Types[i] ) 
+            Error( "Parameter Type Error calling procedure " + name );
 
-      Add( () => B.ExecProcedure( b, parms, this ) ); 
-    }   
+        Add( () => B.ExecProcedure( b, parms, this ) ); 
+      }   
+    }
+    else if ( name == "SETMODE" )
+    {
+      if ( !ParseOnly && ( parms.Count != 1 || parms[0].Bind( this ) != DataType.Bigint ) )
+        Error( "SETMODE param error" );
+      Add( () => B.SetMode( parms[0] ) );
+    }
+    else Error( "Unrecognised procedure" );
   }
 
   void For()

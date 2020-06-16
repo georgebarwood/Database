@@ -32,6 +32,8 @@ public abstract class ResultSet
   public virtual string FileAttr( int ix, int kind /*0=Name,1=ContentType,2=Filename*/ ){ return ""; }
   public virtual byte [] FileContent ( int ix ){ return new byte[0]; }
 
+  public virtual void SetMode( long mode ){}
+
   public System.Exception Exception;
   public long LastIdInserted;
 }
