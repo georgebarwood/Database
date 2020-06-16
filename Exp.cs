@@ -284,33 +284,20 @@ class ExpBinary : Exp
       ExpName e = ((ExpName)Left);
       if ( e.ColName == "Id" && Operator == Token.Equal ) return new SingleId( Right );
       IndexFile ix = te.FindIndex( e.ColIx );
-      if ( ix != null ) 
-      {
-        // Console.WriteLine( "Index found " + ToString() );
-        return new IndexFrom( ix, Right, Operator );
-      }
+      if ( ix != null )  return new IndexFrom( ix, Right, Operator );
     }
     else if ( Operator <= Token.Equal && Left.IsConstant() && Right is ExpName )
     {
       ExpName e = ((ExpName)Right);
       if ( e.ColName == "Id" && Operator == Token.Equal ) return new SingleId( Left );
       IndexFile ix = te.FindIndex( e.ColIx );
-      if ( ix != null ) 
-      {
-        // Console.WriteLine( "Index found " + ToString() );
-        return new IndexFrom( ix, Left, TokenInfo.Reflect( Operator ) );
-      }
+      if ( ix != null ) return new IndexFrom( ix, Left, TokenInfo.Reflect( Operator ) );
     }
-
-    if ( Operator == Token.And )
+    else if ( Operator == Token.And )
     {
-      var left = Left.GetIdSet( te, ee );
-      if ( left != null ) return left;
-      var right = Right.GetIdSet( te ,ee );
-      if ( right != null ) return right;
+      var left = Left.GetIdSet( te, ee );   if ( left != null )  return left;
+      var right = Right.GetIdSet( te ,ee ); if ( right != null ) return right;
     }
-
-    // Console.WriteLine( "Index not found " + ToString() );
     return null;
   }
 
