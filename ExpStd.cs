@@ -209,6 +209,21 @@ class ARG : StdExp
   }
 } // end class ARG
 
+class ARGNAME : StdExp
+{
+  public ARGNAME( G.List<Exp>args, Exec e ) : base( args, DataType.String, 
+    new DataType[]{ DataType.Bigint, DataType.Bigint }, e ){}
+
+  public override Value Eval( EvalEnv e  )
+  {
+    int kind = (int)Arg[0].Eval( e ).L;
+    int ix = (int)Arg[1].Eval( e ).L;
+    Value result = new Value();
+    result.O = e.ResultSet.ArgName( kind, ix );
+    return result;
+  }
+} // end class ARGNAME
+
 class FILEATTR : StdExp
 {
   public FILEATTR( G.List<Exp>args, Exec e ) : base( args, DataType.String, 

@@ -19,25 +19,22 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     }
   }
 
-  int NextStatement; // Index into Statements, can be assigned to change execution control flow.
-  G.List<System.Action> Statements = new G.List<System.Action>(); // List of actions to be executed.
-
-  Value FunctionResult;
-
+  public bool IsFunc;
   public ColInfo Params;
   public DataType ReturnType;
-
   public G.List<DataType> LocalType = new G.List<DataType>(); // Type of the ith local variable.
 
   public DatabaseImp Db;
+
+  int NextStatement; // Index into Statements, can be assigned to change execution control flow.
+  G.List<System.Action> Statements = new G.List<System.Action>(); // List of statements to be executed.
+  Value FunctionResult;
 
   // Lookup dictionaries for local variables and labels.
   G.Dictionary<string,int> LocalVarLookup = new G.Dictionary<string,int>();
   G.List<int> Jump = new G.List<int>();
   int JumpUndefined = 0; // Number of jump labels awaiting definition.
   G.Dictionary<string,int> JumpLookup = new G.Dictionary<string,int>();
-
-  public bool IsFunc;
 
   // Statement preparation ( parse phase ).
 

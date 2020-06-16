@@ -82,7 +82,7 @@ class Table : TableExpression // Represents a Database Table.
 
   // Basic read/write functions ( indexes not updated ).
 
-  public override G.IEnumerable<bool> GetAll( Value[] row, bool [] used, EvalEnv ee )
+  public override G.IEnumerable<bool> GetAll( Value[] row, bool [] used, EvalEnv eeG )
   { 
     long n = RowCount;
     for ( long id = 1; id <= n; id += 1 )
@@ -212,7 +212,7 @@ class Table : TableExpression // Represents a Database Table.
     }     
   }
 
-  // Higher level functions ( called from SqlExec ).
+  // Higher level functions.
 
   public long ExecInsert( TableExpression te, int[] colIx, int idCol, EvalEnv ee )
   {
