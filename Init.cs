@@ -79,7 +79,7 @@ INSERT INTO [browse].[Table](Id,[NameFunction],[SelectFunction],[DefaultOrder],[
 (10,'browse.BrowseColumnName','','','BrowseColumn','',0)
 (11,'dbo.CustName','dbo.CustSelect','','Customer','',0)
 (12,'','','','','',0)
-(14,'ft.PersonName','','BirthYear, BirthMonth, BirthDay','','',0)
+(14,'ft.PersonName','','BirthYear DESC, BirthMonth DESC, BirthDay DESC','','',0)
 INSERT INTO [browse].[Column](Id,[Position],[Label],[Description],[RefersTo],[Default],[InputCols],[InputFunction],[InputRows],[Style]) VALUES 
 (2,0,'','',1,'',0,'',0,0)
 (6,0,'','',2,'',0,'',0,0)
@@ -107,13 +107,13 @@ INSERT INTO [browse].[Column](Id,[Position],[Label],[Description],[RefersTo],[De
 (61,100,'','',0,'',100,'',10,0)
 INSERT INTO [dbo].[Cust](Id,[FirstName],[LastName],[Age],[Postcode]) VALUES 
 (1,'Mary','Poppins',62,'EC4 2NX')
-(2,'Clare','Smith',27,'GL3')
+(2,'Clare','Smith',29,'GL3')
 (3,'Ron','Jones',0,'')
-(4,'Peter','Perfect',0,'')
+(4,'Peter','Perfect',32,'')
 (5,'George','Washington',0,'')
 (6,'Ron','Williams',0,'')
 (7,'Adam','Baker',0,'')
-(8,'George','Barwood',0,'GL2 4LZ')
+(8,'George','Barwood',62,'GL2 4LZ')
 INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES 
 (51,5,555.27)
 (52,2,10.02)
@@ -125,14 +125,14 @@ INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES
 (58,1,35.07)
 (59,2,45.09)
 (60,3,55.11)
-(61,4,665.13)
+(61,4,695.13)
 (62,5,20.04)
 (63,6,30.06)
 (64,7,40.08)
 (65,1,15.03)
 (66,2,25.05)
 (67,3,35.07)
-(68,4,45.09)
+(68,4,445.09)
 (69,5,55.11)
 (70,6,65.13)
 (71,7,75.15)
@@ -168,6 +168,9 @@ INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES
 (101,1,99.85)
 (102,5,9999.00)
 (103,4,111.11)
+(104,1,500.00)
+(105,1,99.53)
+(106,1,56600.78)
 CREATE INDEX ByRefersTo on [browse].[Column]([RefersTo])
 CREATE INDEX ByLastName on [dbo].[Cust]([LastName])
 CREATE FUNCTION [sys].[ColName]( table int, colId int ) RETURNS string AS
@@ -574,11 +577,9 @@ END
 CREATE FUNCTION [browse].[InsertNames]( table int ) RETURNS string AS
 BEGIN
   DECLARE result string, col string
-  SET result = ''
+
   FOR col = Name FROM sys.Column where Table = table
-    SET result = 
-       CASE WHEN result = '' THEN '' ELSE result | ',' END
-       | sys.QuoteName(col)
+    SET result = CASE WHEN result = '' THEN '' ELSE result | ',' END | sys.QuoteName(col)
   RETURN '(' | result | ')'
 END
 CREATE FUNCTION [browse].[InsertSql]( table int, pc int, p int ) RETURNS string AS
@@ -756,13 +757,14 @@ BEGIN
   IF ks != '' SET k = Id, by = BirthYear FROM ft.Person WHERE Id = PARSEINT(ks)  
   
   FOR opt = '<option ' | CASE WHEN Id = sel THEN ' selected' else '' END 
-  | ' value=' | Id | '>' | htm.Encode( ft.PersonName(Id) ) | '</option>'
+    | ' value=' | Id | '>' | htm.Encode( ft.PersonName(Id) ) | '</option>'
   FROM ft.Person
   WHERE Male AND Id != k AND ( BirthYear < by - 10 OR by = 0 )
   ORDER BY Surname, Firstname, BirthYear,  BirthMonth, BirthDay
   SET options = options | opt
 
-  return '<select id=""' | col | '"" name=""' | col | '"">' | options 
+  return '<select id=""' | col | '"" name=""' | col | '"">' 
+    | options 
     | '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
     | '</select>'
 END
@@ -776,13 +778,14 @@ BEGIN
   
 
   FOR opt = '<option ' | CASE WHEN Id = sel THEN ' selected' else '' END 
-  | ' value=' | Id | '>' | htm.Encode( ft.PersonName(Id) ) | '</option>'
+    | ' value=' | Id | '>' | htm.Encode( ft.PersonName(Id) ) | '</option>'
   FROM ft.Person
   WHERE ( NOT Male ) AND Id != k AND ( BirthYear < by - 10 OR by = 0 )
   ORDER BY Surname, Firstname, BirthYear,  BirthMonth, BirthDay
   SET options = options | opt
 
-  return '<select id=""' | col | '"" name=""' | col | '"">' | options 
+  return '<select id=""' | col | '"" name=""' | col | '"">' 
+    | options 
     | '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
     | '</select>'
 END
@@ -790,9 +793,9 @@ CREATE FUNCTION [ft].[PersonName]( id int ) returns string AS
 BEGIN
   DECLARE result string
   SET result = Firstname | ' ' | Surname | ' ' 
-   | CASE WHEN BirthYear > 0 THEN ''|BirthYear ELSE '' END 
+   | CASE WHEN BirthYear > 0 THEN '' | BirthYear ELSE '' END 
    | '-' 
-   | CASE WHEN DeathYear > 0 THEN ''| DeathYear ELSE '' END
+   | CASE WHEN DeathYear > 0 THEN '' | DeathYear ELSE '' END
   FROM ft.Person WHERE Id = id
   RETURN result
 END
@@ -1128,14 +1131,15 @@ BEGIN
 
   /* Maybe results should be displayed by special Code which directs ResultSet to display tables as HTML */
 
-  SELECT '<p>Results:<br><textarea rows=10 cols=100>' 
+  SELECT '<p>Results:'
   IF sql != '' 
   BEGIN
+    EXEC SETMODE( 1 )
     EXECUTE( sql ) 
+    EXEC SETMODE( 0 )
     DECLARE ex string SET ex = EXCEPTION()
-    IF ex != '' SELECT htm.Encode( 'Error : ' | ex ) ELSE SELECT 'ok'
+    IF ex != '' SELECT htm.Encode( '<p>Error : ' | ex ) ELSE SELECT '<p>ok'
   END
-  SELECT '</textarea>'
 
   SELECT '<p>Example SQL: SELECT ''Hello World'''
      | '<br>CREATE TABLE dbo.Cust( LastName string, Age int )'
@@ -1176,28 +1180,28 @@ BEGIN
 END
 CREATE PROCEDURE [handler].[/Manual]() AS BEGIN
 
-   EXEC web.Head('Manual')
+EXEC web.Head('Manual')
 
-   SELECT '<h1>Manual</h1>'
+SELECT '<h1>Manual</h1>'
 
-   SELECT '<p>This manual describes the various SQL statements that are available. Where syntax is described, optional elements are enclosed in square brackets.'
+SELECT '<p>This manual describes the various SQL statements that are available. Where syntax is described, optional elements are enclosed in square brackets.'
 
-   SELECT '<h2>Schema definition</h2>'
+SELECT '<h2>Schema definition</h2>'
 
-   SELECT '<h3>CREATE SCHEMA</h2>'
+SELECT '<h3>CREATE SCHEMA</h2>'
 
-   SELECT '<p>CREATE SCHEMA name
+SELECT '<p>CREATE SCHEMA name
    <p>Creates a new schema. Every database object (Table,View,Procedure,Function) has an associated schema. Schemas are used to organise database objects into logical categories.'
 
-   SELECT '<h2>Table definition</h2>'
+SELECT '<h2>Table definition</h2>'
 
-   SELECT '<h3>CREATE TABLE</h2>'
+SELECT '<h3>CREATE TABLE</h2>'
 
-   SELECT '<p>CREATE TABLE schema.tablename ( Colname1 Coltype1, Colname2 Coltype2, ... )'
+SELECT '<p>CREATE TABLE schema.tablename ( Colname1 Coltype1, Colname2 Coltype2, ... )'
 
-   SELECT '<p>Creates a new base table. Every base table is automatically given an Id column, which auto-increments on INSERT ( if no explicit value is supplied).'
+SELECT '<p>Creates a new base table. Every base table is automatically given an Id column, which auto-increments on INSERT ( if no explicit value is supplied).'
 
-   SELECT '<p>The data types are as follows:<ul>
+SELECT '<p>The data types are as follows:<ul>
 <li>tinyint, smallint, int, bigint : signed integers of size 1, 2, 4 and 8 bytes respectively.
 <li>float, double : floating point numbers of size 4 and 8 bytes respectively.
 <li>decimal(p,s) : a number with p decimal digits, with s digits after the decimal point. The maximum value of p is 18.
@@ -1208,30 +1212,30 @@ CREATE PROCEDURE [handler].[/Manual]() AS BEGIN
 
 <p>Each data type has a default value : zero for numbers, a zero length string for string and binary, and false for the boolean type. The variable length data types are stored in special system tables, and are automatically encoded so that only one copy of a given string or binary value is stored.'
 
-   SELECT '<h3>ALTER TABLE</h2>'
+SELECT '<h3>ALTER TABLE</h2>'
 
-   SELECT '<p>ALTER TABLE schema.tablename action1, action2 .... '
+SELECT '<p>ALTER TABLE schema.tablename action1, action2 .... '
 
-   SELECT '<p>The actions are as follows:<ul>
+SELECT '<p>The actions are as follows:<ul>
 <li>ADD Colname Coltype : a new column is added to the table.
 <li>RENAME Colname TO NewColname : the column is renamed.
 <li>MODIFY Colname Coltype : the datatype of an existing column is changed. The only changes allowed are between the different sizes of integers, between float and double, and decimals with the same scale.
 <li>DROP Colname : the column is removed from the table.
 </ul>'
 
-   SELECT '<h2>Data manipulation statements</h2>'
+SELECT '<h2>Data manipulation statements</h2>'
 
-   SELECT '<h3>INSERT</h3>'
+SELECT '<h3>INSERT</h3>'
 
-   SELECT '<p>INSERT INTO schema.tablename ( Colname1, Colname2 ... ) VALUES ( Val1, Val2... ) [,] ( Val3, Val4 ...) ...
+SELECT '<p>INSERT INTO schema.tablename ( Colname1, Colname2 ... ) VALUES ( Val1, Val2... ) [,] ( Val3, Val4 ...) ...
    <p>The specified values are inserted into the table. The values may be any expressions ( possibly involving local variables or function calls ).
 
    <p>INSERT INTO schema.tablename ( Colname1, Colname2 ... ) select-expression
    <p>The values specified by the select-expression are inserted into the table.'
 
-   SELECT '<h3>SELECT</h3>'
+SELECT '<h3>SELECT</h3>'
 
-   SELECT '<p>SELECT expressions FROM source-table [WHERE bool-exp ] [GROUP BY expressions] [ORDER BY expressions]
+SELECT '<p>SELECT expressions FROM source-table [WHERE bool-exp ] [GROUP BY expressions] [ORDER BY expressions]
     <p>A new table is computed, based on the list of expressions and the WHERE, GROUP BY and ORDER BY clauses.
     <p>If the keyword DESC is placed after an ORDER BY expression, the order is reversed ( descending order ).
     <p>The SELECT expressions can be given names using AS.
@@ -1239,92 +1243,92 @@ CREATE PROCEDURE [handler].[/Manual]() AS BEGIN
     <p>When used as a stand-alone statement, the results are passed to the code that invoked the batch, and may be displayed to a user or sent to a client for further processing and eventual display. 
    <p>See the web schema for stored procedures that can be used to generate http responses.'
 
-   SELECT '<h3>UPDATE</h3>'
+SELECT '<h3>UPDATE</h3>'
 
-   SELECT '<p>UPDATE schema.tablename SET Colname1 = Exp1, Colname2 = Exp2 .... WHERE bool-exp
+SELECT '<p>UPDATE schema.tablename SET Colname1 = Exp1, Colname2 = Exp2 .... WHERE bool-exp
    <p>Rows in the table which satisfy the WHERE condition are updated.'
 
-   SELECT '<h3>DELETE</h3>'
+SELECT '<h3>DELETE</h3>'
 
-   SELECT '<p>DELETE FROM schema.tablename WHERE bool-exp
+SELECT '<p>DELETE FROM schema.tablename WHERE bool-exp
    <p>Rows in the table which satisfy the WHERE condition are removed.'
 
-   SELECT '<h2>Local variable declaration and assignment statements</h2>'
+SELECT '<h2>Local variable declaration and assignment statements</h2>'
 
-   SELECT '<h3>DECLARE</h3>'
-   SELECT '<p>DECLARE name1 type1, name2 type2 ....
+SELECT '<h3>DECLARE</h3>'
+SELECT '<p>DECLARE name1 type1, name2 type2 ....
    <p>Local variables are declared with the specified types. Note that the precision makes no difference, tinyint, smallint, int and bigint are all equivalent in this context. The variables are initialised to default values ( but only once, not each time the DECLARE is encountered if there is a loop ).'
 
-   SELECT '<h3>SET</h3>'
-   SELECT '<p>SET name1 = exp1, name2 = exp2 .... [ FROM table ] [ WHERE bool-exp ] [ GROUP BY expressions ]
+SELECT '<h3>SET</h3>'
+SELECT '<p>SET name1 = exp1, name2 = exp2 .... [ FROM table ] [ WHERE bool-exp ] [ GROUP BY expressions ]
     <p>Local variables are assigned. If the FROM clause is specified, the values are taken from a table row which satisfies the WHERE condition. If there is no such row, the values of the local variables remain unchanged.'
 
-   SELECT '<h3>FOR</h3>'
-   SELECT '<p>FOR name1 = exp1, name2 = exp2 .... FROM table [ WHERE bool-exp ] [ GROUP BY expressions ] [ORDER BY expressions] Statement
+SELECT '<h3>FOR</h3>'
+SELECT '<p>FOR name1 = exp1, name2 = exp2 .... FROM table [ WHERE bool-exp ] [ GROUP BY expressions ] [ORDER BY expressions] Statement
     <p>Statement is repeatedly executed for each row from the table which satisfies the WHERE condition, with the named local variables being assigned expressions which depend on the rows.'
 
-   SELECT '<h2>Control flow statements</h2>'
+SELECT '<h2>Control flow statements</h2>'
 
-   SELECT '<h3>BEGIN .. END</h3>'
-   SELECT '<p>BEGIN Statement1 Statement2 ... END
+SELECT '<h3>BEGIN .. END</h3>'
+SELECT '<p>BEGIN Statement1 Statement2 ... END
    <p>The statements are executed in order. A BEGIN..END compound statement can be used whenever a single statement is allowed.'
 
-   SELECT '<h3>IF .. THEN ... ELSE ...</h3>'
-   SELECT '<p>IF bool-exp THEN Statement1 [ ELSE Statement2 ]
+SELECT '<h3>IF .. THEN ... ELSE ...</h3>'
+SELECT '<p>IF bool-exp THEN Statement1 [ ELSE Statement2 ]
    <p>If bool-exp evaluates to true Statement1 is executed, otherwise Statement2 ( if specified ) is executed.'
 
-   SELECT '<h3>WHILE</h3>'
-   SELECT '<p>WHILE bool-exp Statement
+SELECT '<h3>WHILE</h3>'
+SELECT '<p>WHILE bool-exp Statement
    <p>Statement is repeatedly executed as long as bool-exp evaluates to true. See also BREAK.'
 
-   SELECT '<h3>GOTO</h3>'
-   SELECT '<p>GOTO label
+SELECT '<h3>GOTO</h3>'
+SELECT '<p>GOTO label
    <p>Control is transferred to the labelled statement. A label consists of a name followed by a colon (:)'
 
-   SELECT '<h3>BREAK</h3>'
-   SELECT '<p>BREAK
+SELECT '<h3>BREAK</h3>'
+SELECT '<p>BREAK
    <p>Execution of the enclosing FOR or WHILE loop is terminated.' 
 
-   SELECT '<h2>Batch execution</h2>'
-   SELECT '<p>EXECUTE ( string-expression )
+SELECT '<h2>Batch execution</h2>'
+SELECT '<p>EXECUTE ( string-expression )
    <p>Evaluates the string expression, and then executes the result ( which should be a list of SQL statements ).
    <p>Note that database objects ( tables, views, stored routines ) must be created in a prior batch before being used.'
 
-   SELECT '<h2>Stored Procedures and Functions</h2>'  
+SELECT '<h2>Stored Procedures and Functions</h2>'  
 
-   SELECT '<h3>CREATE PROCEDURE</h3>'
-   SELECT '<p>CREATE PROCEDURE schema.name ( param1 type1, param2 type2... ) AS BEGIN statements END
+SELECT '<h3>CREATE PROCEDURE</h3>'
+SELECT '<p>CREATE PROCEDURE schema.name ( param1 type1, param2 type2... ) AS BEGIN statements END
    <p>A stored procedure is created, which can later be called by an EXEC statement.'
 
-   SELECT '<h3>EXEC</h3>'
-   SELECT '<p>EXEC schema.name( exp1, exp2 ... )
+SELECT '<h3>EXEC</h3>'
+SELECT '<p>EXEC schema.name( exp1, exp2 ... )
    <p>The stored procedure is called with the supplied parameters.'
 
-   SELECT '<h3>CREATE FUNCTION</h3>'
-   SELECT '<p>CREATE FUNCTION schema.name ( param1 type1, param2 type2... ) RETURNS type AS BEGIN statements END
+SELECT '<h3>CREATE FUNCTION</h3>'
+SELECT '<p>CREATE FUNCTION schema.name ( param1 type1, param2 type2... ) RETURNS type AS BEGIN statements END
    <p>A stored function is created which can later be used in expressions.'
 
-   SELECT '<h3>RETURN</h3>'
-   SELECT 'RETURN expression
+SELECT '<h3>RETURN</h3>'
+SELECT 'RETURN expression
    <p>Returns a value from a stored function. RETURN with no expression returns from a stored procedure.'
 
-   SELECT '<h2>Expressions</h2>'
-   SELECT '<p>Expressions are composed from literals, named local variables, local parameters and named columns from tables or views. These may be combined using operators, stored functions, pre-defined functions. There is also the CASE expression, which has syntax CASE WHEN bool1 THEN exp1 WHEN bool2 THEN exp2 .... ELSE exp END - the result is the expression associated with the first bool expression which evaluates to true.'
+SELECT '<h2>Expressions</h2>'
+SELECT '<p>Expressions are composed from literals, named local variables, local parameters and named columns from tables or views. These may be combined using operators, stored functions, pre-defined functions. There is also the CASE expression, which has syntax CASE WHEN bool1 THEN exp1 WHEN bool2 THEN exp2 .... ELSE exp END - the result is the expression associated with the first bool expression which evaluates to true.'
 
-   SELECT '<h3>Literals</h3>'
-   SELECT '<p>String literals are written enclosed in single quotes. If a single quote is needed in a string literal, it is written as two single quotes. Binary literals are written in hexadecimal preceded by 0x. Integers are a list of digits (0-9), decimals have a decimal point. The bool literals are true and false.'
+SELECT '<h3>Literals</h3>'
+SELECT '<p>String literals are written enclosed in single quotes. If a single quote is needed in a string literal, it is written as two single quotes. Binary literals are written in hexadecimal preceded by 0x. Integers are a list of digits (0-9), decimals have a decimal point. The bool literals are true and false.'
 
-   SELECT '<h3>Names</h3>' 
-   SELECT '<p>Names are enclosed in square brackets and are case sensitive ( although language keywords such as CREATE SELECT are case insensitive, and are written without the square brackets, often in upper case only by convention ). The square brackets can be omitted if the name consists of only letters (A-Z,a-z).'
+SELECT '<h3>Names</h3>' 
+SELECT '<p>Names are enclosed in square brackets and are case sensitive ( although language keywords such as CREATE SELECT are case insensitive, and are written without the square brackets, often in upper case only by convention ). The square brackets can be omitted if the name consists of only letters (A-Z,a-z).'
 
-   SELECT '<h3>Operators</h3>'
-   SELECT 'The operators ( all binary, except for - which can be unary, and NOT which is only unary ) in order of precedence, high to low, are as follows:<ul>
+SELECT '<h3>Operators</h3>'
+SELECT 'The operators ( all binary, except for - which can be unary, and NOT which is only unary ) in order of precedence, high to low, are as follows:<ul>
    <li>*  / % : multiplication, division and remainder (after division) of numbers. Remainder only applies to integers.
    <li>+ - : addition, subtraction of numbers.
    <li>| : concatenation of strings. The second expression is automatically converted to string if necessary.
    <li>= != > < >= <= : comparison of any data type.
    <li>IN : tests whether an expression in is in a set. The set may be a list of expressions or a select expression enclosed in brackets.
-   <li>NOT : boolean negation ( result is true if arg is false, false if operand is true ).
+   <li>NOT : boolean negation ( result is true if arg is false, false if arg is true ).
    <li>AND : boolean operator ( result is true if both args are true )
    <li>OR : boolean operator  ( result is true if either arg is true )
    </ul>
@@ -1339,43 +1343,49 @@ CREATE PROCEDURE [handler].[/Manual]() AS BEGIN
    <li>LASTID() : returns the last Id value allocated by an INSERT statement.
    <li>PARSEINT( s string ) : parses an integer from s.
    <li>PARSEFLOAT( s string ) : parses a floating point number from s.
-   <li>PARSEDECIMAL( s string, scale int ) : parses a decimal number from s with the specified scale. The result should be assigned to decimal variable or table column of matching scale.
+   <li>PARSEDECIMAL( s string, scale int ) : parses a decimal number from s with the specified scale. The result should be assigned to a decimal variable or table column of matching scale.
    <li>EXCEPTION() returns a string with any error that occurred during an EXECUTE statement.
    <li>See the web schema for functions that can be used to access http requests.
    </ul>' 
 
-   SELECT '<h2>Views</h2>'
+  SELECT '<h3>Conversions</h3>'
+  SELECT '<p>Any type will implicitly convert to string where required. Integers will convert to float and decimal numbers, and float and decimal will convert to each other as required. ToDo: what about conversions to integer? Truncation vs Rounding etc.'
 
-   SELECT '<h3>CREATE VIEW</h3>'
-   SELECT '<p>CREATE VIEW schema.viewname AS SELECT expressions FROM table [WHERE bool-exp ] [GROUP BY expressions]'
+SELECT '<h2>Views</h2>'
 
-   SELECT '<p>Creates a new view. Every expression must have a unique name.'
+SELECT '<h3>CREATE VIEW</h3>'
+SELECT '<p>CREATE VIEW schema.viewname AS SELECT expressions FROM table [WHERE bool-exp ] [GROUP BY expressions]'
 
-   SELECT '<h2>Indexes'
+SELECT '<p>Creates a new view. Every expression must have a unique name.'
 
-   SELECT '<h3>CREATE INDEX</h3>'
-   SELECT '<p>CREATE INDEX indexname ON schema.tablename( Colname1, Colname2 ... )'
+SELECT '<h2>Indexes'
 
-   SELECT '<p>Creates a new index. Indexes allow efficient access to rows other than by Id values. 
+SELECT '<h3>CREATE INDEX</h3>'
+SELECT '<p>CREATE INDEX indexname ON schema.tablename( Colname1, Colname2 ... )'
+
+SELECT '<p>Creates a new index. Indexes allow efficient access to rows other than by Id values. 
    <p>For example, <br>CREATE INDEX ByCust ON dbo.Order(Cust) 
    <br>creates an index allowing the orders associated with a particular customer to be efficiently retrieved without scanning the entire order table.'
 
-   SELECT '<h2>Rename and Drop</h2>'
+SELECT '<h2>Rename and Drop</h2>'
 
-   SELECT '<h3>RENAME</h3>'
-   SELECT '<p>RENAME object-type object-name TO object-name
+SELECT '<h3>RENAME</h3>'
+SELECT '<p>RENAME object-type object-name TO object-name
    <p>object-type can be any one of SCHEMA,TABLE,VIEW,PROCEDURE or FUNCTION. The name of the specified object is changed.'
 
-   SELECT '<h3>DROP object-type object-name</h3>'
-   SELECT '<p>object-type can be any one of SCHEMA,TABLE,VIEW,PROCEDURE or FUNCTION.
+SELECT '<h3>DROP object-type object-name</h3>'
+SELECT '<p>object-type can be any one of SCHEMA,TABLE,VIEW,PROCEDURE or FUNCTION.
    <p>The specified object is removed from the database. In the case of a SCHEMA, all objects in the SCHEMA are also removed. In the case of TABLE, all the rows in the table are also removed.'
 
-   SELECT '<h3>DROP INDEX</h3>'
-   SELECT '<p>DROP INDEX indexname ON schema.tablename'
-   SELECT '<p>The specified index is removed from the database.'
+SELECT '<h3>DROP INDEX</h3>'
+SELECT '<p>DROP INDEX indexname ON schema.tablename'
+SELECT '<p>The specified index is removed from the database.'
 
-   SELECT '<h2>Comparison with other SQL implementations</h2>'
-   SELECT '<p>There is a single variable length string datatype ""string"" for unicode strings ( equivalent to nvarchar(max) in MSSQL ), no fixed length strings.
+SELECT '<h2>Comments</h2>'
+SELECT '<p>There are two kinds of comments. Single line comments start with -- and extend to the end of the line. Delimited comments start with /* and are terminated by */. Comments have no effect, they are simply to help document the code.'
+
+SELECT '<h2>Comparison with other SQL implementations</h2>'
+SELECT '<p>There is a single variable length string datatype ""string"" for unicode strings ( equivalent to nvarchar(max) in MSSQL ), no fixed length strings.
 
    <p>Similarly there is a single binary datatype ""binary"" equivalent to varbinary(max) in MSSQL.
    
@@ -1384,7 +1394,7 @@ CREATE PROCEDURE [handler].[/Manual]() AS BEGIN
    <p>In an aggregate select, only aggregate functions are allowed as expressions, and GROUP BY expressions are added as columns automatically.
    Aggregate functions cannot be arguments. 
    
-   <p>PROCEDURE parameters are in brackets, body must have BEGIN ... END.
+   <p>PROCEDURE parameters are in brackets, the procedure body must be enclosed by BEGIN ... END.
    
    <p>Local variables cannot be assigned with SELECT, instead SET or FOR is used, can be FROM a table, e.g.
    <p>DECLARE s string SET s = Name FROM sys.Schema WHERE Id = schema
@@ -1399,7 +1409,14 @@ CREATE PROCEDURE [handler].[/Manual]() AS BEGIN
    
    <p>No triggers. No joins. No outer references.' 
 
-   EXEC web.Trailer()
+SELECT '<h2>Guide to the pre-defined schemas</h2>
+   <h3>sys</h3><p>Has core system tables for language objects and related functions.
+   <h3>web</h3><p>Has the procedure that handles web requests ( web.main ) and other functions related to handling web requests.
+   <h3>handler</h3>Has handler procedures, one for each web page.
+   <h3>htm</h3><p>Has functions related to encoding html.
+   <h3>browse</h3><p>Has tables and functions for displaying, editing arbitrary tables in the database.'   
+
+EXEC web.Trailer()
 
 END
 CREATE PROCEDURE [handler].[/Menu]() AS

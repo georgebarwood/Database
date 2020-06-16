@@ -233,7 +233,12 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   public void ExecInsert( Table t, TableExpression te, int[] colIx, int idCol )
   {
     long lastId = t.ExecInsert( te, colIx, idCol, this );
-    ResultSet.LastIdInserted = lastId;
+    if ( ResultSet != null ) ResultSet.LastIdInserted = lastId;
+  }
+
+  public void SetMode( Exp e )
+  {
+    ResultSet.SetMode( e.Eval( this ).L );
   }
 
 } // end class Block

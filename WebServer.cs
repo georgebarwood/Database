@@ -27,8 +27,12 @@ public class WebServer
     {
       var outStream = new System.IO.MemoryStream();
       var wrs = new WebResultSet( ctx, outStream );
+      //var stopWatch = new System.Diagnostics.Stopwatch(); 
+      //stopWatch.Start();
       lock( Database ) Database.Sql( "EXEC web.Main()", wrs );
-      outStream.Seek( 0, 0 );
+      //stopWatch.Stop();
+      //System.Console.WriteLine( "Time (ticks)=" + stopWatch.ElapsedTicks + " ticks per ms="  + System.Diagnostics.Stopwatch.Frequency/1000 );
+      outStream.Position = 0;
       outStream.CopyTo( ctx.Response.OutputStream );
     }
     catch ( System.Exception e )
@@ -111,32 +115,66 @@ class WebResultSet : DBNS.ResultSet
 {
   public override bool NewRow( DBNS.Value [] row )
   {
-    object v = row[0]._O;
-    if ( v is string ) PutUtf8( (string)v );
-    else
+    if ( Mode == 0 )
     {
-      int code = (int) row[0].L;
-      v = row[1]._O;
-
-      if ( code == 10 ) Ctx.Response.ContentType = (string)v;
-      else if ( code == 11 ) PutBytes( (byte[]) v );
-      else if ( code == 14 ) Ctx.Response.StatusCode = (int)row[1].L;
-      else if ( code == 15 ) Ctx.Response.Redirect( (string) v );
-      else if ( code == 16 )
+      object v = row[0]._O;
+      if ( v is string ) PutUtf8( (string)v );
+      else
       {
-        System.Net.Cookie ck = new System.Net.Cookie( (string)v, ( string )row[2]._O );
-        string expires = ( string )row[3]._O;
-        if ( expires != "" ) ck.Expires = System.DateTime.Parse( expires );
-        Ctx.Response.Cookies.Add( ck );
+        int code = (int) row[0].L;
+        v = row[1]._O;
+
+        if ( code == 10 ) Ctx.Response.ContentType = (string)v;
+        else if ( code == 11 ) PutBytes( (byte[]) v );
+        else if ( code == 14 ) Ctx.Response.StatusCode = (int)row[1].L;
+        else if ( code == 15 ) Ctx.Response.Redirect( (string) v );
+        else if ( code == 16 )
+        {
+          System.Net.Cookie ck = new System.Net.Cookie( (string)v, ( string )row[2]._O );
+          string expires = ( string )row[3]._O;
+          if ( expires != "" ) ck.Expires = System.DateTime.Parse( expires );
+          Ctx.Response.Cookies.Add( ck );
+        }
+      }
+    }
+    else // HTML table mode
+    {
+      PutUtf8("<tr>");
+      for ( int i = 0; i < CI.Count; i += 1 )
+      {
+        var type = CI.Types[ i ];
+        PutUtf8( "<td>" ); // Maybe right align depending on type
+        PutUtf8( DBNS.Util.ToHtml( row[i], type ) );
       }
     }
     return true;
+  }
+
+  public override void NewTable( DBNS.ColInfo ci )
+  {
+    CI = ci;
+    if ( Mode == 1 )
+    {
+      PutUtf8( "<table><tr>" );
+      for ( int i = 0; i < ci.Count; i += 1 )
+        PutUtf8( "<th>" + ci.Names[ i ] );
+    }
+  }
+
+  public override void EndTable()
+  {
+    if ( Mode == 1 )
+    {
+      PutUtf8( "</table>" );
+    }
   }
 
   System.Net.HttpListenerContext Ctx;
   System.Collections.Specialized.NameValueCollection Form;
   FormFile [] Files;
   System.IO.MemoryStream OutStream;
+  int Mode;
+  DBNS.ColInfo CI;
 
   public WebResultSet( System.Net.HttpListenerContext ctx, System.IO.MemoryStream outStream )
   {
@@ -184,6 +222,12 @@ class WebResultSet : DBNS.ResultSet
     int n = 512; 
     while ( n < need ) n *= 2; 
     return new byte[n]; 
+  }
+
+  public override void SetMode( long mode )
+  {
+    Mode = (int)mode;
+    System.Console.WriteLine( "Mode=" + Mode );
   }
 
   /////////////////// Functions to make http request information available to SQL code
