@@ -43,4 +43,13 @@ Sort.cs = implementation of ORDER BY.
 
 IdSet.cs = optimisation of WHERE.
 
+Configuration
+=============
+
+The database files are stored in C:\Databasefiles\Test\ this directory needs to be created.
+See webserver.cs to change the location. Also, permission to listen needs to be granted, e.g.
+
+netsh http add urlacl url=http://+:8080/ user=GEORGE-DELL\pc
+
+Again, see webserver.cs to change the http setup. If localhost is used, no permission is needed.
 
