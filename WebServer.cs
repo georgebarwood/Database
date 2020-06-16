@@ -143,7 +143,7 @@ class WebResultSet : DBNS.ResultSet
       for ( int i = 0; i < CI.Count; i += 1 )
       {
         var type = CI.Types[ i ];
-        PutUtf8( "<td>" ); // Maybe right align depending on type
+        PutUtf8( type == DBNS.DataType.String ? "<td>" : "<td align=right>" );
         PutUtf8( DBNS.Util.ToHtml( row[i], type ) );
       }
     }
