@@ -227,7 +227,6 @@ class WebResultSet : DBNS.ResultSet
   public override void SetMode( long mode )
   {
     Mode = (int)mode;
-    System.Console.WriteLine( "Mode=" + Mode );
   }
 
   /////////////////// Functions to make http request information available to SQL code

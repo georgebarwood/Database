@@ -167,12 +167,31 @@ class Util
     : x.L == y.L; // Decimal
   }
 
-  public static string ToString( Value x, DataType t ) // For debugging, error messages
+  public static string ToString( Value x, DataType t )
   {
     t = DTI.Base( t );
     return 
       t == DataType.Bigint ? x.L.ToString()
-    : t == DataType.String ? "'" + (string)x._O + "'"
+    : t == DataType.String ? "'"+(string)x._O + "'"
+    : t == DataType.Double ? x.D.ToString()
+    : t == DataType.Bool ? x.B.ToString()
+    : t == DataType.Binary ? Util.ToString( (byte[])x._O )
+    : DecimalString( x.L, t );
+  }
+
+  public static string HtmlEncode( string s )
+  {
+    s = s.Replace( "&", "&amp;" );
+    s = s.Replace( "<", "&lt;" );
+    return s;
+  }
+
+  public static string ToHtml( Value x, DataType t )
+  {
+    t = DTI.Base( t );
+    return 
+      t == DataType.Bigint ? x.L.ToString()
+    : t == DataType.String ? HtmlEncode( (string)x._O )
     : t == DataType.Double ? x.D.ToString()
     : t == DataType.Bool ? x.B.ToString()
     : t == DataType.Binary ? Util.ToString( (byte[])x._O )
