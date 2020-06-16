@@ -237,7 +237,7 @@ class Table : TableExpression // Represents a Database Table.
     {
       for ( int i=0; i<nr.Length; i +=1 ) nr[i] = tr[i];
 
-      if ( where == null || ( where.Eval( ee ).B ) )
+      if ( where == null || ( where.EvalBool( ee ) ) )
       {
         for ( int i=0; i < a.Length; i += 1 ) 
         {
@@ -269,7 +269,7 @@ class Table : TableExpression // Represents a Database Table.
 
     foreach ( long id in IdSet.All( ee ) ) if ( Get( id, tr, null ) )
     {      
-      if ( where == null || ( where.Eval( ee ).B ) ) Delete( id, tr );
+      if ( where == null || ( where.EvalBool( ee ) ) ) Delete( id, tr );
     }
   }
 

@@ -1425,7 +1425,7 @@ BEGIN
    EXEC web.Head('Menu')
 
    SELECT '
-<p><a href=""http://192.168.0.10:8080/ShowTable?k=14"">Family Tree</a>
+<p><a href=""/ShowTable?k=14"">Family Tree</a>
 <p><a href=/OrderSummary>Order Summary</a>
 <h1>System</h1>
 <p><a href=/Execute>Execute SQL</a>

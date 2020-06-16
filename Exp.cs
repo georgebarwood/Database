@@ -23,6 +23,9 @@ abstract class Exp
   public virtual bool IsConstant() { return false; } // Evaluation doesn't depend on table row ( so Eval() won't fail )
   public virtual DataType TypeCheck( SqlExec e ) { return Type; }
 
+  // Specialised versions of Eval
+  public virtual bool EvalBool( EvalEnv e ){ return Eval(e).B; }
+
   // Methods related to implementation of "IN".
   public virtual bool TestIn( Value x, EvalEnv e ){ return false; }
   public virtual DataType GetElementType() { return DataType.None; }
@@ -85,11 +88,12 @@ class ExpLocalVar : Exp
   public ExpLocalVar( int i, DataType t ) { I = i; Type = t; }
   public override Value Eval( EvalEnv e ) 
   { 
-    if ( Type <= DataType.String && e.Locals[I]._O == null )
-    {
-      e.Locals[I] = DTI.Default( Type );
-    }
+    if ( Type <= DataType.String && e.Locals[I]._O == null ) e.Locals[I] = DTI.Default( Type );
     return e.Locals[I]; 
+  }
+  public override bool EvalBool( EvalEnv e )
+  {
+    return e.Locals[I].B;
   }
   public override bool IsConstant() { return true; }
 }
@@ -102,6 +106,7 @@ class ExpConstant : Exp
   public ExpConstant( byte[] x ){ Value.O = x; Type = DataType.Binary; }
   public ExpConstant( bool x ){ Value.B = x; Type = DataType.Bool; }
   public override Value Eval( EvalEnv e ){ return Value; }
+  public override bool EvalBool( EvalEnv e ){ return Value.B; }
   public override bool IsConstant() { return true; } // Evaluation doesn't depend on table row.
 }
 
@@ -132,6 +137,7 @@ class ExpName : Exp
 
   public override Value Eval( EvalEnv e ) { return e.Row[ColIx]; }
 
+  public override bool EvalBool( EvalEnv e ) { return e.Row[ColIx].B; }
 } // end class ExpName
 
 
@@ -209,6 +215,61 @@ class ExpBinary : Exp
       default: throw new System.Exception("Unexpected type");
     }
     return lv;
+  }
+
+  public override bool EvalBool( EvalEnv e )
+  {
+    Value lv = Left.Eval( e ), rv = Right.Eval( e );
+
+    DataType t = Left.Type; if ( t >= DataType.Decimal ) t = DataType.Decimal;
+    switch ( t )
+    {
+      case DataType.Bool:
+        switch( Operator )
+        {
+          case Token.And: return lv.B & rv.B;
+          case Token.Or:  return lv.B | rv.B;
+          case Token.Equal: return lv.B == rv.B;
+          case Token.NotEqual: return lv.B != rv.B;
+        }   
+        break;    
+      case DataType.Bigint:
+      case DataType.Decimal:
+        switch( Operator )
+        {
+          case Token.Equal:         return lv.L == rv.L;
+          case Token.NotEqual:      return lv.L != rv.L;
+          case Token.Greater:       return lv.L > rv.L;
+          case Token.GreaterEqual:  return lv.L >= rv.L; 
+          case Token.Less:          return lv.L < rv.L;
+          case Token.LessEqual:     return lv.L <= rv.L;
+        }
+        break;         
+      case DataType.Double:
+        switch( Operator )
+        {
+          case Token.Equal:         return lv.D == rv.D;
+          case Token.NotEqual:      return lv.D != rv.D;
+          case Token.Greater:       return lv.D > rv.D;
+          case Token.GreaterEqual:  return lv.D >= rv.D; 
+          case Token.Less:          return lv.D < rv.D;
+          case Token.LessEqual:     return lv.D <= rv.D;
+        }
+        break;
+       
+      case DataType.String:
+        switch( Operator )
+        {
+          case Token.Equal:         return (string)lv._O == (string)rv._O;
+          case Token.NotEqual:      return string.Compare( (string)lv._O, (string)rv._O ) != 0;
+          case Token.Greater:       return string.Compare( (string)lv._O, (string)rv._O ) > 0;
+          case Token.GreaterEqual:  return string.Compare( (string)lv._O, (string)rv._O ) >= 0;
+          case Token.Less:          return string.Compare( (string)lv._O, (string)rv._O ) < 0;
+          case Token.LessEqual:     return string.Compare( (string)lv._O, (string)rv._O ) <= 0;
+         }
+        break;         
+    }
+    throw new System.Exception();
   }
 
   public override DataType Bind( SqlExec e )
@@ -385,6 +446,11 @@ class ExpNot : UnaryExp
     Value v = E.Eval( e );
     v.B = ! v.B;
     return v;
+  }
+
+  public override bool EvalBool( EvalEnv e )
+  {
+    return !E.EvalBool( e );
   }
 } // end class ExpNot
 
@@ -647,7 +713,7 @@ class CASE : Exp
     for ( int i = 0; i < List.Length; i += 1 ) 
     {
       Exp test = List[i].Test;
-      if ( test == null || test.Eval( e ).B ) return List[i].E.Eval( e );
+      if ( test == null || test.EvalBool( e ) ) return List[i].E.Eval( e );
     }
     return new Value(); // Should not get here.
   }

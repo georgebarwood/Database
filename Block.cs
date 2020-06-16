@@ -205,7 +205,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
   public void ExecuteIf( Exp test, int jumpid )
   {
-    if ( !test.Eval( this ).B ) NextStatement = Jump[ jumpid ];
+    if ( !test.EvalBool( this ) ) NextStatement = Jump[ jumpid ];
   }
 
   public void JumpBack( int i )

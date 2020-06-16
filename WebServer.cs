@@ -12,12 +12,13 @@ public class WebServer
     if ( Database.IsNew ) Init.Go( Database ); // Creates initial tables, stored procedures etc.
 
     listener = new System.Net.HttpListener( );
-    // listener.Prefixes.Add( "http://localhost:8080/" ); 
+    //listener.Prefixes.Add( "http://localhost:8080/" ); 
 
     // Note: to listen to internet addresses, program will need to run with admin privilege
     // Or configuration will be needed. e.g. run CMD as Administrator, then type:
     // netsh http add urlacl url=http://+:8080/ user=GEORGE-DELL\pc
     listener.Prefixes.Add( "http://+:8080/" );
+
     listener.Start( );   
   }
 
