@@ -282,12 +282,23 @@ class ExpBinary : Exp
     if ( Operator <= Token.Equal && Right.IsConstant() && Left is ExpName )
     {
       ExpName e = ((ExpName)Left);
-      if ( e.ColName == "Id" && Operator == Token.Equal ) return new SingleId( Right ); // Ought to also cater for inequalities.
+      if ( e.ColName == "Id" && Operator == Token.Equal ) return new SingleId( Right );
       IndexFile ix = te.FindIndex( e.ColIx );
       if ( ix != null ) 
       {
         // Console.WriteLine( "Index found " + ToString() );
         return new IndexFrom( ix, Right, Operator );
+      }
+    }
+    else if ( Operator <= Token.Equal && Left.IsConstant() && Right is ExpName )
+    {
+      ExpName e = ((ExpName)Right);
+      if ( e.ColName == "Id" && Operator == Token.Equal ) return new SingleId( Left );
+      IndexFile ix = te.FindIndex( e.ColIx );
+      if ( ix != null ) 
+      {
+        // Console.WriteLine( "Index found " + ToString() );
+        return new IndexFrom( ix, Left, TokenInfo.Reflect( Operator ) );
       }
     }
 

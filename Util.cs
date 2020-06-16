@@ -53,6 +53,18 @@ class TokenInfo
    }
    return false;
   }
+
+  public static Token Reflect( Token op )
+  {
+    switch ( op )
+    {
+      case Token.Less: return Token.Greater;
+      case Token.Greater: return Token.Less;
+      case Token.LessEqual: return Token.GreaterEqual;
+      case Token.GreaterEqual: return Token.LessEqual;
+    }
+    return op;
+  }
 } // end class TokenInfo
 
 class DTI // "Data Type Info"
