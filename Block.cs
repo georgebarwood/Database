@@ -19,14 +19,8 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     }
   }
 
-  public void AllocLocalValues( SqlExec e )
-  {
-    CheckLabelsDefined( e );
-    Locals = new Value[ LocalType.Count ];
-  }
-
   int NextStatement; // Index into Statements, can be assigned to change execution control flow.
-  public G.List<System.Action> Statements = new G.List<System.Action>(); // List of actions to be executed.
+  G.List<System.Action> Statements = new G.List<System.Action>(); // List of actions to be executed.
 
   Value FunctionResult;
 
@@ -46,6 +40,11 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   public bool IsFunc;
 
   // Statement preparation ( parse phase ).
+
+  public void AddStatement( System.Action a )
+  {
+    Statements.Add( a );
+  }
 
   public void Declare( string name, DataType type )
   {
@@ -117,7 +116,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     Jump[ jumpid ] = Statements.Count;
   }
 
-  public void CheckLabelsDefined( SqlExec e )
+  public void CheckLabelsDefined( Exec e )
   {
     if ( JumpUndefined != 0 ) e.Error( "Undefined Goto Label" );
   }
@@ -131,7 +130,13 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
   // Statement execution.
 
-  public void ExecProcedure( Block b, G.List<Exp> parms, SqlExec e )
+  public void AllocLocalValues( Exec e )
+  {
+    CheckLabelsDefined( e );
+    Locals = new Value[ LocalType.Count ];
+  }
+
+  public void ExecProcedure( Block b, G.List<Exp> parms )
   {
     // Allocate the local variables for the called procedure.
     var locals = new Value[ b.LocalType.Count ];

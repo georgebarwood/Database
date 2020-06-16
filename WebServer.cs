@@ -172,6 +172,7 @@ class WebResultSet : DBNS.ResultSet
   System.Net.HttpListenerContext Ctx;
   System.Collections.Specialized.NameValueCollection Form;
   FormFile [] Files;
+  G.List<string>CookieNames;
   System.IO.MemoryStream OutStream;
   int Mode;
   DBNS.ColInfo CI;
@@ -197,6 +198,9 @@ class WebResultSet : DBNS.ResultSet
         Files = ParseMultipart( ctx.Request );
       }
     }
+
+    CookieNames = new G.List<string>();
+    foreach ( string k in ctx.Request.Cookies ) CookieNames.Add( k );
   }
 
    /////////////////////////////////////////////////////////////////////////////
@@ -248,11 +252,20 @@ class WebResultSet : DBNS.ResultSet
 
   public override string ArgName( int kind, int ix )
   {
-    string a = null;
+    string a = "";
     switch ( kind )
     {
-      case QueryString: a = Ctx.Request.QueryString.GetKey( ix ); break;
-      case FormString: a = Form == null ? null : Form.GetKey( ix ); break;
+      case QueryString: 
+        var c = Ctx.Request.QueryString;
+        if ( ix < c.Count ) a = c.GetKey( ix ); 
+        break;
+      case FormString: 
+        if ( Form != null && ix < Form.Count )  
+          a = Form.GetKey( ix );
+        break;
+      case Cookie:
+        if ( ix < CookieNames.Count ) a = CookieNames[ix]; 
+        break;        
     }
     return a == null ? "" : a;
   }

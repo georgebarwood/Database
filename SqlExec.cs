@@ -85,7 +85,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
   void Add( System.Action a )
   { 
-    if ( !ParseOnly ) B.Statements.Add( a ); 
+    if ( !ParseOnly ) B.AddStatement( a ); 
   }
 
   // ****************** Token parsing
@@ -381,7 +381,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       else if ( name == "SUBSTRING" ) result = new SUBSTRING( parms, this );
       else if ( name == "EXCEPTION" ) result = new EXCEPTION( parms, this );
       else if ( name == "LASTID" ) result = new LASTID( parms, this );
-      else if ( name == "ARG" ) result = new ARG( parms, this );    
+      else if ( name == "ARG" ) result = new ARG( parms, this );   
+      else if ( name == "ARGNAME" ) result = new ARGNAME( parms, this );    
       else if ( name == "FILEATTR" ) result = new FILEATTR( parms, this );
       else if ( name == "FILECONTENT" ) result = new FILECONTENT( parms, this );
       else Error( "Unknown function : " + name );
@@ -885,7 +886,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
           if ( parms[i].Type != b.Params.Types[i] ) 
             Error( "Parameter Type Error calling procedure " + name );
 
-        Add( () => B.ExecProcedure( b, parms, this ) ); 
+        Add( () => B.ExecProcedure( b, parms ) ); 
       }   
     }
     else if ( name == "SETMODE" )
