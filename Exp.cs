@@ -30,7 +30,7 @@ abstract class Exp
   public virtual IdSet ListIdSet( EvalEnv e ){ return null; } // Index optimisation.
   public virtual G.IEnumerable<Value> Values( EvalEnv ee ){ yield break; } // ScalarSelect implementation.
 
-  // Methods related to implementaiton of aggregates.
+  // Methods related to implementation of aggregates.
   public virtual AggOp GetAggOp(){ return AggOp.None; }
   public virtual void BindAgg( SqlExec e ){ }
 
