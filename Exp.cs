@@ -316,7 +316,7 @@ class ExpBinary : Exp
         switch( Operator )
         {
           case Token.Equal:         return (ee) => Value.New( left(ee) == right(ee) );
-          case Token.NotEqual:      return (ee) => Value.New( string.Compare( left(ee), right(ee) ) != 0 );
+          case Token.NotEqual:      return (ee) => Value.New( left(ee) != right(ee) );
           case Token.Greater:       return (ee) => Value.New( string.Compare( left(ee), right(ee) ) > 0 );
           case Token.GreaterEqual:  return (ee) => Value.New( string.Compare( left(ee), right(ee) ) >= 0 );
           case Token.Less:          return (ee) => Value.New( string.Compare( left(ee), right(ee) ) < 0 );
@@ -375,7 +375,7 @@ class ExpBinary : Exp
         switch( Operator )
         {
           case Token.Equal:         return ( ee ) => ls(ee) == rs(ee);
-          case Token.NotEqual:      return ( ee ) => string.Compare( ls(ee), rs(ee) ) != 0;
+          case Token.NotEqual:      return ( ee ) => ls(ee) != rs(ee);
           case Token.Greater:       return ( ee ) => string.Compare( ls(ee), rs(ee) ) > 0;
           case Token.GreaterEqual:  return ( ee ) => string.Compare( ls(ee), rs(ee) ) >= 0;
           case Token.Less:          return ( ee ) => string.Compare( ls(ee), rs(ee) ) < 0;
