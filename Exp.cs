@@ -252,66 +252,79 @@ class ExpBinary : Exp
 
   public override DV GetDV()
   {
-    DV left = Left.GetDV();
-    DV right = Right.GetDV();
     DataType t = Left.Type; if ( t >= DataType.Decimal ) t = DataType.Decimal;
     switch ( t )
     {
       case DataType.Bool:
+      {
+        DB left = Left.GetDB();
+        DB right = Right.GetDB();
         switch( Operator )
         {    
-          case Token.And: return (ee) => Value.New( left(ee).B && right(ee).B );
-          case Token.Or:  return (ee) => Value.New( left(ee).B || right(ee).B );
-          case Token.Equal: return (ee) => Value.New( left(ee).B ==  right(ee).B );
-          case Token.NotEqual: return (ee) => Value.New( left(ee).B != right(ee).B );
+          case Token.And: return (ee) => Value.New( left(ee) && right(ee) );
+          case Token.Or:  return (ee) => Value.New( left(ee) || right(ee) );
+          case Token.Equal: return (ee) => Value.New( left(ee) ==  right(ee) );
+          case Token.NotEqual: return (ee) => Value.New( left(ee) != right(ee) );
         }
         break;
+      }
       case DataType.Bigint:
       case DataType.Decimal:
+      {
+        DL left = Left.GetDL();
+        DL right = Right.GetDL();
         switch( Operator )
         {
-          case Token.Equal:         return (ee) => Value.New( left(ee).L == right(ee).L );
-          case Token.NotEqual:      return (ee) => Value.New( left(ee).L != right(ee).L );
-          case Token.Greater:       return (ee) => Value.New( left(ee).L > right(ee).L );
-          case Token.GreaterEqual:  return (ee) => Value.New( left(ee).L >= right(ee).L );
-          case Token.Less:          return (ee) => Value.New( left(ee).L < right(ee).L );
-          case Token.LessEqual:     return (ee) => Value.New( left(ee).L <= right(ee).L );
-          case Token.Plus:          return (ee) => Value.New( left(ee).L + right(ee).L );
-          case Token.Minus:         return (ee) => Value.New( left(ee).L - right(ee).L );
-          case Token.Times:         return (ee) => Value.New( left(ee).L * right(ee).L );
-          case Token.Divide:        return (ee) => Value.New( left(ee).L / right(ee).L );
-          case Token.Percent:       return (ee) => Value.New( left(ee).L % right(ee).L );
+          case Token.Equal:         return (ee) => Value.New( left(ee) == right(ee) );
+          case Token.NotEqual:      return (ee) => Value.New( left(ee) != right(ee) );
+          case Token.Greater:       return (ee) => Value.New( left(ee) > right(ee) );
+          case Token.GreaterEqual:  return (ee) => Value.New( left(ee) >= right(ee) );
+          case Token.Less:          return (ee) => Value.New( left(ee) < right(ee) );
+          case Token.LessEqual:     return (ee) => Value.New( left(ee) <= right(ee) );
+          case Token.Plus:          return (ee) => Value.New( left(ee) + right(ee) );
+          case Token.Minus:         return (ee) => Value.New( left(ee) - right(ee) );
+          case Token.Times:         return (ee) => Value.New( left(ee) * right(ee) );
+          case Token.Divide:        return (ee) => Value.New( left(ee) / right(ee) );
+          case Token.Percent:       return (ee) => Value.New( left(ee) % right(ee) );
         }
         break;
+      }
       case DataType.Double:
+      {
+        DD left = Left.GetDD();
+        DD right = Right.GetDD();
         switch( Operator )
         {
-          case Token.Equal:         return (ee) => Value.New( left(ee).D == right(ee).D );
-          case Token.NotEqual:      return (ee) => Value.New( left(ee).D != right(ee).D );
-          case Token.Greater:       return (ee) => Value.New( left(ee).D > right(ee).D );
-          case Token.GreaterEqual:  return (ee) => Value.New( left(ee).D >= right(ee).D );
-          case Token.Less:          return (ee) => Value.New( left(ee).D < right(ee).D );
-          case Token.LessEqual:     return (ee) => Value.New( left(ee).D <= right(ee).D );
-          case Token.Plus:          return (ee) => Value.New( left(ee).D + right(ee).D );
-          case Token.Minus:         return (ee) => Value.New( left(ee).D - right(ee).D );
-          case Token.Times:         return (ee) => Value.New( left(ee).D * right(ee).D );
-          case Token.Divide:        return (ee) => Value.New( left(ee).D / right(ee).D );
-          case Token.Percent:       return (ee) => Value.New( left(ee).D % right(ee).D );
+          case Token.Equal:         return (ee) => Value.New( left(ee) == right(ee) );
+          case Token.NotEqual:      return (ee) => Value.New( left(ee) != right(ee) );
+          case Token.Greater:       return (ee) => Value.New( left(ee) > right(ee) );
+          case Token.GreaterEqual:  return (ee) => Value.New( left(ee) >= right(ee) );
+          case Token.Less:          return (ee) => Value.New( left(ee) < right(ee) );
+          case Token.LessEqual:     return (ee) => Value.New( left(ee) <= right(ee) );
+          case Token.Plus:          return (ee) => Value.New( left(ee) + right(ee) );
+          case Token.Minus:         return (ee) => Value.New( left(ee) - right(ee) );
+          case Token.Times:         return (ee) => Value.New( left(ee) * right(ee) );
+          case Token.Divide:        return (ee) => Value.New( left(ee) / right(ee) );
+          case Token.Percent:       return (ee) => Value.New( left(ee) % right(ee) );
         }
         break;
+      }
       case DataType.String:
+      {
+        DS left = Left.GetDS();
+        DS right = Right.GetDS();
         switch( Operator )
         {
-          case Token.Equal:         return (ee) => Value.New( (string)left(ee)._O == (string)right(ee)._O );
-          case Token.NotEqual:      return (ee) => Value.New( string.Compare( (string)left(ee)._O, (string)right(ee)._O ) != 0 );
-          case Token.Greater:       return (ee) => Value.New( string.Compare( (string)left(ee)._O, (string)right(ee)._O ) > 0 );
-          case Token.GreaterEqual:  return (ee) => Value.New( string.Compare( (string)left(ee)._O, (string)right(ee)._O ) >= 0 );
-          case Token.Less:          return (ee) => Value.New( string.Compare( (string)left(ee)._O, (string)right(ee)._O ) < 0 );
-          case Token.LessEqual:     return (ee) => Value.New( string.Compare( (string)left(ee)._O, (string)right(ee)._O ) <= 0 );
-          case Token.VBar:          return (ee) => Value.New( (string)left(ee)._O + (string)right(ee)._O );
+          case Token.Equal:         return (ee) => Value.New( left(ee) == right(ee) );
+          case Token.NotEqual:      return (ee) => Value.New( string.Compare( left(ee), right(ee) ) != 0 );
+          case Token.Greater:       return (ee) => Value.New( string.Compare( left(ee), right(ee) ) > 0 );
+          case Token.GreaterEqual:  return (ee) => Value.New( string.Compare( left(ee), right(ee) ) >= 0 );
+          case Token.Less:          return (ee) => Value.New( string.Compare( left(ee), right(ee) ) < 0 );
+          case Token.LessEqual:     return (ee) => Value.New( string.Compare( left(ee), right(ee) ) <= 0 );
+          case Token.VBar:          return (ee) => Value.New( left(ee) + right(ee) );
         }
         break;
-      
+      }      
     }
     throw new System.Exception( "Unexpected operator" );
   }
@@ -407,12 +420,7 @@ class ExpBinary : Exp
   {
     DS left = Left.GetDS();
     DS right = Right.GetDS();
-
-    switch( Operator )
-    {
-     case Token.VBar: return (ee) => left(ee) + right(ee);
-    }
-    return null;
+    return (ee) => left(ee) + right(ee); // VBar is only operator with string result.
   }
 
   public override DataType Bind( SqlExec e )
