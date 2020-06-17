@@ -25,12 +25,12 @@ public abstract class ResultSet
   public virtual  void EndTable(){} // Called when all rows have been sent ( or sending is aborted ).
 
   /* As well as accepting SELECT results, ResultSet is also used to pass parameters in, via the pre-defined functions ARG,FILEATTR,FILECONTENT. */
-  public virtual string Arg( int kind, string name ){ throw new System.Exception("ARG not available"); }
-  public virtual string ArgName( int kind, int ix ){ return ""; } /* Can be used to obtain names of unknown fields */
+  public virtual string Arg( int kind, string name ){ return null; }
+  public virtual string ArgName( int kind, int ix ){ return null; } /* Can be used to obtain names of unknown fields */
 
   /* FileAttr and FileContent give access to uploaded files. */
-  public virtual string FileAttr( int ix, int kind /*0=Name,1=ContentType,2=Filename*/ ){ return ""; }
-  public virtual byte [] FileContent ( int ix ){ return new byte[0]; }
+  public virtual string FileAttr( int ix, int kind /*0=Name,1=ContentType,2=Filename*/ ){ return null; }
+  public virtual byte [] FileContent ( int ix ){ return null; }
 
   public virtual void SetMode( long mode ){}
 
@@ -74,6 +74,12 @@ public struct Value
   [IOS.FieldOffset(8)] public object _O;  // Binary, String ( L holds an encoding, computed when the value is saved to disk )
 
   public object O { set { _O = value; L = 0; } } // Encoding needs to be be set to zero when _O is assigned.
+
+  public static Value New( bool b ){ Value v = new Value(); v.B = b; return v; }
+  public static Value New( long l ){ Value v = new Value(); v.L = l; return v; }
+  public static Value New( double d ){ Value v = new Value(); v.D = d; return v; }
+  public static Value New( string s ){ Value v = new Value(); v._O = s; return v; }
+  public static Value New( byte [] x ){ Value v = new Value(); v._O = x; return v; }
 
 } // end struct Value
 

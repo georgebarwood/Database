@@ -221,7 +221,7 @@ class Table : TableExpression // Represents a Database Table.
     return ins.LastIdInserted;
   }
 
-  public void ExecUpdate( Assign[] a, Exp where, bool [] used, int idCol, EvalEnv ee  )
+  public void ExecUpdate( Assign[] a, Exp where, Exp.DB w, bool [] used, int idCol, EvalEnv ee  )
   {
     Value [] tr = new Value[ Cols.Count ];
     Value [] nr = new Value[ Cols.Count ]; // The new row.
@@ -237,7 +237,7 @@ class Table : TableExpression // Represents a Database Table.
     {
       for ( int i=0; i<nr.Length; i +=1 ) nr[i] = tr[i];
 
-      if ( where == null || ( where.EvalBool( ee ) ) )
+      if ( w( ee ) )
       {
         for ( int i=0; i < a.Length; i += 1 ) 
         {
@@ -254,7 +254,7 @@ class Table : TableExpression // Represents a Database Table.
     }
   }
 
-  public void ExecDelete( Exp where, bool[] used, EvalEnv ee )
+  public void ExecDelete( Exp where, Exp.DB w, bool[] used, EvalEnv ee )
   {
     Value [] tr = new Value[ Cols.Count ];
     ee.Row = tr;
@@ -269,7 +269,7 @@ class Table : TableExpression // Represents a Database Table.
 
     foreach ( long id in IdSet.All( ee ) ) if ( Get( id, tr, null ) )
     {      
-      if ( where == null || ( where.EvalBool( ee ) ) ) Delete( id, tr );
+      if ( w( ee ) ) Delete( id, tr );
     }
   }
 

@@ -53,8 +53,10 @@ abstract class TableExpression
 class Select : TableExpression
 {
   G.List<Exp> Exps;
+  Exp.DV[] Dvs;
   TableExpression TE;
   Exp Where;
+  Exp.DB WhereD;
   OrderByExp[] Order;
   bool [] Used;
   SortSpec [] SortSpec;
@@ -140,6 +142,10 @@ class Select : TableExpression
       }
       SortSpec = sortSpec;
     }
+
+    Dvs = new Exp.DV [ Exps.Count ];
+    for ( int i = 0; i < Exps.Count; i += 1 ) Dvs[ i ] = Exps[ i ].GetDV();
+    if ( Where != null ) WhereD = Where.GetDB();
   }
 
   public override void CheckNames( Exec  e )
@@ -184,9 +190,9 @@ class Select : TableExpression
       {
         foreach ( long id in idSet.All( ee ) ) if ( TE.Get( id, tr, Used ) )
         {
-          if ( Where == null || ( Where.EvalBool( ee ) ) )
+          if ( Where == null || ( WhereD( ee ) ) )
           {
-            for ( int i = 0; i < final.Length; i += 1 ) final[ i ] = Exps[ i ].Eval( ee );  
+            for ( int i = 0; i < final.Length; i += 1 ) final[ i ] = Dvs[ i ]( ee ); 
             yield return true;
           }
         }
@@ -194,9 +200,9 @@ class Select : TableExpression
       else 
       {
         foreach ( bool ok in TE.GetAll( tr, Used, ee ) )
-        if ( Where == null || ( Where.EvalBool( ee ) ) )
+        if ( Where == null || ( WhereD( ee ) ) )
         {
-          for ( int i = 0; i < final.Length; i += 1 ) final[ i ] = Exps[ i ].Eval( ee );  
+          for ( int i = 0; i < final.Length; i += 1 ) final[ i ] = Dvs[ i ]( ee ); 
           yield return true;
         }
       }
@@ -207,9 +213,9 @@ class Select : TableExpression
       {
         foreach ( long id in idSet.All( ee ) ) if ( TE.Get( id, tr, Used ) )
         {
-          if ( Where == null || Where.EvalBool( ee ) )
+          if ( Where == null || WhereD( ee ) )
           {
-            for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Exps[ i ].Eval( ee );  
+            for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Dvs[ i ]( ee ); 
             srs.NewRow( outrow ); 
           }
         }
@@ -217,9 +223,9 @@ class Select : TableExpression
       else 
       {
         foreach ( bool ok in TE.GetAll( tr, Used, ee ) )
-        if ( Where == null || Where.EvalBool( ee ) )
+        if ( Where == null || WhereD( ee ) )
         {
-          for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Exps[ i ].Eval( ee );  
+          for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Dvs[ i ]( ee );  
           srs.NewRow( outrow ); 
         }
       }
@@ -248,9 +254,9 @@ class Select : TableExpression
     {
       foreach ( long id in idSet.All( ee ) ) if ( TE.Get( id, tr, Used ) )
       {
-        if ( Where == null || Where.EvalBool( ee ) )
+        if ( Where == null || WhereD( ee ) )
         {
-          for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Exps[ i ].Eval( ee );   
+          for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Dvs[ i ]( ee );   
           if ( !srs.NewRow( outrow ) ) break;
         }
       }
@@ -259,9 +265,9 @@ class Select : TableExpression
     // Fetch every record in source table, send it to output ( if it satisfies any WHERE clause )
     {
       foreach ( bool ok in TE.GetAll( tr, Used, ee ) )
-      if ( Where == null || Where.EvalBool( ee ) )
+      if ( Where == null || WhereD( ee ) )
       {
-        for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Exps[ i ].Eval( ee );   
+        for ( int i = 0; i < Exps.Count; i += 1 ) outrow[ i ] = Dvs[ i ]( ee );  
         if ( !srs.NewRow( outrow ) ) break;
       }
     }

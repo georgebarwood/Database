@@ -17,14 +17,11 @@ abstract class Exp
 {
   public string Name = "";
   public DataType Type;
-  public virtual Value Eval( EvalEnv e ){ return new Value(); }
+
   public virtual DataType Bind( SqlExec e ){ return Type; }
   public virtual IdSet GetIdSet(  TableExpression te, EvalEnv ee ) { return null; }
-  public virtual bool IsConstant() { return false; } // Evaluation doesn't depend on table row ( so Eval() won't fail )
+  public virtual bool IsConstant() { return false; } // Evaluation doesn't depend on table row.
   public virtual DataType TypeCheck( SqlExec e ) { return Type; }
-
-  // Specialised versions of Eval
-  public virtual bool EvalBool( EvalEnv e ){ return Eval(e).B; }
 
   // Methods related to implementation of "IN".
   public virtual bool TestIn( Value x, EvalEnv e ){ return false; }
@@ -71,9 +68,48 @@ abstract class Exp
     else if ( Type == DataType.ScaledInt && t >= DataType.Decimal ) return this;
     return null;
   }
+
+  // Either GetDV or the relevant GetD? must be implemented.
+
+  public delegate Value DV( EvalEnv e );
+  public virtual DV GetDV()
+  { 
+    switch( DTI.Base( Type ) )
+    {
+      case DataType.Bool   : DB db = GetDB(); return (ee) => Value.New( db(ee) );
+      case DataType.Double : DD dd = GetDD(); return (ee) => Value.New( dd(ee) );
+      case DataType.String : DS ds = GetDS(); return (ee) => Value.New( ds(ee) );
+      case DataType.Binary : DX dx = GetDX(); return (ee) => Value.New( dx(ee) );
+      default:               DL dl = GetDL(); return (ee) => Value.New( dl(ee) );
+    }
+  }
+
+  public delegate bool DB( EvalEnv e );
+  public virtual DB GetDB(){ var dv = GetDV(); return ( ee ) => dv(ee).B; }
+
+  public delegate long DL( EvalEnv e );
+  public virtual DL GetDL(){ var dv = GetDV(); return ( ee ) => dv(ee).L; }
+
+  public delegate double DD( EvalEnv e );
+  public virtual DD GetDD(){ var dv = GetDV(); return ( ee ) => dv(ee).D; }
+
+  public delegate string DS( EvalEnv e );
+  public virtual DS GetDS(){ var dv = GetDV(); return ( ee ) => (string)dv(ee)._O; }
+
+  public delegate byte[] DX( EvalEnv e );
+  public virtual DX GetDX(){ var dv = GetDV(); return ( ee ) => (byte[])dv(ee)._O; }
+
+  public Value Eval( EvalEnv e ) { var dv = GetDV(); return dv( e ); }
+
+  public DV[] GetDV( Exp [] exps )
+  {
+    var result = new DV[ exps.Length ];
+    for ( int i = 0; i < exps.Length; i += 1 ) result[ i ] = exps[ i ].GetDV();
+    return result;
+  }
 }
 
-class UnaryExp : Exp
+abstract class UnaryExp : Exp
 {
   protected Exp E;
   public override bool IsConstant()
@@ -86,16 +122,38 @@ class ExpLocalVar : Exp
 {
   int I;
   public ExpLocalVar( int i, DataType t ) { I = i; Type = t; }
-  public override Value Eval( EvalEnv e ) 
-  { 
-    if ( Type <= DataType.String && e.Locals[I]._O == null ) e.Locals[I] = DTI.Default( Type );
-    return e.Locals[I]; 
-  }
-  public override bool EvalBool( EvalEnv e )
-  {
-    return e.Locals[I].B;
-  }
+
   public override bool IsConstant() { return true; }
+
+  public override DV GetDV()
+  {
+    int i = I;
+    return ( EvalEnv ee ) => ee.Locals[i];
+  }
+
+  public override DB GetDB()
+  {
+    int i = I;
+    return ( EvalEnv ee ) => ee.Locals[i].B;
+  }
+
+  public override DL GetDL()
+  {
+    int i = I;
+    return ( EvalEnv ee ) => ee.Locals[i].L;
+  }
+
+  public override DS GetDS()
+  {
+    int i = I;
+    return ( EvalEnv ee ) => ee.Locals[i]._O == null ? "" : (string)ee.Locals[i]._O;
+  }
+
+  public override DX GetDX()
+  {
+    int i = I;
+    return ( EvalEnv ee ) => ee.Locals[i]._O == null ? DTI.ZeroByte : (byte[])ee.Locals[i]._O;
+  }
 }
 
 class ExpConstant : Exp
@@ -105,9 +163,32 @@ class ExpConstant : Exp
   public ExpConstant( string x ){ Value.O = x; Type = DataType.String; }
   public ExpConstant( byte[] x ){ Value.O = x; Type = DataType.Binary; }
   public ExpConstant( bool x ){ Value.B = x; Type = DataType.Bool; }
-  public override Value Eval( EvalEnv e ){ return Value; }
-  public override bool EvalBool( EvalEnv e ){ return Value.B; }
   public override bool IsConstant() { return true; } // Evaluation doesn't depend on table row.
+
+  public override DV GetDV()
+  {
+    return ( EvalEnv ee ) => Value;
+  }
+
+  public override DB GetDB()
+  {
+    return ( EvalEnv ee ) => Value.B;
+  }
+
+  public override DL GetDL()
+  {
+    return ( EvalEnv ee ) => Value.L;
+  }
+
+  public override DS GetDS()
+  {
+    return ( EvalEnv ee ) => (string)Value._O;
+  }
+
+  public override DX GetDX()
+  {
+    return ( EvalEnv ee ) => (byte[])Value._O;
+  }
 }
 
 class ExpName : Exp
@@ -135,9 +216,30 @@ class ExpName : Exp
     return Type;
   }
 
-  public override Value Eval( EvalEnv e ) { return e.Row[ColIx]; }
+  public override DV GetDV()
+  {
+    return ( EvalEnv ee ) => ee.Row[ColIx];
+  }
 
-  public override bool EvalBool( EvalEnv e ) { return e.Row[ColIx].B; }
+  public override DB GetDB()
+  {
+    return ( EvalEnv ee ) => ee.Row[ColIx].B;
+  }
+
+  public override DL GetDL()
+  {
+    return ( EvalEnv ee ) => ee.Row[ColIx].L;
+  }
+
+  public override DS GetDS()
+  {
+    return ( EvalEnv ee ) => (string)ee.Row[ColIx]._O;
+  }
+
+  public override DX GetDX()
+  {
+    return ( EvalEnv ee ) => (byte[])ee.Row[ColIx]._O;
+  }
 } // end class ExpName
 
 
@@ -148,128 +250,169 @@ class ExpBinary : Exp
 
   public ExpBinary( Token op, Exp left, Exp right ) { Operator = op; Left = left; Right = right; }
 
-  public override Value Eval( EvalEnv e )
+  public override DV GetDV()
   {
-    Value lv = Left.Eval( e ), rv = Right.Eval( e );
+    DV left = Left.GetDV();
+    DV right = Right.GetDV();
     DataType t = Left.Type; if ( t >= DataType.Decimal ) t = DataType.Decimal;
     switch ( t )
     {
       case DataType.Bool:
         switch( Operator )
-        {
-          case Token.And: lv.B = lv.B & rv.B; break;
-          case Token.Or:  lv.B = lv.B | rv.B; break;
-          case Token.Equal: lv.B = lv.B == rv.B; break;
-          case Token.NotEqual: lv.B = lv.B != rv.B; break;
-          default: throw new System.Exception( "Unexpected boolean operator" );
+        {    
+          case Token.And: return (ee) => Value.New( left(ee).B && right(ee).B );
+          case Token.Or:  return (ee) => Value.New( left(ee).B || right(ee).B );
+          case Token.Equal: return (ee) => Value.New( left(ee).B ==  right(ee).B );
+          case Token.NotEqual: return (ee) => Value.New( left(ee).B != right(ee).B );
         }
         break;
       case DataType.Bigint:
       case DataType.Decimal:
         switch( Operator )
         {
-          case Token.Equal:         lv.B = lv.L == rv.L; break;
-          case Token.NotEqual:      lv.B = lv.L != rv.L; break;
-          case Token.Greater:       lv.B = lv.L > rv.L; break;
-          case Token.GreaterEqual:  lv.B = lv.L >= rv.L; break; 
-          case Token.Less:          lv.B = lv.L < rv.L; break;
-          case Token.LessEqual:     lv.B = lv.L <= rv.L; break;
-          case Token.Plus:          lv.L += rv.L; break;
-          case Token.Minus:         lv.L -= rv.L; break;
-          case Token.Times:         lv.L *= rv.L; break;
-          case Token.Divide:        lv.L /= rv.L; break;
-          case Token.Percent:       lv.L %= rv.L; break;
-          default: throw new System.Exception( "Unexpected integer operator" );
+          case Token.Equal:         return (ee) => Value.New( left(ee).L == right(ee).L );
+          case Token.NotEqual:      return (ee) => Value.New( left(ee).L != right(ee).L );
+          case Token.Greater:       return (ee) => Value.New( left(ee).L > right(ee).L );
+          case Token.GreaterEqual:  return (ee) => Value.New( left(ee).L >= right(ee).L );
+          case Token.Less:          return (ee) => Value.New( left(ee).L < right(ee).L );
+          case Token.LessEqual:     return (ee) => Value.New( left(ee).L <= right(ee).L );
+          case Token.Plus:          return (ee) => Value.New( left(ee).L + right(ee).L );
+          case Token.Minus:         return (ee) => Value.New( left(ee).L - right(ee).L );
+          case Token.Times:         return (ee) => Value.New( left(ee).L * right(ee).L );
+          case Token.Divide:        return (ee) => Value.New( left(ee).L / right(ee).L );
+          case Token.Percent:       return (ee) => Value.New( left(ee).L % right(ee).L );
         }
         break;
       case DataType.Double:
         switch( Operator )
         {
-          case Token.Equal:         lv.B = lv.D == rv.D; break;
-          case Token.NotEqual:      lv.B = lv.D != rv.D; break;
-          case Token.Greater:       lv.B = lv.D > rv.D; break;
-          case Token.GreaterEqual:  lv.B = lv.D >= rv.D; break; 
-          case Token.Less:          lv.B = lv.D < rv.D; break;
-          case Token.LessEqual:     lv.B = lv.D <= rv.D; break;
-          case Token.Plus:          lv.D += rv.D; break;
-          case Token.Minus:         lv.D -= rv.D; break;
-          case Token.Times:         lv.D *= rv.D; break;
-          case Token.Divide:        lv.D /= rv.D; break;
-          case Token.Percent:       lv.D %= rv.D; break;
-          default: throw new System.Exception( "Unexpected integer operator" );
+          case Token.Equal:         return (ee) => Value.New( left(ee).D == right(ee).D );
+          case Token.NotEqual:      return (ee) => Value.New( left(ee).D != right(ee).D );
+          case Token.Greater:       return (ee) => Value.New( left(ee).D > right(ee).D );
+          case Token.GreaterEqual:  return (ee) => Value.New( left(ee).D >= right(ee).D );
+          case Token.Less:          return (ee) => Value.New( left(ee).D < right(ee).D );
+          case Token.LessEqual:     return (ee) => Value.New( left(ee).D <= right(ee).D );
+          case Token.Plus:          return (ee) => Value.New( left(ee).D + right(ee).D );
+          case Token.Minus:         return (ee) => Value.New( left(ee).D - right(ee).D );
+          case Token.Times:         return (ee) => Value.New( left(ee).D * right(ee).D );
+          case Token.Divide:        return (ee) => Value.New( left(ee).D / right(ee).D );
+          case Token.Percent:       return (ee) => Value.New( left(ee).D % right(ee).D );
         }
         break;
       case DataType.String:
         switch( Operator )
         {
-          case Token.Equal:         lv.B = (string)lv._O == (string)rv._O; break;
-          case Token.NotEqual:      lv.B = string.Compare( (string)lv._O, (string)rv._O ) != 0; break;
-          case Token.Greater:       lv.B = string.Compare( (string)lv._O, (string)rv._O ) > 0; break;
-          case Token.GreaterEqual:  lv.B = string.Compare( (string)lv._O, (string)rv._O ) >= 0; break;
-          case Token.Less:          lv.B = string.Compare( (string)lv._O, (string)rv._O ) < 0; break;
-          case Token.LessEqual:     lv.B = string.Compare( (string)lv._O, (string)rv._O ) <= 0; break;
-          case Token.VBar:          lv.O = (string)lv._O + (string)rv._O; break;
-          default: throw new System.Exception( "Unexpected string operator" );
+          case Token.Equal:         return (ee) => Value.New( (string)left(ee)._O == (string)right(ee)._O );
+          case Token.NotEqual:      return (ee) => Value.New( string.Compare( (string)left(ee)._O, (string)right(ee)._O ) != 0 );
+          case Token.Greater:       return (ee) => Value.New( string.Compare( (string)left(ee)._O, (string)right(ee)._O ) > 0 );
+          case Token.GreaterEqual:  return (ee) => Value.New( string.Compare( (string)left(ee)._O, (string)right(ee)._O ) >= 0 );
+          case Token.Less:          return (ee) => Value.New( string.Compare( (string)left(ee)._O, (string)right(ee)._O ) < 0 );
+          case Token.LessEqual:     return (ee) => Value.New( string.Compare( (string)left(ee)._O, (string)right(ee)._O ) <= 0 );
+          case Token.VBar:          return (ee) => Value.New( (string)left(ee)._O + (string)right(ee)._O );
         }
         break;
-      default: throw new System.Exception("Unexpected type");
+      
     }
-    return lv;
+    throw new System.Exception( "Unexpected operator" );
   }
 
-  public override bool EvalBool( EvalEnv e )
+  public override DB GetDB()
   {
-    Value lv = Left.Eval( e ), rv = Right.Eval( e );
-
     DataType t = Left.Type; if ( t >= DataType.Decimal ) t = DataType.Decimal;
     switch ( t )
     {
       case DataType.Bool:
+        DB lb = Left.GetDB(), rb = Right.GetDB();
         switch( Operator )
         {
-          case Token.And: return lv.B & rv.B;
-          case Token.Or:  return lv.B | rv.B;
-          case Token.Equal: return lv.B == rv.B;
-          case Token.NotEqual: return lv.B != rv.B;
+          case Token.And: return ( ee ) => lb(ee) && rb( ee );
+          case Token.Or:  return ( ee ) => lb(ee) || rb( ee );
+          case Token.Equal: return ( ee ) => lb(ee) == rb( ee );
+          case Token.NotEqual: return ( ee ) => lb(ee) != rb( ee );
         }   
         break;    
       case DataType.Bigint:
       case DataType.Decimal:
+        DL ll = Left.GetDL(), rl = Right.GetDL();
         switch( Operator )
         {
-          case Token.Equal:         return lv.L == rv.L;
-          case Token.NotEqual:      return lv.L != rv.L;
-          case Token.Greater:       return lv.L > rv.L;
-          case Token.GreaterEqual:  return lv.L >= rv.L; 
-          case Token.Less:          return lv.L < rv.L;
-          case Token.LessEqual:     return lv.L <= rv.L;
+          case Token.Equal:         return ( ee ) => ll(ee) == rl(ee);
+          case Token.NotEqual:      return ( ee ) => ll(ee) != rl(ee);
+          case Token.Greater:       return ( ee ) => ll(ee) > rl(ee);
+          case Token.GreaterEqual:  return ( ee ) => ll(ee) >= rl(ee);
+          case Token.Less:          return ( ee ) => ll(ee) < rl(ee);
+          case Token.LessEqual:     return ( ee ) => ll(ee) <= rl(ee);
         }
         break;         
       case DataType.Double:
+         DD ld = Left.GetDD(), rd = Right.GetDD();
         switch( Operator )
         {
-          case Token.Equal:         return lv.D == rv.D;
-          case Token.NotEqual:      return lv.D != rv.D;
-          case Token.Greater:       return lv.D > rv.D;
-          case Token.GreaterEqual:  return lv.D >= rv.D; 
-          case Token.Less:          return lv.D < rv.D;
-          case Token.LessEqual:     return lv.D <= rv.D;
+          case Token.Equal:         return ( ee ) => ld(ee) == rd(ee);
+          case Token.NotEqual:      return ( ee ) => ld(ee) != rd(ee);
+          case Token.Greater:       return ( ee ) => ld(ee) > rd(ee);
+          case Token.GreaterEqual:  return ( ee ) => ld(ee) >= rd(ee);
+          case Token.Less:          return ( ee ) => ld(ee) < rd(ee);
+          case Token.LessEqual:     return ( ee ) => ld(ee) <= rd(ee);
         }
         break;
        
       case DataType.String:
+        DS ls = Left.GetDS(), rs = Right.GetDS();
         switch( Operator )
         {
-          case Token.Equal:         return (string)lv._O == (string)rv._O;
-          case Token.NotEqual:      return string.Compare( (string)lv._O, (string)rv._O ) != 0;
-          case Token.Greater:       return string.Compare( (string)lv._O, (string)rv._O ) > 0;
-          case Token.GreaterEqual:  return string.Compare( (string)lv._O, (string)rv._O ) >= 0;
-          case Token.Less:          return string.Compare( (string)lv._O, (string)rv._O ) < 0;
-          case Token.LessEqual:     return string.Compare( (string)lv._O, (string)rv._O ) <= 0;
-         }
+          case Token.Equal:         return ( ee ) => ls(ee) == rs(ee);
+          case Token.NotEqual:      return ( ee ) => string.Compare( ls(ee), rs(ee) ) != 0;
+          case Token.Greater:       return ( ee ) => string.Compare( ls(ee), rs(ee) ) > 0;
+          case Token.GreaterEqual:  return ( ee ) => string.Compare( ls(ee), rs(ee) ) >= 0;
+          case Token.Less:          return ( ee ) => string.Compare( ls(ee), rs(ee) ) < 0;
+          case Token.LessEqual:     return ( ee ) => string.Compare( ls(ee), rs(ee) ) <= 0;
+        }
         break;         
     }
-    throw new System.Exception();
+    return null;
+  }
+
+  public override DL GetDL()
+  {
+    DL left = Left.GetDL();
+    DL right = Right.GetDL();
+    switch( Operator )
+    {
+      case Token.Plus:          return (ee) => left(ee) + right(ee);
+      case Token.Minus:         return (ee) => left(ee) - right(ee);
+      case Token.Times:         return (ee) => left(ee) * right(ee);
+      case Token.Divide:        return (ee) => left(ee) / right(ee);
+      case Token.Percent:       return (ee) => left(ee) % right(ee);
+    }
+    return null;
+  }
+
+  public override DD GetDD()
+  {
+    DD left = Left.GetDD();
+    DD right = Right.GetDD();
+    switch( Operator )
+    {
+      case Token.Plus:          return (ee) => left(ee) + right(ee);
+      case Token.Minus:         return (ee) => left(ee) - right(ee);
+      case Token.Times:         return (ee) => left(ee) * right(ee);
+      case Token.Divide:        return (ee) => left(ee) / right(ee);
+      case Token.Percent:       return (ee) => left(ee) % right(ee);
+    }
+    return null;
+  }
+
+  public override DS GetDS()
+  {
+    DS left = Left.GetDS();
+    DS right = Right.GetDS();
+
+    switch( Operator )
+    {
+     case Token.VBar: return (ee) => left(ee) + right(ee);
+    }
+    return null;
   }
 
   public override DataType Bind( SqlExec e )
@@ -375,11 +518,11 @@ class ExpScale : UnaryExp
     Amount = (long)Util.PowerTen( amount );
     Type = t;
   }
-  public override Value Eval( EvalEnv e )
+
+  public override DL GetDL()
   {
-    Value v = E.Eval( e );
-    v.L = v.L * Amount;
-    return v;
+    DL x = E.GetDL();
+    return ( ee ) => x( ee ) * Amount;
   }
 }
 
@@ -392,11 +535,11 @@ class ExpScaleReduce : UnaryExp
     Amount = (long)Util.PowerTen( amount );
     Type = t;
   }
-  public override Value Eval( EvalEnv e )
+
+  public override DL GetDL()
   {
-    Value v = E.Eval( e );
-    v.L = v.L / Amount;
-    return v;
+    DL x = E.GetDL();
+    return ( ee ) => x( ee ) / Amount;
   }
 }
 
@@ -415,14 +558,19 @@ class ExpMinus : UnaryExp
     return Type;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override bool IsConstant() { return E.IsConstant(); }
+
+  public override DL GetDL()
   {
-    Value v = E.Eval( e );
-    if ( E.Type == DataType.Double ) v.D = - v.D; else v.L = - v.L;
-    return v;
+    DL x = E.GetDL();
+    return ( ee ) => - x( ee );
   }
 
-  public override bool IsConstant() { return E.IsConstant(); }
+  public override DD GetDD()
+  {
+    DD x = E.GetDD();
+    return ( ee ) => - x( ee );
+  }
 
 } // end class ExpMinus
 
@@ -441,16 +589,10 @@ class ExpNot : UnaryExp
     return Type;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DB GetDB()
   {
-    Value v = E.Eval( e );
-    v.B = ! v.B;
-    return v;
-  }
-
-  public override bool EvalBool( EvalEnv e )
-  {
-    return !E.EvalBool( e );
+    DB x = E.GetDB();
+    return ( ee ) => !x( ee );
   }
 } // end class ExpNot
 
@@ -464,12 +606,11 @@ class IntToStringExp : UnaryExp
     Type = DataType.String;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DS GetDS()
   {
-    Value v = E.Eval( e );
-    v.O = v.L.ToString();
-    return v;
-  }  
+    DL x = E.GetDL();
+    return ( ee ) => x( ee ).ToString();
+  }
 }
 
 class DecimalToStringExp : UnaryExp
@@ -480,15 +621,20 @@ class DecimalToStringExp : UnaryExp
     Type = DataType.String;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DS GetDS()
   {
-    Value v = E.Eval( e );
-    decimal d = v.L;
-    int scale = DTI.Scale( E.Type );
+    DL x = E.GetDL();
+    DataType t = E.Type;
+    return ( ee ) => D2S( x( ee ), t );
+  }
+
+  public static string D2S( long v, DataType t )
+  {
+    decimal d = v;
+    int scale = DTI.Scale( t );
     d = d / Util.PowerTen( scale );
-    v.O = d.ToString( "F" + scale, System.Globalization.CultureInfo.InvariantCulture );
-    return v;
-  }  
+    return d.ToString( "F" + scale, System.Globalization.CultureInfo.InvariantCulture );
+  }
 }
 
 class DecimalToDoubleExp : UnaryExp
@@ -499,12 +645,12 @@ class DecimalToDoubleExp : UnaryExp
     Type = DataType.Double;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DD GetDD()
   {
-    Value v = E.Eval( e );
-    v.D = ((double)v.L) / Util.PowerTen( DTI.Scale( E.Type ) );
-    return v;
-  }  
+    DL x = E.GetDL();
+    double p10 = Util.PowerTen( DTI.Scale( E.Type ) );
+    return ( ee ) => (double)x(ee) / p10;
+  }
 }
 
 class IntToDoubleExp : UnaryExp
@@ -515,12 +661,11 @@ class IntToDoubleExp : UnaryExp
     Type = DataType.Double;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DD GetDD()
   {
-    Value v = E.Eval( e );
-    v.D = v.L;
-    return v;
-  }  
+    DL x = E.GetDL();
+    return ( ee ) => (double)x(ee);
+  }
 }
 
 class DoubleToIntExp : UnaryExp
@@ -531,12 +676,11 @@ class DoubleToIntExp : UnaryExp
     Type = DataType.Bigint;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DL GetDL()
   {
-    Value v = E.Eval( e );
-    v.L = (long)v.D;
-    return v;
-  }  
+    DD x = E.GetDD();
+    return ( ee ) => (long)x(ee);
+  }
 }
 
 class DoubleToDecimalExp : UnaryExp
@@ -547,12 +691,12 @@ class DoubleToDecimalExp : UnaryExp
     Type = t;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DL GetDL()
   {
-    Value v = E.Eval( e );
-    v.L = (long) ( v.D * Util.PowerTen( DTI.Scale( Type ) ) );
-    return v;
-  }  
+    DD x = E.GetDD();
+    ulong p10 = Util.PowerTen( DTI.Scale( Type ) );
+    return ( ee ) => (long)( x(ee) * p10 );
+  }
 }
 
 class IntToDecimalExp : UnaryExp
@@ -563,12 +707,12 @@ class IntToDecimalExp : UnaryExp
     Type = t;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DL GetDL()
   {
-    Value v = E.Eval( e );
-    v.L = (long) ( v.L * (long)Util.PowerTen( DTI.Scale( Type ) ) );
-    return v;
-  }  
+    DL x = E.GetDL();
+    long p10 = (long)Util.PowerTen( DTI.Scale( Type ) );
+    return ( ee ) => x(ee) * p10;
+  }
 }
 
 class DoubleToStringExp : UnaryExp
@@ -579,12 +723,11 @@ class DoubleToStringExp : UnaryExp
     Type = DataType.String;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DS GetDS()
   {
-    Value v = E.Eval( e );
-    v.O = v.D.ToString();
-    return v;
-  }  
+    DD x = E.GetDD();
+    return ( ee ) => x(ee).ToString();
+  } 
 }
 
 class BinaryToStringExp : UnaryExp
@@ -595,12 +738,11 @@ class BinaryToStringExp : UnaryExp
     Type = DataType.String;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DS GetDS()
   {
-    Value v = E.Eval( e );
-    v.O = Util.ToString( (byte[])v._O );
-    return v;
-  }  
+    DX x = E.GetDX();
+    return ( ee ) => Util.ToString( x(ee) );
+  } 
 }
 
 class BoolToStringExp : UnaryExp
@@ -611,12 +753,11 @@ class BoolToStringExp : UnaryExp
     Type = DataType.String;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DS GetDS()
   {
-    Value v = E.Eval( e );
-    v.O = v.B.ToString();
-    return v;
-  }  
+    DB x = E.GetDB();
+    return ( ee ) => x(ee).ToString();
+  } 
 }
 
 // end conversions
@@ -643,9 +784,10 @@ class ExpFuncCall : Exp
     Plist = plist.ToArray();
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DV GetDV()
   {
-    return B.ExecuteFunctionCall( e, Plist );
+    var dvs = GetDV( Plist );
+    return ( ee ) => B.ExecuteFunctionCall( ee, dvs );
   }
 
   public override DataType Bind( SqlExec e  )
@@ -673,6 +815,7 @@ class ExpFuncCall : Exp
       }
     return Type;
   }
+
 } // end class ExpFuncCall
 
 class CASE : Exp
@@ -708,15 +851,26 @@ class CASE : Exp
     return Type;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DV GetDV()
   {
-    for ( int i = 0; i < List.Length; i += 1 ) 
+    var dbs = new Exp.DB[ List.Length ];
+    var dvs = new Exp.DV[ List.Length ];
+    for ( int i = 0; i < List.Length; i += 1 )
     {
-      Exp test = List[i].Test;
-      if ( test == null || test.EvalBool( e ) ) return List[i].E.Eval( e );
+      dbs[ i ] = List[ i ].Test == null ? null : List[ i ].Test.GetDB();
+      dvs[ i ] = List[ i ].E.GetDV();
     }
+    return ( ee ) => Go( ee, dbs, dvs );
+  }
+
+  Value Go( EvalEnv ee, Exp.DB[] dbs, Exp.DV[] dvs )
+  {
+    for ( int i = 0; i < dbs.Length; i += 1 )
+      if ( dbs[i] == null || dbs[i](ee) ) return dvs[ i ]( ee );
     return new Value(); // Should not get here.
   }
+    
+
 } // end class CASE
 
 class ExpList : Exp // Implements the list of expressions in an SQL conditional expression X IN ( e1, e2, e3 .... )
@@ -846,12 +1000,10 @@ class ExpIn : Exp
     return Type;
   }
 
-  public override Value Eval( EvalEnv e )
+  public override DB GetDB()
   {
-    Value lhs = Lhs.Eval( e );
-    Value result = new Value();
-    result.B = Rhs.TestIn( lhs, e );
-    return result;    
+    var lhs = Lhs.GetDV();
+    return ( ee ) => Rhs.TestIn( lhs(ee), ee );
   }
 
   public override IdSet GetIdSet( TableExpression te, EvalEnv ee )
@@ -879,6 +1031,10 @@ class COUNT : Exp
 {
   public COUNT() { Type = DataType.Bigint; }
   public override AggOp GetAggOp(){ return AggOp.Count; }
+  public override DL GetDL()
+  {
+    return ( ee ) => 0;
+  }
 }
 
 class ExpAgg : Exp
@@ -892,9 +1048,10 @@ class ExpAgg : Exp
     E = arg[0]; 
   }
 
-  public override Value Eval( EvalEnv e )
-  { 
-    return E.Eval( e );
+  public override DV GetDV()
+  {
+    var e = E.GetDV();
+    return ( ee ) => e( ee );
   }
 
   public override void BindAgg( SqlExec e )

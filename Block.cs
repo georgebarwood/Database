@@ -133,13 +133,13 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     Locals = new Value[ LocalType.Count ];
   }
 
-  public void ExecProcedure( Block b, G.List<Exp> parms )
+  public void ExecProcedure( Block b, Exp.DV [] parms )
   {
     // Allocate the local variables for the called procedure.
     var locals = new Value[ b.LocalType.Count ];
 
     // Evaluate the parameters to be passed, saving them in the newly allocated local variables.
-    for ( int i = 0; i < parms.Count; i += 1 ) locals[i] = parms[ i ].Eval( this );
+    for ( int i = 0; i < parms.Length; i += 1 ) locals[i] = parms[ i ]( this );
 
     // Save local state.
     var save1 = b.Locals; 
@@ -154,13 +154,13 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     b.Locals = save1;
   }
 
-  public Value ExecuteFunctionCall( EvalEnv e, Exp [] parms )
+  public Value ExecuteFunctionCall( EvalEnv e, Exp.DV [] parms )
   {
     // Allocate the local variables for the called function.
     var locals = new Value[ LocalType.Count ];
 
     // Evaluate the parameters to be passed, saving them in the newly allocated local variables.
-    for ( int i = 0; i < parms.Length; i += 1 ) locals[i] = parms[ i ].Eval( e );
+    for ( int i = 0; i < parms.Length; i += 1 ) locals[i] = parms[ i ]( e );
 
     // Save local state.
     var save1 = Locals; 
@@ -178,9 +178,9 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     return FunctionResult;
   }
 
-  public void Execute( Exp e )
+  public void Execute( Exp.DS e )
   {
-    string s = (string) ( e.Eval( this )._O );
+    string s = e( this );
     try
     {
       Db.ExecuteSql( s, ResultSet );    
@@ -197,15 +197,15 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     NextStatement = Jump[ jumpId ];
   }
 
-  public void ExecuteReturn( Exp e )
+  public void ExecuteReturn( Exp.DV e )
   {
-    if ( IsFunc ) FunctionResult = e.Eval( this );
+    if ( IsFunc ) FunctionResult = e( this );
     NextStatement = Statements.Count;
   }
 
-  public void ExecuteIf( Exp test, int jumpid )
+  public void ExecuteIf( Exp.DB test, int jumpid )
   {
-    if ( !test.EvalBool( this ) ) NextStatement = Jump[ jumpid ];
+    if ( !test( this ) ) NextStatement = Jump[ jumpid ];
   }
 
   public void JumpBack( int i )
@@ -238,9 +238,9 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     if ( ResultSet != null ) ResultSet.LastIdInserted = lastId;
   }
 
-  public void SetMode( Exp e )
+  public void SetMode( Exp.DL e )
   {
-    ResultSet.SetMode( e.Eval( this ).L );
+    ResultSet.SetMode( e( this ) );
   }
 
 } // end class Block

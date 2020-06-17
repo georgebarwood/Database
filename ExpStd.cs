@@ -6,7 +6,7 @@ using DBNS;
 
 // Standard functions.
 
-class StdExp : Exp
+abstract class StdExp : Exp
 {
   protected Exp [] Arg;
   DataType [] Types;
@@ -39,12 +39,16 @@ class EXCEPTION : Exp
     Type = DataType.String;
   }
 
-  public override Value Eval( EvalEnv e  )
+  public override DS GetDS()
   {
-    Value result = new Value();
-    var ex = e.ResultSet.Exception;
-    result.O = ex == null ? "" : ex.ToString(); // .Message or .ToString() for full debug info.
-    e.ResultSet.Exception = null;
+    return ( ee ) => GetException( ee );
+  }
+
+  string GetException( EvalEnv ee )
+  {
+    var ex = ee.ResultSet.Exception;
+    string result = ex == null ? "" : ex.ToString(); // .Message or .ToString() for full debug info.
+    ee.ResultSet.Exception = null;
     return result;
   }
 } // end class EXCEPTION
@@ -54,13 +58,12 @@ class REPLACE : StdExp
   public REPLACE( G.List<Exp>args, Exec e ) : base( args, DataType.String, 
     new DataType[]{ DataType.String, DataType.String, DataType.String }, e ){}
 
-  public override Value Eval( EvalEnv e )
+  public override DS GetDS()
   {
-    Value s = Arg[0].Eval( e );
-    string pat = (string)( Arg[1].Eval( e )._O );
-    string sub = (string)( Arg[2].Eval( e )._O );
-    s.O = ((string)s._O).Replace( pat, sub );
-    return s; 
+    var s = Arg[0].GetDS();
+    var pat = Arg[1].GetDS();
+    var sub = Arg[2].GetDS();
+    return ( ee ) => s(ee).Replace( pat(ee), sub(ee) );
   }
 
 } // end class REPLACE
@@ -70,21 +73,21 @@ class SUBSTRING : StdExp
   public SUBSTRING( G.List<Exp>args, Exec e ) : base( args, DataType.String, 
     new DataType[]{ DataType.String, DataType.Bigint, DataType.Bigint }, e ){}
 
-  public override Value Eval( EvalEnv e )
+  public override DS GetDS()
   {
-    Value s = Arg[0].Eval( e );
-    string x = (string)s._O;
-    int start = (int) Arg[1].Eval( e ).L - 1;
-    int len = (int) Arg[2].Eval( e ).L;
+    var a0 = Arg[0].GetDS();
+    var a1 = Arg[1].GetDL();
+    var a2 = Arg[2].GetDL();
+    return ( ee ) => DoSub( a0(ee), (int)a1(ee), (int)a2(ee) );
+  }
 
+  public string DoSub( string s, int start, int len )
+  {
     if ( start < 0 ) start = 0;
-    if ( start > x.Length ) start = x.Length;
-    if ( len < 0 ) len = 0; // Maybe should raise exception
-    if ( len > x.Length - start ) len = x.Length - start;
-
-    s.O = ((string)s._O).Substring( start, len );
-
-    return s; 
+    if ( start > s.Length ) start = s.Length;
+    if ( len < 0 ) len = 0;
+    if ( len > s.Length - start ) len = s.Length - start;
+    return s.Substring( start, len );
   }
 
 } // end class SUBSTRING
@@ -106,12 +109,18 @@ class LEN : UnaryExp
     return Type;
   }   
 
-  public override Value Eval( EvalEnv e )
+  public override DL GetDL()
   {
-    object o = E.Eval( e )._O;
-    Value result = new Value();
-    result.L = SType == DataType.String ? ((string)o).Length : ((byte[])o).Length;
-    return result;
+    if ( SType == DataType.String )
+    {
+      var a0 = E.GetDS();
+      return ( ee ) => a0(ee).Length;
+    }
+    else
+    {
+      var a0 = E.GetDX();
+      return ( ee ) => a0(ee).Length;
+    }
   }
 } // end class LEN
 
@@ -119,14 +128,17 @@ class PARSEINT : StdExp
 {
   public PARSEINT( G.List<Exp>args, Exec e ) : base( args, DataType.Bigint, new DataType[]{ DataType.String }, e ){}
 
-  public override Value Eval( EvalEnv e )
+  public override DL GetDL()
   {
-    string s = (string)Arg[0].Eval( e )._O;
+    var a = Arg[0].GetDS();
+    return ( ee ) => DoParse( a(ee) );
+  }
+
+  long DoParse( string s )
+  {
     try
     {
-      Value result = new Value();
-      result.L = long.Parse( s );
-      return result;
+      return long.Parse( s );
     }
     catch ( System.Exception )
     {
@@ -139,15 +151,18 @@ class PARSEDECIMAL : StdExp
 {
   public PARSEDECIMAL( G.List<Exp>args, Exec e ) : base( args, DataType.ScaledInt, new DataType[]{ DataType.String, DataType.Bigint }, e ){}
 
-  public override Value Eval( EvalEnv e )
+  public override DL GetDL()
   {
-    string s = (string)Arg[0].Eval( e )._O;
-    DataType t = (DataType)Arg[1].Eval( e ).L;
+    var a = Arg[0].GetDS();
+    var t = Arg[1].GetDL();
+    return ( ee ) => DoParse( a(ee), (DataType)t(ee) );
+  }
+
+  long DoParse( string s, DataType t )
+  {
     try
     {
-      Value result = new Value();
-      result.L = (long) ( decimal.Parse( s ) * Util.PowerTen( DTI.Scale(t) ) );
-      return result;
+      return (long) ( decimal.Parse( s ) * Util.PowerTen( DTI.Scale(t) ) );
     }
     catch ( System.Exception )
     {
@@ -160,14 +175,17 @@ class PARSEDOUBLE : StdExp
 {
   public PARSEDOUBLE( G.List<Exp>args, Exec e ) : base( args, DataType.Double, new DataType[]{ DataType.String }, e ){}
 
-  public override Value Eval( EvalEnv e )
+  public override DD GetDD()
   {
-    string s = (string)Arg[0].Eval( e )._O;
+    var a = Arg[0].GetDS();
+    return ( ee ) => DoParse( a(ee) );
+  }
+
+  double DoParse( string s )
+  {
     try
     {
-      Value result = new Value();
-      result.D = double.Parse( s );
-      return result;
+      return double.Parse( s );
     }
     catch ( System.Exception )
     {
@@ -186,11 +204,9 @@ class LASTID : Exp
     Type = DataType.Bigint;
   }
 
-  public override Value Eval( EvalEnv e  )
+  public override DL GetDL()
   {
-    Value result = new Value();
-    result.L = e.ResultSet.LastIdInserted;
-    return result;
+    return ( ee ) => ee.ResultSet.LastIdInserted;
   }
 } // end class LASTID
 
@@ -199,13 +215,11 @@ class ARG : StdExp
   public ARG( G.List<Exp>args, Exec e ) : base( args, DataType.String, 
     new DataType[]{ DataType.Bigint, DataType.String }, e ){}
 
-  public override Value Eval( EvalEnv e  )
+  public override DS GetDS()
   {
-    int kind = (int)Arg[0].Eval( e ).L;
-    string name = (string)Arg[1].Eval( e )._O;
-    Value result = new Value();
-    result.O = e.ResultSet.Arg( kind, name );
-    return result;
+    var k = Arg[0].GetDL();
+    var n = Arg[1].GetDS();
+    return ( ee ) => ee.ResultSet.Arg( (int)k(ee), n(ee) );
   }
 } // end class ARG
 
@@ -214,13 +228,11 @@ class ARGNAME : StdExp
   public ARGNAME( G.List<Exp>args, Exec e ) : base( args, DataType.String, 
     new DataType[]{ DataType.Bigint, DataType.Bigint }, e ){}
 
-  public override Value Eval( EvalEnv e  )
+  public override DS GetDS()
   {
-    int kind = (int)Arg[0].Eval( e ).L;
-    int ix = (int)Arg[1].Eval( e ).L;
-    Value result = new Value();
-    result.O = e.ResultSet.ArgName( kind, ix );
-    return result;
+    var k = Arg[0].GetDL();
+    var x = Arg[1].GetDL();
+    return ( ee ) => ee.ResultSet.ArgName( (int)k(ee), (int)x(ee) );
   }
 } // end class ARGNAME
 
@@ -229,13 +241,11 @@ class FILEATTR : StdExp
   public FILEATTR( G.List<Exp>args, Exec e ) : base( args, DataType.String, 
     new DataType[]{ DataType.Bigint, DataType.Bigint }, e ){}
 
-  public override Value Eval( EvalEnv e )
+  public override DS GetDS()
   {
-    Value result = new Value();
-    int ix = (int)Arg[0].Eval( e ).L;
-    int kind = (int)Arg[1].Eval( e ).L;
-    result.O = e.ResultSet.FileAttr( ix, kind );
-    return result;
+    var x = Arg[0].GetDL();
+    var k = Arg[1].GetDL();
+    return ( ee ) => ee.ResultSet.FileAttr( (int)x(ee), (int)k(ee) );
   }
 } // end class FILEATTR
 
@@ -244,12 +254,10 @@ class FILECONTENT : StdExp
   public FILECONTENT( G.List<Exp>args, Exec e ) : base( args, DataType.Binary, 
     new DataType[]{ DataType.Bigint }, e ){}
 
-  public override Value Eval( EvalEnv e )
+  public override DX GetDX()
   {
-    Value result = new Value();
-    int ix = (int)Arg[0].Eval( e ).L;
-    result.O = e.ResultSet.FileContent( ix );
-    return result;
+    var x = Arg[0].GetDL();
+    return ( ee ) => ee.ResultSet.FileContent( (int)x(ee) );
   }
 } // end class FILECONTENT
 

@@ -14,7 +14,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 {
   public static void ExecuteBatch( string sql, DatabaseImp d, ResultSet rs )
   {
-    // System.Console.WriteLine("Sql: " + sql );
+    // System.Console.WriteLine("ExecuteBatch: " + sql );
     new SqlExec( sql, d, null ).Batch( rs );
   }
 
@@ -812,7 +812,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         Error( "WHERE expression must be boolean" );
 
       var used = Used; // Need to take a copy
-      Add( () => t.ExecUpdate( a, where, used, idCol, B ) ); 
+      var w = where.GetDB();
+      Add( () => t.ExecUpdate( a, where, w, used, idCol, B ) ); 
 
       Used = save1; CI = save2; 
     }
@@ -837,7 +838,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       if ( where != null && where.Bind( this ) != DataType.Bool ) 
         Error( "WHERE expression must be boolean" );
       var used = Used; // Need to take a copy.
-      Add( () => t.ExecDelete( where, used, B ) );
+      var w = where.GetDB();
+      Add( () => t.ExecDelete( where, w, used, B ) );
 
       Used = save1; CI = save2;
     }
@@ -851,7 +853,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     if ( !ParseOnly )
     {
       if ( exp.Type != DataType.String ) Error( "Argument of EXECUTE must be a string" );
-      Add( () => B.Execute( exp ) );
+      var ds = exp.GetDS();
+      Add( () => B.Execute( ds ) );
     }
   }
 
@@ -886,14 +889,19 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
           if ( parms[i].Type != b.Params.Types[i] ) 
             Error( "Parameter Type Error calling procedure " + name );
 
-        Add( () => B.ExecProcedure( b, parms ) ); 
+
+        var pdv = new Exp.DV[ parms.Count ];
+        for ( int i = 0; i < parms.Count; i += 1 ) pdv[ i ] = parms[ i ].GetDV();
+
+        Add( () => B.ExecProcedure( b, pdv ) ); 
       }   
     }
     else if ( name == "SETMODE" )
     {
       if ( !ParseOnly && ( parms.Count != 1 || parms[0].Bind( this ) != DataType.Bigint ) )
         Error( "SETMODE param error" );
-      Add( () => B.SetMode( parms[0] ) );
+      var dl = parms[0].GetDL();
+      Add( () => B.SetMode( dl ) );
     }
     else Error( "Unrecognised procedure" );
   }
@@ -1187,7 +1195,11 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     
     int start = B.GetHere();
     int breakid = B.GetJumpId();
-    Add( () => B.ExecuteIf( exp, breakid ) );
+    if (!ParseOnly)
+    {
+      var db = exp.GetDB();
+      Add( () => B.ExecuteIf( db, breakid ) );
+    }
     
     int save = BreakId;
     BreakId = breakid;
@@ -1204,7 +1216,11 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     if ( !ParseOnly && exp.TypeCheck( this ) != DataType.Bool ) Error( "IF expression must be boolean" );
 
     int falseid = B.GetJumpId();
-    Add( () => B.ExecuteIf( exp, falseid ) );
+    if (!ParseOnly)
+    {
+      var db = exp.GetDB();
+      Add( () => B.ExecuteIf( db, falseid ) );
+    }
 
     Statement();
 
@@ -1249,7 +1265,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         e = e.Convert( B.ReturnType );
         if ( e == null ) Error( "Return type error" );        
       }
-      Add( () => B.ExecuteReturn( e ) );
+      var dv = e == null ? null : e.GetDV();
+      Add( () => B.ExecuteReturn( dv ) );
     }
   }
 
