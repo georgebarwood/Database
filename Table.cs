@@ -221,7 +221,7 @@ class Table : TableExpression // Represents a Database Table.
     return ins.LastIdInserted;
   }
 
-  public void ExecUpdate( Assign[] a, Exp where, Exp.DB w, bool [] used, int idCol, EvalEnv ee  )
+  public void ExecUpdate( int [] ixs, Exp.DV [] dvs, Exp where, Exp.DB w, bool [] used, int idCol, EvalEnv ee  )
   {
     Value [] tr = new Value[ Cols.Count ];
     Value [] nr = new Value[ Cols.Count ]; // The new row.
@@ -239,10 +239,10 @@ class Table : TableExpression // Represents a Database Table.
 
       if ( w( ee ) )
       {
-        for ( int i=0; i < a.Length; i += 1 ) 
+        for ( int i=0; i < ixs.Length; i += 1 ) 
         {
-          int ix = a[i].Lhs.ColIx;
-          nr[ ix ] = a[i].Rhs.Eval( ee );   
+          int ix = ixs[ i ];
+          nr[ ix ] = dvs[ i ]( ee );   
         }
         if ( idCol >= 0 && nr[ idCol ].L != id )
         {

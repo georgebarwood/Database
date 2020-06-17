@@ -813,7 +813,15 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
       var used = Used; // Need to take a copy
       var w = where.GetDB();
-      Add( () => t.ExecUpdate( a, where, w, used, idCol, B ) ); 
+      var dvs = new Exp.DV[ a.Length ];
+      var ixs = new int[ a.Length ];
+      for ( int i = 0; i < a.Length; i += 1 )
+      {
+        ixs[ i ] = a[ i ].Lhs.ColIx;
+        dvs[ i ] = a[ i ].Rhs.GetDV();
+      }
+
+      Add( () => t.ExecUpdate( ixs, dvs, where, w, used, idCol, B ) ); 
 
       Used = save1; CI = save2; 
     }
