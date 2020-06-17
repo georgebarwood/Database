@@ -6,35 +6,37 @@ using DBNS;
 
 class ExpScale : UnaryExp
 {
-  long Amount;
+  int Amount;
   public ExpScale( Exp e, DataType t, int amount )
   {
     E = e; 
-    Amount = (long)Util.PowerTen( amount );
+    Amount = amount;
     Type = t;
   }
 
   public override DL GetDL()
   {
+    long p10 = (long)Util.PowerTen( Amount );
     DL x = E.GetDL();
-    return ( ee ) => x( ee ) * Amount;
+    return ( ee ) => x( ee ) * p10;
   }
 }
 
 class ExpScaleReduce : UnaryExp
 {
-  long Amount;
+  int Amount;
   public ExpScaleReduce( Exp e, DataType t, int amount )
   {
     E = e; 
-    Amount = (long)Util.PowerTen( amount );
+    Amount = amount;
     Type = t;
   }
 
   public override DL GetDL()
   {
+    long p10 = (long)Util.PowerTen( Amount );
     DL x = E.GetDL();
-    return ( ee ) => x( ee ) / Amount;
+    return ( ee ) => x( ee ) / p10;
   }
 }
 

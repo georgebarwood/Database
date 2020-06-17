@@ -131,29 +131,13 @@ class ExpLocalVar : Exp
     return ( EvalEnv ee ) => ee.Locals[i];
   }
 
-  public override DB GetDB()
-  {
-    int i = I;
-    return ( EvalEnv ee ) => ee.Locals[i].B;
-  }
+  public override DB GetDB() { int i = I; return ( EvalEnv ee ) => ee.Locals[i].B; }
 
-  public override DL GetDL()
-  {
-    int i = I;
-    return ( EvalEnv ee ) => ee.Locals[i].L;
-  }
+  public override DL GetDL() { int i = I; return ( EvalEnv ee ) => ee.Locals[i].L; }
 
-  public override DS GetDS()
-  {
-    int i = I;
-    return ( EvalEnv ee ) => ee.Locals[i]._O == null ? "" : (string)ee.Locals[i]._O;
-  }
+  public override DS GetDS() { int i = I; return ( EvalEnv ee ) => ee.Locals[i]._O == null ? "" : (string)ee.Locals[i]._O; }
 
-  public override DX GetDX()
-  {
-    int i = I;
-    return ( EvalEnv ee ) => ee.Locals[i]._O == null ? DTI.ZeroByte : (byte[])ee.Locals[i]._O;
-  }
+  public override DX GetDX() { int i = I; return ( EvalEnv ee ) => ee.Locals[i]._O == null ? DTI.ZeroByte : (byte[])ee.Locals[i]._O; }
 }
 
 class ExpConstant : Exp
@@ -165,30 +149,11 @@ class ExpConstant : Exp
   public ExpConstant( bool x ){ Value.B = x; Type = DataType.Bool; }
   public override bool IsConstant() { return true; } // Evaluation doesn't depend on table row.
 
-  public override DV GetDV()
-  {
-    return ( EvalEnv ee ) => Value;
-  }
-
-  public override DB GetDB()
-  {
-    return ( EvalEnv ee ) => Value.B;
-  }
-
-  public override DL GetDL()
-  {
-    return ( EvalEnv ee ) => Value.L;
-  }
-
-  public override DS GetDS()
-  {
-    return ( EvalEnv ee ) => (string)Value._O;
-  }
-
-  public override DX GetDX()
-  {
-    return ( EvalEnv ee ) => (byte[])Value._O;
-  }
+  public override DV GetDV() { return ( EvalEnv ee ) => Value; }
+  public override DB GetDB() { return ( EvalEnv ee ) => Value.B; }
+  public override DL GetDL() { return ( EvalEnv ee ) => Value.L; }
+  public override DS GetDS() { return ( EvalEnv ee ) => (string)Value._O; }
+  public override DX GetDX() { return ( EvalEnv ee ) => (byte[])Value._O; }
 }
 
 class ExpName : Exp
@@ -216,30 +181,11 @@ class ExpName : Exp
     return Type;
   }
 
-  public override DV GetDV()
-  {
-    return ( EvalEnv ee ) => ee.Row[ColIx];
-  }
-
-  public override DB GetDB()
-  {
-    return ( EvalEnv ee ) => ee.Row[ColIx].B;
-  }
-
-  public override DL GetDL()
-  {
-    return ( EvalEnv ee ) => ee.Row[ColIx].L;
-  }
-
-  public override DS GetDS()
-  {
-    return ( EvalEnv ee ) => (string)ee.Row[ColIx]._O;
-  }
-
-  public override DX GetDX()
-  {
-    return ( EvalEnv ee ) => (byte[])ee.Row[ColIx]._O;
-  }
+  public override DV GetDV() { return ( EvalEnv ee ) => ee.Row[ColIx]; }
+  public override DB GetDB() { return ( EvalEnv ee ) => ee.Row[ColIx].B; }
+  public override DL GetDL() { return ( EvalEnv ee ) => ee.Row[ColIx].L; }
+  public override DS GetDS() { return ( EvalEnv ee ) => (string)ee.Row[ColIx]._O; }
+  public override DX GetDX() { return ( EvalEnv ee ) => (byte[])ee.Row[ColIx]._O; }
 } // end class ExpName
 
 
@@ -519,10 +465,7 @@ class ExpBinary : Exp
 
 class ExpMinus : UnaryExp
 {
-  public ExpMinus( Exp e )
-  {
-    E = e;
-  }
+  public ExpMinus( Exp e ) { E = e; }
 
   public override DataType Bind( SqlExec e )
   {
@@ -534,40 +477,22 @@ class ExpMinus : UnaryExp
 
   public override bool IsConstant() { return E.IsConstant(); }
 
-  public override DL GetDL()
-  {
-    DL x = E.GetDL();
-    return ( ee ) => - x( ee );
-  }
-
-  public override DD GetDD()
-  {
-    DD x = E.GetDD();
-    return ( ee ) => - x( ee );
-  }
+  public override DL GetDL() { DL x = E.GetDL(); return ( ee ) => - x( ee ); }
+  public override DD GetDD() { DD x = E.GetDD(); return ( ee ) => - x( ee ); }
 
 } // end class ExpMinus
 
 class ExpNot : UnaryExp
 {
-  public ExpNot( Exp e )
-  {
-    E = e;
-    Type = DataType.Bool;
-  }
+  public ExpNot( Exp e ) { E = e; Type = DataType.Bool;  }
 
   public override DataType Bind( SqlExec e )
   {
-    if ( E.Bind( e ) != DataType.Bool )
-      e.Error( "NOT needs bool argument" );
+    if ( E.Bind( e ) != DataType.Bool ) e.Error( "NOT needs bool argument" );
     return Type;
   }
 
-  public override DB GetDB()
-  {
-    DB x = E.GetDB();
-    return ( ee ) => !x( ee );
-  }
+  public override DB GetDB() { DB x = E.GetDB(); return ( ee ) => !x( ee ); }
 } // end class ExpNot
 
 class OrderByExp
@@ -590,12 +515,6 @@ class ExpFuncCall : Exp
     Schema = schema;
     FuncName = fname;
     Plist = plist.ToArray();
-  }
-
-  public override DV GetDV()
-  {
-    var dvs = GetDV( Plist );
-    return ( ee ) => B.ExecuteFunctionCall( ee, dvs );
   }
 
   public override DataType Bind( SqlExec e  )
@@ -624,6 +543,11 @@ class ExpFuncCall : Exp
     return Type;
   }
 
+  public override DV GetDV()
+  {
+    var dvs = GetDV( Plist );
+    return ( ee ) => B.ExecuteFunctionCall( ee, dvs );
+  }
 } // end class ExpFuncCall
 
 class CASE : Exp
@@ -632,19 +556,12 @@ class CASE : Exp
   {
     public Exp Test;
     public Exp E;
-    public Part( Exp test, Exp e )
-    {
-      Test = test;
-      E = e;
-    }
+    public Part( Exp test, Exp e ) { Test = test; E = e; }
   }
 
   Part [] List;
 
-  public CASE( Part[] list )
-  {
-    List = list;
-  }
+  public CASE( Part[] list ) { List = list; }
 
   public override DataType Bind( SqlExec e )
   {
