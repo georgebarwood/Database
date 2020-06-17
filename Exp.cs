@@ -876,8 +876,26 @@ class CASE : Exp
     for ( int i = 0; i < dbs.Length; i += 1 )
       if ( dbs[i] == null || dbs[i](ee) ) return dvs[ i ]( ee );
     return new Value(); // Should not get here.
-  }
-    
+  }    
+
+  public override DS GetDS()
+  {
+    var dbs = new Exp.DB[ List.Length ];
+    var dvs = new Exp.DS[ List.Length ];
+    for ( int i = 0; i < List.Length; i += 1 )
+    {
+      dbs[ i ] = List[ i ].Test == null ? null : List[ i ].Test.GetDB();
+      dvs[ i ] = List[ i ].E.GetDS();
+    }
+    return ( ee ) => GoS( ee, dbs, dvs );
+  }  
+
+  string GoS( EvalEnv ee, Exp.DB[] dbs, Exp.DS[] dvs )
+  {
+    for ( int i = 0; i < dbs.Length; i += 1 )
+      if ( dbs[i] == null || dbs[i](ee) ) return dvs[ i ]( ee );
+    return null; // Should not get here.
+  }   
 
 } // end class CASE
 
