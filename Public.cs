@@ -104,7 +104,7 @@ SQL-specific ( namespace SQLNS )
 ================================
 SqlExec.cs = parsing and execution of SQL statements.
 Block.cs = list of statements for execution.
-Exp.cs, ExpStd.Exp = scalar expressions.
+Exp.cs, ExpStd.cs, ExpConv.cs = scalar expressions.
 TableExp.cs = table-valued expressions.
 Group.cs = implementation of GROUP BY.
 Sort.cs = implementation of ORDER BY.
