@@ -38,61 +38,6 @@ class ExpScaleReduce : UnaryExp
   }
 }
 
-class ExpMinus : UnaryExp
-{
-  public ExpMinus( Exp e )
-  {
-    E = e;
-  }
-
-  public override DataType Bind( SqlExec e )
-  {
-    Type = E.Bind( e );
-    if ( Type != DataType.Bigint && Type != DataType.Double && Type < DataType.Decimal )
-      e.Error( "Unary minus needs numeric argument" );
-    return Type;
-  }
-
-  public override bool IsConstant() { return E.IsConstant(); }
-
-  public override DL GetDL()
-  {
-    DL x = E.GetDL();
-    return ( ee ) => - x( ee );
-  }
-
-  public override DD GetDD()
-  {
-    DD x = E.GetDD();
-    return ( ee ) => - x( ee );
-  }
-
-} // end class ExpMinus
-
-class ExpNot : UnaryExp
-{
-  public ExpNot( Exp e )
-  {
-    E = e;
-    Type = DataType.Bool;
-  }
-
-  public override DataType Bind( SqlExec e )
-  {
-    if ( E.Bind( e ) != DataType.Bool )
-      e.Error( "NOT needs bool argument" );
-    return Type;
-  }
-
-  public override DB GetDB()
-  {
-    DB x = E.GetDB();
-    return ( ee ) => !x( ee );
-  }
-} // end class ExpNot
-
-// Conversions
-
 class IntToStringExp : UnaryExp
 {
   public IntToStringExp( Exp e )
