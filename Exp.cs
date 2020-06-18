@@ -34,6 +34,9 @@ abstract class Exp
   public virtual AggOp GetAggOp(){ return AggOp.None; }
   public virtual void BindAgg( SqlExec e ){ }
 
+  // Optimisation of string concat
+  public virtual void GetConcat( G.List<Exp> list ){ list.Add(this); }
+
   public Exp Convert( DataType t )
   {
     if ( t < DataType.Decimal ) t = DTI.Base( t );
@@ -170,7 +173,7 @@ class ExpName : Exp
     // for ( int i=0; i < ci.Length; i += 1 ) System.Console.WriteLine( ci[i].Name );
     
     e.Error( "Column " + ColName + " not found" );
-    return null;
+    return this;
   }
 
   public override DV GetDV() { return ( EvalEnv ee ) => ee.Row[ColIx]; }
@@ -259,12 +262,11 @@ class ExpBinary : Exp
           case Token.GreaterEqual:  return (ee) => Value.New( string.Compare( left(ee), right(ee) ) >= 0 );
           case Token.Less:          return (ee) => Value.New( string.Compare( left(ee), right(ee) ) < 0 );
           case Token.LessEqual:     return (ee) => Value.New( string.Compare( left(ee), right(ee) ) <= 0 );
-          case Token.VBar:          return (ee) => Value.New( left(ee) + right(ee) );
         }
         break;
       }      
     }
-    throw new System.Exception( "Unexpected operator" );
+    throw new System.Exception( "Unexpected operator" + this );
   }
 
   public override DB GetDB()
@@ -354,19 +356,30 @@ class ExpBinary : Exp
     return null;
   }
 
-  public override DS GetDS()
-  {
-    DS left = Left.GetDS();
-    DS right = Right.GetDS();
-    return (ee) => left(ee) + right(ee); // VBar is only operator with string result.
-  }
-
   public override Exp Bind( SqlExec e )
   {
-    Left.Bind( e );
-    Right.Bind( e );
+    if ( Operator == Token.VBar )
+    {
+      var clist = new G.List<Exp>();
+      Left.GetConcat( clist );
+      Right.GetConcat( clist );
+      return new ConcatExp( clist ).Bind( e );
+    } 
+    Left = Left.Bind( e );
+    Right = Right.Bind( e );
     TypeCheck( e );
     return this;
+  }
+
+  public override void GetConcat( G.List<Exp> list )
+  { 
+    if ( Operator == Token.VBar )
+    {
+      Left.GetConcat( list );
+      Right.GetConcat( list );
+    }
+    else
+      list.Add(this); 
   }
 
   public override DataType TypeCheck( SqlExec e )
@@ -384,7 +397,7 @@ class ExpBinary : Exp
       Right = new IntToDoubleExp(Right);
       tR = DataType.Double;
     }
-    else if ( Operator != Token.VBar && ( tL >= DataType.Decimal || tR >= DataType.Decimal ) )
+    else if ( tL >= DataType.Decimal || tR >= DataType.Decimal )
     {
       if ( tR == DataType.Bigint ) tR = DTI.Decimal(18,0);
       else if ( tL == DataType.Bigint ) tL = DTI.Decimal(18,0);
@@ -419,11 +432,6 @@ class ExpBinary : Exp
           e.Error ( "Type error " + TokenInfo.Name(Operator) + " not valid for type " + DTI.Name(tL) );
       }
     }
-    else if ( tL == DataType.String && Operator == Token.VBar )
-    {
-      Type = DataType.String;
-      Right = Right.Convert( DataType.String );
-    }
     else e.Error( "Binary operator datatype error");
     return Type;
   }
@@ -455,6 +463,44 @@ class ExpBinary : Exp
   public override bool IsConstant() { return Left.IsConstant() && Right.IsConstant(); }
 
 } // end class ExpBinary
+
+class ConcatExp : Exp
+{
+  G.List<Exp> Exps;
+
+  public ConcatExp( G.List<Exp> exps )
+  {
+    Type = DataType.String;
+    Exps = exps;
+  }
+
+  public override DS GetDS()
+  {
+    var list = new DS[ Exps.Count ];
+    for ( int i = 0; i < list.Length; i += 1 ) list[ i ] = Exps[ i ].GetDS();
+    return ( e ) => DoConcat( list, e );
+  }
+
+  public string DoConcat( DS[] list, EvalEnv e )
+  {
+    string [] result = new string[ list.Length ];
+    for ( int i = 0; i < list.Length; i += 1 )
+      result[ i ] = list[i]( e );
+    return string.Join( null, result );
+  }
+
+  public override Exp Bind( SqlExec ee )
+  {
+    for ( int i = 0; i < Exps.Count; i += 1 ) 
+    {
+      Exp x = Exps[ i ];
+      x = x.Bind( ee );
+      if ( x.Type != DataType.String ) x = x.Convert( DataType.String );
+      Exps[ i ] = x;
+    }
+    return this;
+  }
+}
 
 class ExpMinus : UnaryExp
 {

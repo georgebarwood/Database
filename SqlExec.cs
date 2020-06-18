@@ -463,7 +463,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   Exp ExpOrAgg()
   {
     Exp result = Exp( Primary( true ), 0 );
-    if ( !ParseOnly && !DynScope ) result.Bind( this );
+    if ( !ParseOnly && !DynScope ) result = result.Bind( this );
     return result;
   }
 
@@ -475,7 +475,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   Exp Exp( int prec )
   {
     Exp result = Exp( Primary( false ), prec );
-    if ( !ParseOnly && !DynScope ) result.Bind( this );
+    if ( !ParseOnly && !DynScope ) result = result.Bind( this );
     return result;
   }
   
@@ -635,7 +635,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         else 
         { 
           if ( group != null ) Error( "All exps in aggregate select must be aggregate functions" );
-          exps[i].Bind( this );
+          exps[i] = exps[i].Bind( this );
         }
       }
 
@@ -649,7 +649,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       {
         for ( int i=0; i<group.Length; i+=1 ) 
         {
-          group[i].Bind( this );
+          group[i] = group[i].Bind( this );
           exps.Add( group[i] );
         }
       }
@@ -803,7 +803,10 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       int idCol = -1;
       for ( int i=0; i < a.Length; i += 1 ) 
       {        
-        if ( a[i].Lhs.Bind( this ) != a[i].Rhs.Bind( this ) )
+        a[i].Lhs.Bind( this );
+        a[ i ].Rhs = a[i].Rhs.Bind( this );
+
+        if ( a[i].Lhs.Type != a[i].Rhs.Type )
         {
           Exp conv = a[i].Rhs.Convert( a[i].Lhs.Type );
           if ( conv == null ) Error( "Update type mismatch" );
@@ -868,6 +871,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     Read( Token.RBra );
     if ( !ParseOnly )
     {
+      exp = exp.Bind( this );
       if ( exp.Type != DataType.String ) Error( "Argument of EXECUTE must be a string" );
       var ds = exp.GetDS();
       Add( () => B.Execute( ds ) );
@@ -1280,10 +1284,15 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     Exp e = B.IsFunc ? Exp() : null;
     if ( !ParseOnly )
     {
+      if ( e != null ) e = e.Bind( this );
       if ( e != null && B.ReturnType != e.Type ) 
       {
+        var ce = e;
         e = e.Convert( B.ReturnType );
-        if ( e == null ) Error( "Return type error" );        
+        if ( e == null ) 
+        {
+          Error( "Return type error" + ce );   
+        }     
       }
       var dv = e == null ? null : e.GetDV();
       Add( () => B.ExecuteReturn( dv ) );

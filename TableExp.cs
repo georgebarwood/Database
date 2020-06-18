@@ -133,8 +133,8 @@ class Select : TableExpression
           }
         }
         int cix = Exps.Count;
-        Exps.Add( e );    
-        if ( !found ) e.Bind( x );    
+        if ( !found ) e = e.Bind( x );   
+        Exps.Add( e );     
         sortSpec[ i ].Type = e.Type;
         sortSpec[ i ].ColIx = cix;       
       }
