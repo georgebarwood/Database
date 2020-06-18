@@ -243,7 +243,7 @@ class AssignResultSet : ResultSet // Implements SET assignment of local variable
   public override bool NewRow( Value [] r )
   {
     for ( int i=0; i < Assigns.Length; i += 1 ) B.Locals[ Assigns[ i ] ] = r[ i ];
-    return true;
+    return false; // Only one row is assigned.
   }  
 } // end class AssignResultSet
 
