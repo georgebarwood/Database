@@ -4,41 +4,87 @@ namespace SQLNS
 using G = System.Collections.Generic;
 using DBNS;
 
-class ExpScale : UnaryExp
+class DoubleToIntExp : UnaryExp
 {
-  int Amount;
-  public ExpScale( Exp e, DataType t, int amount )
+  public DoubleToIntExp( Exp e )
+  { 
+    E = e;
+    Type = DataType.Bigint;
+  }
+
+  public override DL GetDL()
   {
-    E = e; 
-    Amount = amount;
+    DD x = E.GetDD();
+    return ( ee ) => (long)x(ee);
+  }
+}
+
+class DecimalToDoubleExp : UnaryExp
+{
+  public DecimalToDoubleExp( Exp e )
+  { 
+    E = e;
+    Type = DataType.Double;
+  }
+
+  public override DD GetDD()
+  {
+    DL x = E.GetDL();
+    double p10 = Util.PowerTen( DTI.Scale( E.Type ) );
+    return ( ee ) => (double)x(ee) / p10;
+  }
+}
+
+class IntToDoubleExp : UnaryExp
+{
+  public IntToDoubleExp( Exp e )
+  { 
+    E = e;
+    Type = DataType.Double;
+  }
+
+  public override DD GetDD()
+  {
+    DL x = E.GetDL();
+    return ( ee ) => (double)x(ee);
+  }
+}
+
+// ToDecimal
+
+class IntToDecimalExp : UnaryExp
+{
+  public IntToDecimalExp( Exp e, DataType t )
+  { 
+    E = e;
     Type = t;
   }
 
   public override DL GetDL()
   {
-    long p10 = (long)Util.PowerTen( Amount );
     DL x = E.GetDL();
-    return ( ee ) => x( ee ) * p10;
+    long p10 = (long)Util.PowerTen( DTI.Scale( Type ) );
+    return ( ee ) => x(ee) * p10;
   }
 }
 
-class ExpScaleReduce : UnaryExp
+class DoubleToDecimalExp : UnaryExp
 {
-  int Amount;
-  public ExpScaleReduce( Exp e, DataType t, int amount )
-  {
-    E = e; 
-    Amount = amount;
+  public DoubleToDecimalExp( Exp e, DataType t )
+  { 
+    E = e;
     Type = t;
   }
 
   public override DL GetDL()
   {
-    long p10 = (long)Util.PowerTen( Amount );
-    DL x = E.GetDL();
-    return ( ee ) => x( ee ) / p10;
+    DD x = E.GetDD();
+    ulong p10 = Util.PowerTen( DTI.Scale( Type ) );
+    return ( ee ) => (long)( x(ee) * p10 );
   }
 }
+
+// ToString
 
 class IntToStringExp : UnaryExp
 {
@@ -76,84 +122,6 @@ class DecimalToStringExp : UnaryExp
     int scale = DTI.Scale( t );
     d = d / Util.PowerTen( scale );
     return d.ToString( "F" + scale, System.Globalization.CultureInfo.InvariantCulture );
-  }
-}
-
-class DecimalToDoubleExp : UnaryExp
-{
-  public DecimalToDoubleExp( Exp e )
-  { 
-    E = e;
-    Type = DataType.Double;
-  }
-
-  public override DD GetDD()
-  {
-    DL x = E.GetDL();
-    double p10 = Util.PowerTen( DTI.Scale( E.Type ) );
-    return ( ee ) => (double)x(ee) / p10;
-  }
-}
-
-class IntToDoubleExp : UnaryExp
-{
-  public IntToDoubleExp( Exp e )
-  { 
-    E = e;
-    Type = DataType.Double;
-  }
-
-  public override DD GetDD()
-  {
-    DL x = E.GetDL();
-    return ( ee ) => (double)x(ee);
-  }
-}
-
-class DoubleToIntExp : UnaryExp
-{
-  public DoubleToIntExp( Exp e )
-  { 
-    E = e;
-    Type = DataType.Bigint;
-  }
-
-  public override DL GetDL()
-  {
-    DD x = E.GetDD();
-    return ( ee ) => (long)x(ee);
-  }
-}
-
-class DoubleToDecimalExp : UnaryExp
-{
-  public DoubleToDecimalExp( Exp e, DataType t )
-  { 
-    E = e;
-    Type = t;
-  }
-
-  public override DL GetDL()
-  {
-    DD x = E.GetDD();
-    ulong p10 = Util.PowerTen( DTI.Scale( Type ) );
-    return ( ee ) => (long)( x(ee) * p10 );
-  }
-}
-
-class IntToDecimalExp : UnaryExp
-{
-  public IntToDecimalExp( Exp e, DataType t )
-  { 
-    E = e;
-    Type = t;
-  }
-
-  public override DL GetDL()
-  {
-    DL x = E.GetDL();
-    long p10 = (long)Util.PowerTen( DTI.Scale( Type ) );
-    return ( ee ) => x(ee) * p10;
   }
 }
 
@@ -200,6 +168,44 @@ class BoolToStringExp : UnaryExp
     DB x = E.GetDB();
     return ( ee ) => x(ee).ToString();
   } 
+}
+
+// Decimal scaling
+
+class ExpScale : UnaryExp
+{
+  int Amount;
+  public ExpScale( Exp e, DataType t, int amount )
+  {
+    E = e; 
+    Amount = amount;
+    Type = t;
+  }
+
+  public override DL GetDL()
+  {
+    long p10 = (long)Util.PowerTen( Amount );
+    DL x = E.GetDL();
+    return ( ee ) => x( ee ) * p10;
+  }
+}
+
+class ExpScaleReduce : UnaryExp
+{
+  int Amount;
+  public ExpScaleReduce( Exp e, DataType t, int amount )
+  {
+    E = e; 
+    Amount = amount;
+    Type = t;
+  }
+
+  public override DL GetDL()
+  {
+    long p10 = (long)Util.PowerTen( Amount );
+    DL x = E.GetDL();
+    return ( ee ) => x( ee ) / p10;
+  }
 }
 
 } // end namespace SQLNS
