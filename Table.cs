@@ -39,6 +39,7 @@ class Table : TableExpression // Represents a Database Table.
 
   public override void PrepareToCommit()
   {
+    if ( !Dirty ) return;
     foreach ( G.KeyValuePair<long,IndexFile> p in IxDict ) p.Value.PrepareToCommit();
   }
 
@@ -55,6 +56,7 @@ class Table : TableExpression // Represents a Database Table.
     if ( !Dirty ) return;
     DF.Rollback();
     foreach ( G.KeyValuePair<long,IndexFile> p in IxDict ) p.Value.Rollback();
+    Dirty = false;
   }    
 
   public void CloseAndDelete() // Called as part of DROP TABLE
