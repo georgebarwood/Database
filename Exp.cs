@@ -538,7 +538,7 @@ class ExpFuncCall : Exp
   public override DV GetDV()
   {
     var dvs = GetDV( Plist );
-    return ( ee ) => B.ExecuteFunctionCall( ee, dvs );
+    return ( ee ) => B.ExecuteRoutine( ee, dvs );
   }
 } // end class ExpFuncCall
 

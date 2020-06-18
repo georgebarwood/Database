@@ -901,7 +901,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         var pdv = new Exp.DV[ parms.Count ];
         for ( int i = 0; i < parms.Count; i += 1 ) pdv[ i ] = parms[ i ].GetDV();
 
-        Add( () => B.ExecProcedure( b, pdv ) ); 
+        Add( () => b.ExecuteRoutine( B, pdv ) ); 
       }   
     }
     else if ( name == "SETMODE" )

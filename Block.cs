@@ -141,28 +141,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     return result;
   }
 
-  public void ExecProcedure( Block b, Exp.DV [] parms )
-  {
-    // Allocate the local variables for the called procedure.
-    var locals = b.InitLocals();
-
-    // Evaluate the parameters to be passed, saving them in the newly allocated local variables.
-    for ( int i = 0; i < parms.Length; i += 1 ) locals[i] = parms[ i ]( this );
-
-    // Save local state.
-    var save1 = b.Locals; 
-    var save2 = b.NextStatement;
-
-    // Execute the procedure
-    b.Locals = locals;
-    b.ExecuteStatements( ResultSet );
-
-    // Restore local state.
-    b.NextStatement = save2; 
-    b.Locals = save1;
-  }
-
-  public Value ExecuteFunctionCall( EvalEnv e, Exp.DV [] parms )
+  public Value ExecuteRoutine( EvalEnv e, Exp.DV [] parms )
   {
     // Allocate the local variables for the called function.
     var locals = InitLocals();
@@ -171,17 +150,13 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     for ( int i = 0; i < parms.Length; i += 1 ) locals[i] = parms[ i ]( e );
 
     // Save local state.
-    var save1 = Locals; 
-    var save2 = NextStatement;
+    var save1 = Locals; var save2 = NextStatement;
 
-    // Execute the function
     Locals = locals;
-
     ExecuteStatements( e.ResultSet );
 
     // Restore local state.
-    NextStatement = save2; 
-    Locals = save1;
+    NextStatement = save2; Locals = save1;
 
     return FunctionResult;
   }
