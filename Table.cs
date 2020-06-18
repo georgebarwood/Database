@@ -494,7 +494,7 @@ class Inserter : ResultSet
     T = t; ColIx = colIx; IdCol = idCol; TE = te;
     DataType [] types = t.Cols.Types; 
     Row = new Value[ types.Length ];
-    // The line below is not required as Writer.SaveRecord handles any nulls, but this may be safer.
+    // Initialise row to default values.
     for ( int i = 0; i < types.Length; i += 1 ) Row[ i ] = DTI.Default( types[ i ] );
   }
 
