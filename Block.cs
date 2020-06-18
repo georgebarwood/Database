@@ -130,7 +130,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   public void AllocLocalValues( Exec e )
   {
     CheckLabelsDefined( e );
-    Locals = new Value[ LocalType.Count ];
+    Locals = InitLocals();
   }
 
   public Value [] InitLocals()
