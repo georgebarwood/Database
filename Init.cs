@@ -65,8 +65,8 @@ INSERT INTO [sys].[Column](Id,[Table],[Name],[Type]) VALUES
 (56,14,'BirthMonth',8)
 (57,14,'BirthDay',8)
 (58,14,'DeathYear',5)
-(59,14,'DeathMonth',5)
-(60,14,'DeathDay',5)
+(59,14,'DeathMonth',8)
+(60,14,'DeathDay',8)
 (61,14,'Notes',2)
 ", null );
 
@@ -831,9 +831,9 @@ BEGIN
   DELETE FROM sys.Index WHERE Table = t
   DELETE FROM sys.IndexCol WHERE Table = t
 END
-CREATE PROCEDURE [sys].[ModifiedColumn]( t int, colIx int ) AS 
+CREATE PROCEDURE [sys].[ModifiedColumn]( t int, colId int ) AS 
 BEGIN
-  UPDATE sys.Index SET Modified = 1 WHERE Id IN ( SELECT Index FROM sys.IndexCol WHERE Table = t AND ColIx = colix )
+  UPDATE sys.Index SET Modified = 1 WHERE Id IN ( SELECT Index FROM sys.IndexCol WHERE Table = t AND ColId = colId )
 END
 CREATE PROCEDURE [sys].[RecreateModifiedIndexes]() AS 
 BEGIN
