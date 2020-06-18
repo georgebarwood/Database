@@ -44,10 +44,8 @@ abstract class TableExpression
   public virtual IndexFile FindIndex( int colIx ){ return null; }
   public virtual bool Get( long id, Value[] row, bool [] used ){ return false; } // Only called if FindIndex is implemented.
 
-  // Atomic update.
-  public virtual void PrepareToCommit() { }
-  public virtual void Commit() { }
-  public virtual void Rollback() { }
+  // Atomic update.  
+  public virtual void Commit( CommitStage c ) { }
 }
 
 class Select : TableExpression

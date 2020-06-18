@@ -10,7 +10,7 @@ using G = System.Collections.Generic;
 
 class IndexFile
 {
-  public IndexFile( IO.Stream f, IndexFileInfo inf, DatabaseImp d, long indexId )
+  public IndexFile( FullyBufferedStream f, IndexFileInfo inf, DatabaseImp d, long indexId )
   {
     F = f; Inf = inf; Database = d; IndexId = indexId;
     Initialise();
@@ -18,7 +18,7 @@ class IndexFile
     //Dump();
   }
 
-  public IO.Stream F; // The backing file.
+  public FullyBufferedStream F; // The backing file.
   public IndexFileInfo Inf; // Information about the number of keys and their datatypes ( see below for definition ).
   DatabaseImp Database; // This is used to encode String and Binary keys.
   public long IndexId;
@@ -28,36 +28,34 @@ class IndexFile
   public long PageAlloc; 
   bool Saved;
 
-  public void PrepareToCommit() // Writes pages to the underlying file ( which will be fully buffered ).
+  public void Commit( CommitStage c )
   {
     if ( Saved ) return;
-    // Save the pages.
-    foreach ( G.KeyValuePair<long,IndexPage> pair in PageMap )
+
+    if ( c == CommitStage.Prepare )
     {
-      IndexPage p = pair.Value;
-      if ( !p.Saved )
+      // Save the pages to the underlying stream.
+      foreach ( G.KeyValuePair<long,IndexPage> pair in PageMap )
       {
-        p.WriteHeader();
-        F.Position = (long)p.PageId * IndexPage.PageSize;
+        IndexPage p = pair.Value;
+        if ( !p.Saved )
+        {
+          p.WriteHeader();
+          F.Position = (long)p.PageId * IndexPage.PageSize;
         
-        // For last page, only write the amount actually used (so file size is minimised)
-        F.Write( p.Data, 0, p.PageId == PageAlloc-1 ? p.Size() : IndexPage.PageSize );
-        p.Saved = true;
+          // For last page, only write the amount actually used (so file size is minimised)
+          F.Write( p.Data, 0, p.PageId == PageAlloc-1 ? p.Size() : IndexPage.PageSize );
+          p.Saved = true;
+        }
       }
     }
-    Saved = true;
-  }
-
-  public void Commit()
-  {
-    F.Flush();
-  }
-
-  public void Rollback()
-  {
-    if ( Saved ) return;
-    PageMap.Clear();
-    Initialise();
+    else if ( c == CommitStage.Rollback )
+    {
+      PageMap.Clear();
+      Initialise();
+    }
+    else F.Commit( c );
+    if ( c >= CommitStage.Flush ) Saved = true;
   }
 
   void Initialise()

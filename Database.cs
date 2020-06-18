@@ -6,6 +6,7 @@ using IO = System.IO;
 using SQLNS;
 
 enum FileType{ Table=0, Index=1, System = 3 };
+enum CommitStage { Prepare, Write, Flush, Rollback };
 
 class DatabaseImp : Database
 {  
@@ -115,7 +116,7 @@ class DatabaseImp : Database
   bool Rollback;
   G.HashSet<long> DeletedFiles = new G.HashSet<long>();
 
-  readonly IO.Stream SysString, SysBinary;
+  readonly FullyBufferedStream SysString, SysBinary;
   readonly BinaryReader SysStringReader, SysBinaryReader;
   readonly BinaryWriter SysStringWriter, SysBinaryWriter;
 
@@ -585,33 +586,33 @@ class DatabaseImp : Database
 
   /* Private methods */
 
-  void  RollbackOrCommit()
+  void Commit( CommitStage c )
+  {
+    SysString.Commit( c );
+    SysBinary.Commit( c );
+    SysStringIndex.Commit( c );
+    SysBinaryIndex.Commit( c );
+    foreach( G.KeyValuePair<string,Schema> p in SchemaDict )
+      foreach( G.KeyValuePair<string,TableExpression> q in p.Value.TableDict )
+        q.Value.Commit( c );
+  }
+
+  void RollbackOrCommit()
   {
     if ( Rollback )
     {
       Log.Reset();
-      foreach( G.KeyValuePair<string,Schema> p in SchemaDict )
-        foreach( G.KeyValuePair<string,TableExpression> q in p.Value.TableDict )
-          q.Value.Rollback();
+      Commit( CommitStage.Rollback );
       Rollback = false;
     }
     else 
     {
-      // Save indexes to underlying buffered streams ( can add more Log entries ). 
-      SysStringIndex.PrepareToCommit();
-      SysBinaryIndex.PrepareToCommit();
-      foreach( G.KeyValuePair<string,Schema> p in SchemaDict )
-        foreach( G.KeyValuePair<string,TableExpression> q in p.Value.TableDict )
-          q.Value.PrepareToCommit();  
+      Commit( CommitStage.Prepare );
     
       if ( Log.Commit() )
       {
-        SysString.Flush(); SysStringIndex.Commit();
-        SysBinary.Flush(); SysBinaryIndex.Commit();
-
-        foreach( G.KeyValuePair<string,Schema> p in SchemaDict )
-          foreach( G.KeyValuePair<string,TableExpression> q in p.Value.TableDict )
-            q.Value.Commit();
+        Commit( CommitStage.Write );
+        Commit( CommitStage.Flush );
 
         foreach ( long fileId in DeletedFiles )
         {

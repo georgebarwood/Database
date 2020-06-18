@@ -45,6 +45,7 @@ class FullyBufferedStream : IO.Stream
   public override bool CanRead { get{ return true; } }
   public override bool CanWrite { get{ return true; } }
   public override bool CanSeek { get{ return true; } }
+  public override void Flush(){ Commit( CommitStage.Write ); Commit( CommitStage.Flush ); }
 
   public override long Length { get{ return Len; } }
 
@@ -175,36 +176,41 @@ class FullyBufferedStream : IO.Stream
     return true;
   }
 
-  public void Rollback()
+  public void Commit( CommitStage c )
   {
-    Buffers.Clear();
-    UnsavedPageNums.Clear();
-    UnsavedAdded = false;
-    ReadAvail = 0;
-    WriteAvail = 0;   
-    CurBufferNum = -1;
-  }
-
-  public override void Flush()
-  {
-    foreach ( long bufferNum in UnsavedPageNums )
+    if ( c == CommitStage.Rollback )
     {
-      byte [] b = GetBuffer( bufferNum );
-      long pos = bufferNum << BufferShift;
-      long n = Len - pos;
-      if ( n > BufferSize ) n = BufferSize;
-      if ( BaseStream.Position != pos ) BaseStream.Position = pos;
-      BaseStream.Write( b, 0, (int)n );
+      Buffers.Clear();
+      UnsavedPageNums.Clear();
+      UnsavedAdded = false;
+      ReadAvail = 0;
+      WriteAvail = 0;   
+      CurBufferNum = -1;
     }
-    UnsavedPageNums.Clear();
-    UnsavedAdded = false;
-    BaseStream.SetLength( Len );
-    BaseStream.Flush( true );
+    else if ( c == CommitStage.Write )
+    {
+      foreach ( long bufferNum in UnsavedPageNums )
+      {
+        byte [] b = GetBuffer( bufferNum );
+        long pos = bufferNum << BufferShift;
+        long n = Len - pos;
+        if ( n > BufferSize ) n = BufferSize;
+        if ( BaseStream.Position != pos ) BaseStream.Position = pos;
+        BaseStream.Write( b, 0, (int)n );
+      }
+      UnsavedPageNums.Clear();
+      UnsavedAdded = false;
+      BaseStream.SetLength( Len );
+    }
+    else if ( c == CommitStage.Flush )
+    {
+      BaseStream.Flush( true );
+    }
   }
 
   public override void Close()
   {
-    Rollback();
+    Commit( CommitStage.Rollback );
     BaseStream.Close();
   }
 

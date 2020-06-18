@@ -37,27 +37,13 @@ class Table : TableExpression // Represents a Database Table.
     // System.Console.WriteLine( "Opened " + Schema + "." + name + " RowSize=" + RowSize + " RowCount=" + RowCount );
   }
 
-  public override void PrepareToCommit()
+  public override void Commit( CommitStage c )
   {
     if ( !Dirty ) return;
-    foreach ( G.KeyValuePair<long,IndexFile> p in IxDict ) p.Value.PrepareToCommit();
+    DF.Commit( c );
+    foreach ( G.KeyValuePair<long,IndexFile> p in IxDict ) p.Value.Commit( c );
+    if ( c >= CommitStage.Flush ) Dirty = false;
   }
-
-  public override void Commit()
-  {
-    if ( !Dirty ) return;
-    DF.Flush();
-    foreach ( G.KeyValuePair<long,IndexFile> p in IxDict ) p.Value.Commit();
-    Dirty = false;
-  }
-
-  public override void Rollback()
-  {
-    if ( !Dirty ) return;
-    DF.Rollback();
-    foreach ( G.KeyValuePair<long,IndexFile> p in IxDict ) p.Value.Rollback();
-    Dirty = false;
-  }    
 
   public void CloseAndDelete() // Called as part of DROP TABLE
   {
