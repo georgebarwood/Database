@@ -138,7 +138,7 @@ class WebResultSet : DBNS.ResultSet
         }
       }
     }
-    else // HTML table mode
+    else if ( Mode == 1 ) // HTML table mode
     {
       PutUtf8("<tr>");
       for ( int i = 0; i < CI.Count; i += 1 )
