@@ -133,10 +133,18 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     Locals = new Value[ LocalType.Count ];
   }
 
+  public Value [] InitLocals()
+  {
+    int n = LocalType.Count;
+    var result = new Value[ n ];
+    for ( int i = 0; i < n; i += 1 ) result[ i ] = DTI.Default( LocalType[ i ] );
+    return result;
+  }
+
   public void ExecProcedure( Block b, Exp.DV [] parms )
   {
     // Allocate the local variables for the called procedure.
-    var locals = new Value[ b.LocalType.Count ];
+    var locals = b.InitLocals();
 
     // Evaluate the parameters to be passed, saving them in the newly allocated local variables.
     for ( int i = 0; i < parms.Length; i += 1 ) locals[i] = parms[ i ]( this );
@@ -157,7 +165,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   public Value ExecuteFunctionCall( EvalEnv e, Exp.DV [] parms )
   {
     // Allocate the local variables for the called function.
-    var locals = new Value[ LocalType.Count ];
+    var locals = InitLocals();
 
     // Evaluate the parameters to be passed, saving them in the newly allocated local variables.
     for ( int i = 0; i < parms.Length; i += 1 ) locals[i] = parms[ i ]( e );

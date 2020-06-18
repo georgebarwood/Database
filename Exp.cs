@@ -123,21 +123,13 @@ class ExpLocalVar : Exp
   int I;
   public ExpLocalVar( int i, DataType t ) { I = i; Type = t; }
 
-  public override bool IsConstant() { return true; }
-
-  public override DV GetDV()
-  {
-    int i = I;
-    return ( EvalEnv ee ) => ee.Locals[i];
-  }
-
+  public override DV GetDV() { int i = I; return ( EvalEnv ee ) => ee.Locals[i]; }
   public override DB GetDB() { int i = I; return ( EvalEnv ee ) => ee.Locals[i].B; }
-
   public override DL GetDL() { int i = I; return ( EvalEnv ee ) => ee.Locals[i].L; }
+  public override DS GetDS() { int i = I; return ( EvalEnv ee ) => (string)ee.Locals[i]._O; }
+  public override DX GetDX() { int i = I; return ( EvalEnv ee ) => (byte[])ee.Locals[i]._O; }
 
-  public override DS GetDS() { int i = I; return ( EvalEnv ee ) => ee.Locals[i]._O == null ? "" : (string)ee.Locals[i]._O; }
-
-  public override DX GetDX() { int i = I; return ( EvalEnv ee ) => ee.Locals[i]._O == null ? DTI.ZeroByte : (byte[])ee.Locals[i]._O; }
+  public override bool IsConstant() { return true; }
 }
 
 class ExpConstant : Exp
