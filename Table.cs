@@ -11,39 +11,28 @@ class Table : TableExpression // Represents a Database Table.
 
   readonly FullyBufferedStream DF;
   int RowSize;
-  byte [] RB;
+  byte [] RowBuffer;
   readonly DatabaseImp Db;
 
   public long RowCount; // Includes deleted rows.
   IndexInfo[] Ix;
   bool Dirty;
 
-  int CalcRowSize( ColInfo c )
-  {
-    int result = 1; // Flag byte that indicates whether row is deleted.
-    for ( int i = 1; i < c.Count; i += 1 )
-      result += DTI.Size( c.Types[i] ); 
-    return result;
-  }
-
   public Table ( DatabaseImp db, Schema schema, string name, ColInfo cols, long tableId )
   {
+    Db = db;
+    Schema = schema.Name;
+    Name = name;
+    Cols = cols;
     TableId = tableId;
 
     schema.TableDict[ name ] = this;
-
-    Schema = schema.Name;
-    Name = name;
-    Db = db;
     Ix = new IndexInfo[0];
-    Cols = cols;
-
     DF = Db.OpenFile( FileType.Table, tableId );
 
     RowSize = CalcRowSize( Cols );
     RowCount = (long)( DF.Length / RowSize );
-
-    RB = new byte[ RowSize ];
+    RowBuffer = new byte[ RowSize ];
 
     // System.Console.WriteLine( "Opened " + Schema + "." + name + " RowSize=" + RowSize + " RowCount=" + RowCount );
   }
@@ -94,8 +83,8 @@ class Table : TableExpression // Represents a Database Table.
     if ( id <= 0 || id > RowCount ) return false;
 
     DF.Position = (id-1) * RowSize;
-    int ix; byte [] RB = DF.FastRead( RowSize, out ix );
-    if ( RB[ix++] == 0 ) return false; // Row has been deleted
+    int ix; byte [] RowBuffer = DF.FastRead( RowSize, out ix );
+    if ( RowBuffer[ix++] == 0 ) return false; // Row has been deleted
     row[ 0 ].L = id;
     DataType [] types = Cols.Types;
     byte [] sizes = Cols.Sizes;
@@ -105,7 +94,7 @@ class Table : TableExpression // Represents a Database Table.
       if ( used == null || used [ i ] ) // Column not skipped
       {
         DataType t = types[ i ];
-        long x = (long)Util.Get( RB, ix, size, t ); 
+        long x = (long)Util.Get( RowBuffer, ix, size, t ); 
         row[ i ].L = x;
         if ( t <= DataType.String ) row[ i ]._O =       
           t == DataType.Binary ? (object)Db.DecodeBinary( x ): (object)Db.DecodeString( x );
@@ -121,13 +110,13 @@ class Table : TableExpression // Represents a Database Table.
 
     if ( row == null ) // Delete record
     {
-      for ( int i = 0; i < RowSize; i += 1 ) RB[ i ] = 0;
+      for ( int i = 0; i < RowSize; i += 1 ) RowBuffer[ i ] = 0;
     }
     else
     {
       DataType [] types = Cols.Types;
       byte [] sizes = Cols.Sizes;
-      RB[ 0 ] = 1;
+      RowBuffer[ 0 ] = 1;
       int ix = 1;
       for ( int i = 1; i < types.Length; i += 1 )
       {
@@ -141,11 +130,11 @@ class Table : TableExpression // Represents a Database Table.
         }
         else if ( t == DataType.Float ) x = Conv.PackFloat( x );
         int size = sizes[ i ];
-        Util.Set( RB, ix, x, size );     
+        Util.Set( RowBuffer, ix, x, size );     
         ix += size;
       }
     }
-    if ( !DF.Write( RB, 0, RowSize, checkNew ) ) 
+    if ( !DF.Write( RowBuffer, 0, RowSize, checkNew ) ) 
     {
       throw new System.Exception( "Duplicate id, id=" + id + " Table=" + Schema + "." + Name );
     }
@@ -379,7 +368,7 @@ class Table : TableExpression // Represents a Database Table.
 
     int newRowSize = CalcRowSize( newcols );
     byte [] blank = new byte[ newRowSize ];
-    RB = new byte[ newRowSize ];
+    RowBuffer = new byte[ newRowSize ];
 
     // So that old data is not over-written before it has been converted, if new row size is bigger, use descending order.
     bool desc = newRowSize > RowSize;
@@ -410,13 +399,13 @@ class Table : TableExpression // Represents a Database Table.
 
   bool AlterRead( DataType [] types, long [] row ) 
   {
-    int ix; byte [] RB = DF.FastRead( RowSize, out ix );
-    if ( RB[ix++] == 0 ) return false; // Row has been deleted
+    int ix; byte [] RowBuffer = DF.FastRead( RowSize, out ix );
+    if ( RowBuffer[ix++] == 0 ) return false; // Row has been deleted
     for ( int i=1; i < types.Length; i += 1 )
     {
       DataType t = types[ i ];
       int size = DTI.Size( t );
-      ulong x = Util.Get( RB, ix, size, t );
+      ulong x = Util.Get( RowBuffer, ix, size, t );
       ix += size;
       row[ i ] = (long)x;
     }
@@ -425,7 +414,7 @@ class Table : TableExpression // Represents a Database Table.
 
   void AlterWrite( DataType [] types, long [] row, int newRowSize )
   {
-    RB[ 0 ] = 1;
+    RowBuffer[ 0 ] = 1;
     int ix = 1;
     for ( int i = 1; i < types.Length; i += 1 )
     {
@@ -433,13 +422,21 @@ class Table : TableExpression // Represents a Database Table.
       ulong x = (ulong) row[ i ];
       if ( t == DataType.Float ) x = Conv.PackFloat( x );
       int size = DTI.Size( t );
-      Util.Set( RB, ix, x, size );
+      Util.Set( RowBuffer, ix, x, size );
       ix += size;       
     }
-    DF.Write( RB, 0, newRowSize, false );
+    DF.Write( RowBuffer, 0, newRowSize, false );
   }
 
   // end Alter section
+
+  int CalcRowSize( ColInfo c )
+  {
+    int result = 1; // Flag byte that indicates whether row is deleted.
+    for ( int i = 1; i < c.Count; i += 1 )
+      result += DTI.Size( c.Types[i] ); 
+    return result;
+  }
 
 }  // End class Table
 
