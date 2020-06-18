@@ -260,17 +260,11 @@ class Table : TableExpression // Represents a Database Table.
     ee.Row = tr;
 
     IdSet IdSet = where == null ? null : where.GetIdSet( this, ee );
-    if ( IdSet == null ) 
-    {
-      IdSet = new UpTo( RowCount );
-    }
-    else 
-      IdSet = new IdCopy( IdSet, ee ); // Need to take a copy of the id values, as indexes may be updated.
+    if ( IdSet == null ) IdSet = new UpTo( RowCount );
+    else IdSet = new IdCopy( IdSet, ee ); // Need to take a copy of the id values, as indexes may be updated.
 
-    foreach ( long id in IdSet.All( ee ) ) if ( Get( id, tr, null ) )
-    {      
-      if ( w( ee ) ) Delete( id, tr );
-    }
+    foreach ( long id in IdSet.All( ee ) ) 
+      if ( Get( id, tr, null ) && w( ee ) ) Delete( id, tr );
   }
 
   public int ColumnIx( string name, Exec e )
