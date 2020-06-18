@@ -639,8 +639,11 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         }
       }
 
-      if ( where != null && where.Bind( this ) != DataType.Bool ) 
-        Error( "WHERE expression must be boolean" );
+      if ( where != null )
+      {
+        where = where.Bind( this );
+        if ( where.Type != DataType.Bool ) Error( "WHERE expression must be boolean" );
+      }
       
       if ( group != null ) 
       {
@@ -808,9 +811,11 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         }
         if ( a[i].Lhs.ColIx == 0 ) idCol = i;
       }
-      if ( where != null && where.Bind( this ) != DataType.Bool ) 
-        Error( "WHERE expression must be boolean" );
-
+      if ( where != null )
+      {
+        where = where.Bind( this );
+        if ( where.Type != DataType.Bool ) Error( "WHERE expression must be boolean" );
+      }
       var used = Used; // Need to take a copy
       var w = where.GetDB();
       var dvs = new Exp.DV[ a.Length ];
@@ -843,8 +848,11 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       Used = new bool[ t.Cols.Count ]; // Bitmap of columns that are referenced by any expression.
       CI = t.Cols;
 
-      if ( where != null && where.Bind( this ) != DataType.Bool ) 
-        Error( "WHERE expression must be boolean" );
+      if ( where != null )
+      {
+        where = where.Bind( this );
+        if ( where.Type != DataType.Bool ) Error( "WHERE expression must be boolean" );
+      }
       var used = Used; // Need to take a copy.
       var w = where.GetDB();
       Add( () => t.ExecDelete( where, w, used, B ) );
@@ -906,8 +914,12 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     }
     else if ( name == "SETMODE" )
     {
-      if ( !ParseOnly && ( parms.Count != 1 || parms[0].Bind( this ) != DataType.Bigint ) )
-        Error( "SETMODE param error" );
+      if ( parms.Count != 1 ) Error ( "SETMODE takes one param" );
+      if ( !ParseOnly )
+      {
+        parms[ 0 ] = parms[ 0 ].Bind( this );
+        if ( parms[ 0 ].Type != DataType.Bigint ) Error( "SETMODE param error" );
+      }
       var dl = parms[0].GetDL();
       Add( () => B.SetMode( dl ) );
     }
