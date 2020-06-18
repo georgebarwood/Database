@@ -79,28 +79,28 @@ abstract class Exp
   { 
     switch( DTI.Base( Type ) )
     {
-      case DataType.Bool   : DB db = GetDB(); return (ee) => Value.New( db(ee) );
-      case DataType.Double : DD dd = GetDD(); return (ee) => Value.New( dd(ee) );
-      case DataType.String : DS ds = GetDS(); return (ee) => Value.New( ds(ee) );
-      case DataType.Binary : DX dx = GetDX(); return (ee) => Value.New( dx(ee) );
-      default:               DL dl = GetDL(); return (ee) => Value.New( dl(ee) );
+      case DataType.Bool   : DB db = GetDB(); return ( ee ) => Value.New( db( ee ) );
+      case DataType.Double : DD dd = GetDD(); return ( ee ) => Value.New( dd( ee ) );
+      case DataType.String : DS ds = GetDS(); return ( ee ) => Value.New( ds( ee ) );
+      case DataType.Binary : DX dx = GetDX(); return ( ee ) => Value.New( dx( ee ) );
+      default:               DL dl = GetDL(); return ( ee ) => Value.New( dl( ee ) );
     }
   }
 
   public delegate bool DB( EvalEnv e );
-  public virtual DB GetDB(){ var dv = GetDV(); return ( ee ) => dv(ee).B; }
+  public virtual DB GetDB(){ var dv = GetDV(); return ( ee ) => dv( ee ).B; }
 
   public delegate long DL( EvalEnv e );
-  public virtual DL GetDL(){ var dv = GetDV(); return ( ee ) => dv(ee).L; }
+  public virtual DL GetDL(){ var dv = GetDV(); return ( ee ) => dv( ee ).L; }
 
   public delegate double DD( EvalEnv e );
-  public virtual DD GetDD(){ var dv = GetDV(); return ( ee ) => dv(ee).D; }
+  public virtual DD GetDD(){ var dv = GetDV(); return ( ee ) => dv( ee ).D; }
 
   public delegate string DS( EvalEnv e );
-  public virtual DS GetDS(){ var dv = GetDV(); return ( ee ) => (string)dv(ee)._O; }
+  public virtual DS GetDS(){ var dv = GetDV(); return ( ee ) => (string)dv( ee )._O; }
 
   public delegate byte[] DX( EvalEnv e );
-  public virtual DX GetDX(){ var dv = GetDV(); return ( ee ) => (byte[])dv(ee)._O; }
+  public virtual DX GetDX(){ var dv = GetDV(); return ( ee ) => (byte[])dv( ee )._O; }
 
   public Value Eval( EvalEnv e ) { var dv = GetDV(); return dv( e ); }
 
@@ -126,11 +126,11 @@ class ExpLocalVar : Exp
   int I;
   public ExpLocalVar( int i, DataType t ) { I = i; Type = t; }
 
-  public override DV GetDV() { int i = I; return ( EvalEnv ee ) => ee.Locals[i]; }
-  public override DB GetDB() { int i = I; return ( EvalEnv ee ) => ee.Locals[i].B; }
-  public override DL GetDL() { int i = I; return ( EvalEnv ee ) => ee.Locals[i].L; }
-  public override DS GetDS() { int i = I; return ( EvalEnv ee ) => (string)ee.Locals[i]._O; }
-  public override DX GetDX() { int i = I; return ( EvalEnv ee ) => (byte[])ee.Locals[i]._O; }
+  public override DV GetDV() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ]; }
+  public override DB GetDB() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ].B; }
+  public override DL GetDL() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ].L; }
+  public override DS GetDS() { int i = I; return ( EvalEnv ee ) => (string)ee.Locals[ i ]._O; }
+  public override DX GetDX() { int i = I; return ( EvalEnv ee ) => (byte[])ee.Locals[ i ]._O; }
 
   public override bool IsConstant() { return true; }
 }
@@ -162,16 +162,14 @@ class ExpName : Exp
     var ci = e.CI;
     if ( ci == null ) e.Error( "Undeclared variable " + ColName );
     for ( int i=0; i < ci.Count; i += 1 ) 
-      if ( ci.Names[i] == ColName ) 
+      if ( ci.Names[ i ] == ColName ) 
       { 
         e.Used[ i ] = true;
         ColIx = i; 
-        Type = DTI.Base( ci.Types[i] );
+        Type = DTI.Base( ci.Types[ i ] );
         return this;
       }
 
-    // for ( int i=0; i < ci.Length; i += 1 ) System.Console.WriteLine( ci[i].Name );
-    
     e.Error( "Column " + ColName + " not found" );
     return this;
   }
@@ -202,10 +200,10 @@ class ExpBinary : Exp
         DB right = Right.GetDB();
         switch( Operator )
         {    
-          case Token.And: return (ee) => Value.New( left(ee) && right(ee) );
-          case Token.Or:  return (ee) => Value.New( left(ee) || right(ee) );
-          case Token.Equal: return (ee) => Value.New( left(ee) ==  right(ee) );
-          case Token.NotEqual: return (ee) => Value.New( left(ee) != right(ee) );
+          case Token.And: return ( ee ) => Value.New( left( ee ) && right( ee ) );
+          case Token.Or:  return ( ee ) => Value.New( left( ee ) || right( ee ) );
+          case Token.Equal: return ( ee ) => Value.New( left( ee ) ==  right( ee ) );
+          case Token.NotEqual: return ( ee ) => Value.New( left( ee ) != right( ee ) );
         }
         break;
       }
@@ -216,17 +214,17 @@ class ExpBinary : Exp
         DL right = Right.GetDL();
         switch( Operator )
         {
-          case Token.Equal:         return (ee) => Value.New( left(ee) == right(ee) );
-          case Token.NotEqual:      return (ee) => Value.New( left(ee) != right(ee) );
-          case Token.Greater:       return (ee) => Value.New( left(ee) > right(ee) );
-          case Token.GreaterEqual:  return (ee) => Value.New( left(ee) >= right(ee) );
-          case Token.Less:          return (ee) => Value.New( left(ee) < right(ee) );
-          case Token.LessEqual:     return (ee) => Value.New( left(ee) <= right(ee) );
-          case Token.Plus:          return (ee) => Value.New( left(ee) + right(ee) );
-          case Token.Minus:         return (ee) => Value.New( left(ee) - right(ee) );
-          case Token.Times:         return (ee) => Value.New( left(ee) * right(ee) );
-          case Token.Divide:        return (ee) => Value.New( left(ee) / right(ee) );
-          case Token.Percent:       return (ee) => Value.New( left(ee) % right(ee) );
+          case Token.Equal:         return ( ee ) => Value.New( left( ee ) == right( ee ) );
+          case Token.NotEqual:      return ( ee ) => Value.New( left( ee ) != right( ee ) );
+          case Token.Greater:       return ( ee ) => Value.New( left( ee ) > right( ee ) );
+          case Token.GreaterEqual:  return ( ee ) => Value.New( left( ee ) >= right( ee ) );
+          case Token.Less:          return ( ee ) => Value.New( left( ee ) < right( ee ) );
+          case Token.LessEqual:     return ( ee ) => Value.New( left( ee ) <= right( ee ) );
+          case Token.Plus:          return ( ee ) => Value.New( left( ee ) + right( ee ) );
+          case Token.Minus:         return ( ee ) => Value.New( left( ee ) - right( ee ) );
+          case Token.Times:         return ( ee ) => Value.New( left( ee ) * right( ee ) );
+          case Token.Divide:        return ( ee ) => Value.New( left( ee ) / right( ee ) );
+          case Token.Percent:       return ( ee ) => Value.New( left( ee ) % right( ee ) );
         }
         break;
       }
@@ -236,17 +234,17 @@ class ExpBinary : Exp
         DD right = Right.GetDD();
         switch( Operator )
         {
-          case Token.Equal:         return (ee) => Value.New( left(ee) == right(ee) );
-          case Token.NotEqual:      return (ee) => Value.New( left(ee) != right(ee) );
-          case Token.Greater:       return (ee) => Value.New( left(ee) > right(ee) );
-          case Token.GreaterEqual:  return (ee) => Value.New( left(ee) >= right(ee) );
-          case Token.Less:          return (ee) => Value.New( left(ee) < right(ee) );
-          case Token.LessEqual:     return (ee) => Value.New( left(ee) <= right(ee) );
-          case Token.Plus:          return (ee) => Value.New( left(ee) + right(ee) );
-          case Token.Minus:         return (ee) => Value.New( left(ee) - right(ee) );
-          case Token.Times:         return (ee) => Value.New( left(ee) * right(ee) );
-          case Token.Divide:        return (ee) => Value.New( left(ee) / right(ee) );
-          case Token.Percent:       return (ee) => Value.New( left(ee) % right(ee) );
+          case Token.Equal:         return ( ee ) => Value.New( left( ee ) == right( ee ) );
+          case Token.NotEqual:      return ( ee ) => Value.New( left( ee ) != right( ee ) );
+          case Token.Greater:       return ( ee ) => Value.New( left( ee ) > right( ee ) );
+          case Token.GreaterEqual:  return ( ee ) => Value.New( left( ee ) >= right( ee ) );
+          case Token.Less:          return ( ee ) => Value.New( left( ee ) < right( ee ) );
+          case Token.LessEqual:     return ( ee ) => Value.New( left( ee ) <= right( ee ) );
+          case Token.Plus:          return ( ee ) => Value.New( left( ee ) + right( ee ) );
+          case Token.Minus:         return ( ee ) => Value.New( left( ee ) - right( ee ) );
+          case Token.Times:         return ( ee ) => Value.New( left( ee ) * right( ee ) );
+          case Token.Divide:        return ( ee ) => Value.New( left( ee ) / right( ee ) );
+          case Token.Percent:       return ( ee ) => Value.New( left( ee ) % right( ee ) );
         }
         break;
       }
@@ -256,12 +254,12 @@ class ExpBinary : Exp
         DS right = Right.GetDS();
         switch( Operator )
         {
-          case Token.Equal:         return (ee) => Value.New( left(ee) == right(ee) );
-          case Token.NotEqual:      return (ee) => Value.New( left(ee) != right(ee) );
-          case Token.Greater:       return (ee) => Value.New( string.Compare( left(ee), right(ee) ) > 0 );
-          case Token.GreaterEqual:  return (ee) => Value.New( string.Compare( left(ee), right(ee) ) >= 0 );
-          case Token.Less:          return (ee) => Value.New( string.Compare( left(ee), right(ee) ) < 0 );
-          case Token.LessEqual:     return (ee) => Value.New( string.Compare( left(ee), right(ee) ) <= 0 );
+          case Token.Equal:         return ( ee ) => Value.New( left( ee ) == right( ee ) );
+          case Token.NotEqual:      return ( ee ) => Value.New( left( ee ) != right( ee ) );
+          case Token.Greater:       return ( ee ) => Value.New( string.Compare( left( ee ), right( ee ) ) > 0 );
+          case Token.GreaterEqual:  return ( ee ) => Value.New( string.Compare( left( ee ), right( ee ) ) >= 0 );
+          case Token.Less:          return ( ee ) => Value.New( string.Compare( left( ee ), right( ee ) ) < 0 );
+          case Token.LessEqual:     return ( ee ) => Value.New( string.Compare( left( ee ), right( ee ) ) <= 0 );
         }
         break;
       }      
@@ -278,10 +276,10 @@ class ExpBinary : Exp
         DB lb = Left.GetDB(), rb = Right.GetDB();
         switch( Operator )
         {
-          case Token.And: return ( ee ) => lb(ee) && rb( ee );
-          case Token.Or:  return ( ee ) => lb(ee) || rb( ee );
-          case Token.Equal: return ( ee ) => lb(ee) == rb( ee );
-          case Token.NotEqual: return ( ee ) => lb(ee) != rb( ee );
+          case Token.And: return ( ee ) => lb( ee ) && rb( ee );
+          case Token.Or:  return ( ee ) => lb( ee ) || rb( ee );
+          case Token.Equal: return ( ee ) => lb( ee ) == rb( ee );
+          case Token.NotEqual: return ( ee ) => lb( ee ) != rb( ee );
         }   
         break;    
       case DataType.Bigint:
@@ -289,24 +287,24 @@ class ExpBinary : Exp
         DL ll = Left.GetDL(), rl = Right.GetDL();
         switch( Operator )
         {
-          case Token.Equal:         return ( ee ) => ll(ee) == rl(ee);
-          case Token.NotEqual:      return ( ee ) => ll(ee) != rl(ee);
-          case Token.Greater:       return ( ee ) => ll(ee) > rl(ee);
-          case Token.GreaterEqual:  return ( ee ) => ll(ee) >= rl(ee);
-          case Token.Less:          return ( ee ) => ll(ee) < rl(ee);
-          case Token.LessEqual:     return ( ee ) => ll(ee) <= rl(ee);
+          case Token.Equal:         return ( ee ) => ll( ee ) == rl( ee );
+          case Token.NotEqual:      return ( ee ) => ll( ee ) != rl( ee );
+          case Token.Greater:       return ( ee ) => ll( ee ) > rl( ee );
+          case Token.GreaterEqual:  return ( ee ) => ll( ee ) >= rl( ee );
+          case Token.Less:          return ( ee ) => ll( ee ) < rl( ee );
+          case Token.LessEqual:     return ( ee ) => ll( ee ) <= rl( ee );
         }
         break;         
       case DataType.Double:
          DD ld = Left.GetDD(), rd = Right.GetDD();
         switch( Operator )
         {
-          case Token.Equal:         return ( ee ) => ld(ee) == rd(ee);
-          case Token.NotEqual:      return ( ee ) => ld(ee) != rd(ee);
-          case Token.Greater:       return ( ee ) => ld(ee) > rd(ee);
-          case Token.GreaterEqual:  return ( ee ) => ld(ee) >= rd(ee);
-          case Token.Less:          return ( ee ) => ld(ee) < rd(ee);
-          case Token.LessEqual:     return ( ee ) => ld(ee) <= rd(ee);
+          case Token.Equal:         return ( ee ) => ld( ee ) == rd( ee );
+          case Token.NotEqual:      return ( ee ) => ld( ee ) != rd( ee );
+          case Token.Greater:       return ( ee ) => ld( ee ) > rd( ee );
+          case Token.GreaterEqual:  return ( ee ) => ld( ee ) >= rd( ee );
+          case Token.Less:          return ( ee ) => ld( ee ) < rd( ee );
+          case Token.LessEqual:     return ( ee ) => ld( ee ) <= rd( ee );
         }
         break;
        
@@ -314,12 +312,12 @@ class ExpBinary : Exp
         DS ls = Left.GetDS(), rs = Right.GetDS();
         switch( Operator )
         {
-          case Token.Equal:         return ( ee ) => ls(ee) == rs(ee);
-          case Token.NotEqual:      return ( ee ) => ls(ee) != rs(ee);
-          case Token.Greater:       return ( ee ) => string.Compare( ls(ee), rs(ee) ) > 0;
-          case Token.GreaterEqual:  return ( ee ) => string.Compare( ls(ee), rs(ee) ) >= 0;
-          case Token.Less:          return ( ee ) => string.Compare( ls(ee), rs(ee) ) < 0;
-          case Token.LessEqual:     return ( ee ) => string.Compare( ls(ee), rs(ee) ) <= 0;
+          case Token.Equal:         return ( ee ) => ls( ee ) == rs( ee );
+          case Token.NotEqual:      return ( ee ) => ls( ee ) != rs( ee );
+          case Token.Greater:       return ( ee ) => string.Compare( ls( ee ), rs( ee ) ) > 0;
+          case Token.GreaterEqual:  return ( ee ) => string.Compare( ls( ee ), rs( ee ) ) >= 0;
+          case Token.Less:          return ( ee ) => string.Compare( ls( ee ), rs( ee ) ) < 0;
+          case Token.LessEqual:     return ( ee ) => string.Compare( ls( ee ), rs( ee ) ) <= 0;
         }
         break;         
     }
@@ -332,11 +330,11 @@ class ExpBinary : Exp
     DL right = Right.GetDL();
     switch( Operator )
     {
-      case Token.Plus:          return (ee) => left(ee) + right(ee);
-      case Token.Minus:         return (ee) => left(ee) - right(ee);
-      case Token.Times:         return (ee) => left(ee) * right(ee);
-      case Token.Divide:        return (ee) => left(ee) / right(ee);
-      case Token.Percent:       return (ee) => left(ee) % right(ee);
+      case Token.Plus:          return ( ee ) => left( ee ) + right( ee );
+      case Token.Minus:         return ( ee ) => left( ee ) - right( ee );
+      case Token.Times:         return ( ee ) => left( ee ) * right( ee );
+      case Token.Divide:        return ( ee ) => left( ee ) / right( ee );
+      case Token.Percent:       return ( ee ) => left( ee ) % right( ee );
     }
     return null;
   }
@@ -347,11 +345,11 @@ class ExpBinary : Exp
     DD right = Right.GetDD();
     switch( Operator )
     {
-      case Token.Plus:          return (ee) => left(ee) + right(ee);
-      case Token.Minus:         return (ee) => left(ee) - right(ee);
-      case Token.Times:         return (ee) => left(ee) * right(ee);
-      case Token.Divide:        return (ee) => left(ee) / right(ee);
-      case Token.Percent:       return (ee) => left(ee) % right(ee);
+      case Token.Plus:          return ( ee ) => left( ee ) + right( ee );
+      case Token.Minus:         return ( ee ) => left( ee ) - right( ee );
+      case Token.Times:         return ( ee ) => left( ee ) * right( ee );
+      case Token.Divide:        return ( ee ) => left( ee ) / right( ee );
+      case Token.Percent:       return ( ee ) => left( ee ) % right( ee );
     }
     return null;
   }
@@ -485,7 +483,7 @@ class ConcatExp : Exp
   {
     string [] result = new string[ list.Length ];
     for ( int i = 0; i < list.Length; i += 1 )
-      result[ i ] = list[i]( e );
+      result[ i ] = list[ i ]( e );
     return string.Join( null, result );
   }
 
@@ -574,13 +572,13 @@ class ExpFuncCall : Exp
   {
     if ( B.Params.Count != Plist.Length ) e.Error( "Param count error calling function " + FuncName );
     for ( int i = 0; i < Plist.Length; i += 1 )
-      if ( Plist[i].Type != B.Params.Types[i] )
+      if ( Plist[ i ].Type != B.Params.Types[ i ] )
       {
-        Exp conv = Plist[i].Convert( B.Params.Types[i] );
-        if ( conv != null ) Plist[i] = conv;
+        Exp conv = Plist[ i ].Convert( B.Params.Types[ i ] );
+        if ( conv != null ) Plist[ i ] = conv;
         else e.Error( "Parameter Type Error calling function " + FuncName 
-           + " required type=" + DTI.Name( B.Params.Types[i] ) 
-           + " supplied type=" + DTI.Name( Plist[i].Type ) + " exp=" + Plist[i] );
+           + " required type=" + DTI.Name( B.Params.Types[ i ] ) 
+           + " supplied type=" + DTI.Name( Plist[ i ].Type ) + " exp=" + Plist[ i ] );
       }
     return Type;
   }
@@ -609,9 +607,9 @@ class CASE : Exp
   {
     for ( int i = 0; i < List.Length; i += 1 ) 
     {
-      if ( List[i].Test != null )
+      if ( List[ i ].Test != null )
       {
-        List[ i ].Test = List[i].Test.Bind( e );
+        List[ i ].Test = List[ i ].Test.Bind( e );
         if ( List[ i ].Test.Type != DataType.Bool ) e.Error( "Case test must be Bool" );
       }
       List[ i ].E = List[ i ].E.Bind( e );
@@ -637,7 +635,7 @@ class CASE : Exp
   Value Go( EvalEnv ee, Exp.DB[] dbs, Exp.DV[] dvs )
   {
     for ( int i = 0; i < dbs.Length; i += 1 )
-      if ( dbs[i] == null || dbs[i](ee) ) return dvs[ i ]( ee );
+      if ( dbs[ i ] == null || dbs[ i ]( ee ) ) return dvs[ i ]( ee );
     return new Value(); // Should not get here.
   }    
 
@@ -656,7 +654,7 @@ class CASE : Exp
   string GoS( EvalEnv ee, Exp.DB[] dbs, Exp.DS[] dvs )
   {
     for ( int i = 0; i < dbs.Length; i += 1 )
-      if ( dbs[i] == null || dbs[i](ee) ) return dvs[ i ]( ee );
+      if ( dbs[ i ] == null || dbs[ i ]( ee ) ) return dvs[ i ]( ee );
     return null; // Should not get here.
   }   
 
@@ -676,7 +674,7 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
   {
     for ( int i = 0; i < List.Length; i += 1 ) 
     {
-      List[ i ] = List[i].Bind( e );
+      List[ i ] = List[ i ].Bind( e );
       DataType dt = List[ i ].Type;
       if ( i == 0 ) ElementType = dt;
       else if ( dt != ElementType ) e.Error( "Tuple type error" ); // Maybe should apply Exp.Convert if possible.
@@ -688,7 +686,7 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
   {
     for ( int i=0; i < List.Length; i += 1 )
     {
-      Value y = List[i].Eval( e );
+      Value y = List[ i ].Eval( e );
       if ( Util.Equal( x, y, ElementType ) ) return true;
     }
     return false;
@@ -699,7 +697,7 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
   public override bool IsConstant() 
   { 
     for ( int i = 0; i < List.Length; i += 1 )
-      if ( !List[i].IsConstant() ) return false;
+      if ( !List[ i ].IsConstant() ) return false;
     return true;
   }
 
@@ -712,7 +710,7 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
   {
     for ( int i = 0; i < List.Length; i += 1 )
     {
-      yield return List[i].Eval( ee );
+      yield return List[ i ].Eval( ee );
     }
   }
 
@@ -748,7 +746,7 @@ class ScalarSelect : Exp
     TE.FetchTo( rs, ee  );
     var rows = rs.Table.Rows;
     for ( int i = 0; i < rows.Count; i += 1 )
-      yield return rows[i][0];
+      yield return rows[ i ][ 0 ];
   }
 
   public override bool IsConstant() 
@@ -793,7 +791,7 @@ class ExpIn : Exp
   public override DB GetDB()
   {
     var lhs = Lhs.GetDV();
-    return ( ee ) => Rhs.TestIn( lhs(ee), ee );
+    return ( ee ) => Rhs.TestIn( lhs( ee ), ee );
   }
 
   public override IdSet GetIdSet( TableExpression te, EvalEnv ee )

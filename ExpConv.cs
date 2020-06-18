@@ -15,7 +15,7 @@ class DoubleToIntExp : UnaryExp
   public override DL GetDL()
   {
     DD x = E.GetDD();
-    return ( ee ) => (long)x(ee);
+    return ( ee ) => (long)x( ee );
   }
 }
 
@@ -31,7 +31,7 @@ class DecimalToDoubleExp : UnaryExp
   {
     DL x = E.GetDL();
     double p10 = Util.PowerTen( DTI.Scale( E.Type ) );
-    return ( ee ) => (double)x(ee) / p10;
+    return ( ee ) => (double)x( ee ) / p10;
   }
 }
 
@@ -46,7 +46,7 @@ class IntToDoubleExp : UnaryExp
   public override DD GetDD()
   {
     DL x = E.GetDL();
-    return ( ee ) => (double)x(ee);
+    return ( ee ) => (double)x( ee );
   }
 }
 
@@ -64,7 +64,7 @@ class IntToDecimalExp : UnaryExp
   {
     DL x = E.GetDL();
     long p10 = (long)Util.PowerTen( DTI.Scale( Type ) );
-    return ( ee ) => x(ee) * p10;
+    return ( ee ) => x( ee ) * p10;
   }
 }
 
@@ -80,7 +80,7 @@ class DoubleToDecimalExp : UnaryExp
   {
     DD x = E.GetDD();
     ulong p10 = Util.PowerTen( DTI.Scale( Type ) );
-    return ( ee ) => (long)( x(ee) * p10 );
+    return ( ee ) => (long)( x( ee ) * p10 );
   }
 }
 
@@ -136,7 +136,7 @@ class DoubleToStringExp : UnaryExp
   public override DS GetDS()
   {
     DD x = E.GetDD();
-    return ( ee ) => x(ee).ToString();
+    return ( ee ) => x( ee ).ToString();
   } 
 }
 
@@ -151,7 +151,7 @@ class BinaryToStringExp : UnaryExp
   public override DS GetDS()
   {
     DX x = E.GetDX();
-    return ( ee ) => Util.ToString( x(ee) );
+    return ( ee ) => Util.ToString( x( ee ) );
   } 
 }
 
@@ -166,7 +166,7 @@ class BoolToStringExp : UnaryExp
   public override DS GetDS()
   {
     DB x = E.GetDB();
-    return ( ee ) => x(ee).ToString();
+    return ( ee ) => x( ee ).ToString();
   } 
 }
 

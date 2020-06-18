@@ -147,7 +147,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     var locals = InitLocals();
 
     // Evaluate the parameters to be passed, saving them in the newly allocated local variables.
-    for ( int i = 0; i < parms.Length; i += 1 ) locals[i] = parms[ i ]( e );
+    for ( int i = 0; i < parms.Length; i += 1 ) locals[ i ] = parms[ i ]( e );
 
     // Save local state.
     var save1 = Locals; var save2 = NextStatement;

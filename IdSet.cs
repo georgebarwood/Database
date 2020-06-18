@@ -35,7 +35,7 @@ class ExpListIdSet : IdSet
   { 
     for ( int i = 0; i < List.Length; i += 1 )
     {
-      yield return List[i].Eval( ee ).L;
+      yield return List[ i ].Eval( ee ).L;
     }
   }  
 }

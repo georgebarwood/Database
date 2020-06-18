@@ -28,7 +28,7 @@ abstract class TableExpression
   public long TableId;
   public string Alias;
 
-  public virtual DataType Type( int i ){ return Cols.Types[i]; } // Data type of the ith column.
+  public virtual DataType Type( int i ){ return Cols.Types[ i ]; } // Data type of the ith column.
 
   public virtual TableExpression Load( SqlExec e ) { return this; } // Loads table or view definition from database.
 
@@ -70,8 +70,8 @@ class Select : TableExpression
     var types = new DataType[ ColumnCount ];
     for ( int i = 0; i < ColumnCount; i += 1 )
     {
-      names[i] = exps[i].Name;
-      types[i] = exps[i].Type;
+      names[ i ] = exps[ i ].Name;
+      types[ i ] = exps[ i ].Type;
     }
     Cols = new ColInfo( names, types );
 
@@ -83,7 +83,7 @@ class Select : TableExpression
       var alist = new G.List<AggSpec>();
       for ( int i = 0; i < exps.Count; i += 1 )
       {
-        Exp e = exps[i];
+        Exp e = exps[ i ];
         AggOp op = e.GetAggOp();
         if ( op != AggOp.None )
         {
@@ -115,8 +115,8 @@ class Select : TableExpression
       for ( int i = 0; i < Order.Length; i += 1 )
       {
         // Quite complicated as ORDER BY can use aliases or expressions.
-        Exp e = Order[i].E;
-        sortSpec[ i ].Desc = Order[i].Desc;
+        Exp e = Order[ i ].E;
+        sortSpec[ i ].Desc = Order[ i ].Desc;
 
         bool found = false;
         if ( e is ExpName )
@@ -151,8 +151,8 @@ class Select : TableExpression
     var set = new G.HashSet<string>();
     for ( int i = 0; i < Exps.Count; i += 1 )
     {
-      string name = Exps[i].Name;
-      if ( name == "" ) e.Error( "Unnamed expression: " + Exps[i] );
+      string name = Exps[ i ].Name;
+      if ( name == "" ) e.Error( "Unnamed expression: " + Exps[ i ] );
       else if ( set.Contains(name) ) e.Error( "Duplicate name: " + name );
       set.Add( name );
     }
@@ -163,9 +163,9 @@ class Select : TableExpression
     for ( int i = 0; i < types.Length; i += 1 )
     {
       DataType assignType = types[ i ];
-      Exp conv = Exps[i].Convert( assignType );
+      Exp conv = Exps[ i ].Convert( assignType );
       if ( conv == null ) e.Error( "Assign data type error" );
-      Exps[i] = conv;
+      Exps[ i ] = conv;
     }
   }
 
@@ -287,7 +287,7 @@ class ValueTable : TableExpression
 
   public override DataType Type( int i )
   {
-    return Values[0][i].Type;
+    return Values[0][ i ].Type;
   }
 
   bool Convert( int i, DataType t )
@@ -308,7 +308,7 @@ class ValueTable : TableExpression
     {
       if ( !Convert( i, types[ i ] ) ) 
       {
-        e.Error( "Data type conversion error to " + DTI.Name( types[i] ) );
+        e.Error( "Data type conversion error to " + DTI.Name( types[ i ] ) );
       }
     }
   }

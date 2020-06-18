@@ -350,7 +350,7 @@ class DatabaseImp : Database
     int [] colIx = new int[ names.Length ];
     for ( int i=0; i < names.Length; i +=1 )
     {
-      colIx[ i ] = t.ColumnIx( names[i], e );
+      colIx[ i ] = t.ColumnIx( names[ i ], e );
     }    
 
     // Create the index.
@@ -651,8 +651,8 @@ class DatabaseImp : Database
     r.V[1].L = tableId;
     for ( int i = 0; i < cols.Count; i += 1 )
     {
-      r.V[2].O = cols.Names[i];
-      r.V[3].L = (long)cols.Types[i];
+      r.V[2].O = cols.Names[ i ];
+      r.V[3].L = (long)cols.Types[ i ];
       r.Insert();
     }
   }
@@ -660,7 +660,7 @@ class DatabaseImp : Database
   int GetIx( ColInfo info, string name )
   {
     for ( int i = 0; i < info.Count; i += 1 )
-      if ( info.Names[i] == name ) return i;
+      if ( info.Names[ i ] == name ) return i;
     return -1;
   }
 

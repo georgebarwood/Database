@@ -48,23 +48,23 @@ class Grouper : StoredResultSet, G.IEqualityComparer<Value[]>
     // Now do the Aggregate calculation.
     for ( int i = 0; i < Agg.Length; i += 1 )
     {
-      int cix = Agg[i].ColIx;
-      switch( Agg[i].Op )
+      int cix = Agg[ i ].ColIx;
+      switch( Agg[ i ].Op )
       {
         case AggOp.Count: v[ cix ].L += 1; break;
 
         case AggOp.Sum: 
-          if ( !first ) switch ( Agg[i].Type )
+          if ( !first ) switch ( Agg[ i ].Type )
           {
             case DataType.Double: v[ cix ].D += row[ cix ].D; break;
             default: v[ cix].L += row[ cix ].L; break;
           }
           break;  
         case AggOp.Min: 
-          if ( !first ) if ( Util.Compare( row[ cix ], v[ cix ], Agg[i].Type ) < 0 ) v[ cix ] = row[ cix ];
+          if ( !first ) if ( Util.Compare( row[ cix ], v[ cix ], Agg[ i ].Type ) < 0 ) v[ cix ] = row[ cix ];
           break;    
         case AggOp.Max: 
-          if ( !first ) if ( Util.Compare( row[ cix ], v[ cix ], Agg[i].Type ) > 0 ) v[ cix ] = row[ cix ];
+          if ( !first ) if ( Util.Compare( row[ cix ], v[ cix ], Agg[ i ].Type ) > 0 ) v[ cix ] = row[ cix ];
           break;     
       }
     }

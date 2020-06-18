@@ -301,7 +301,7 @@ class IndexPage
     int cf = 0;
     for ( int i = 0; i < Inf.KeyCount; i += 1 )
     {
-      cf = Util.Compare( r.Col[i], y.Col[i], Inf.Types[i] );
+      cf = Util.Compare( r.Col[ i ], y.Col[ i ], Inf.Types[ i ] );
       if ( cf != 0 ) break;
     }
     return cf;

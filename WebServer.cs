@@ -28,11 +28,11 @@ public class WebServer
     {
       var outStream = new System.IO.MemoryStream();
       var wrs = new WebResultSet( ctx, outStream );
-      //var stopWatch = new System.Diagnostics.Stopwatch(); 
-      //stopWatch.Start();
+      var stopWatch = new System.Diagnostics.Stopwatch(); 
+      stopWatch.Start();
       lock( Database ) Database.Sql( "EXEC web.Main()", wrs );
-      //stopWatch.Stop();
-      //System.Console.WriteLine( "Time (ticks)=" + stopWatch.ElapsedTicks + " ticks per ms="  + System.Diagnostics.Stopwatch.Frequency/1000 );
+      stopWatch.Stop();
+      System.Console.WriteLine( "Time (ticks)=" + stopWatch.ElapsedTicks + " ticks per ms="  + System.Diagnostics.Stopwatch.Frequency/1000 );
       outStream.Position = 0;
       outStream.CopyTo( ctx.Response.OutputStream );
     }
@@ -145,7 +145,7 @@ class WebResultSet : DBNS.ResultSet
       {
         var type = CI.Types[ i ];
         PutUtf8( type == DBNS.DataType.String ? "<td>" : "<td align=right>" );
-        PutUtf8( DBNS.Util.ToHtml( row[i], type ) );
+        PutUtf8( DBNS.Util.ToHtml( row[ i ], type ) );
       }
     }
     return true;

@@ -156,7 +156,7 @@ struct IndexFileInfo
   {
     int result = 0;
     for ( int i = 0; i < KeyCount; i += 1 )
-      result += DTI.Size( Types[i] );
+      result += DTI.Size( Types[ i ] );
     return result;
   }
 }
@@ -176,7 +176,7 @@ struct IndexFileRecord
   {
     IndexFileRecord result = new IndexFileRecord( Col.Length );
     result.Child = Child;
-    for ( int i=0; i<Col.Length; i += 1 ) result.Col[i] = Col[i];
+    for ( int i=0; i<Col.Length; i += 1 ) result.Col[ i ] = Col[ i ];
     return result;
   }
 
@@ -185,7 +185,7 @@ struct IndexFileRecord
     string s = "";
     for ( int i = 0 ; i < Inf.Types.Length; i+= 1 )
     {
-      s += Util.ToString( Col[i], Inf.Types[i] ) + "|";
+      s += Util.ToString( Col[ i ], Inf.Types[ i ] ) + "|";
     }
     return s;
   }

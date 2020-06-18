@@ -221,7 +221,7 @@ class Util
   public static int GetHashCode( byte [] a )
   {
     int hash = a.Length;
-    for ( int i = 0; i < a.Length; i += 1 ) hash += a[i];
+    for ( int i = 0; i < a.Length; i += 1 ) hash += a[ i ];
     return hash;
   }
 
@@ -231,7 +231,7 @@ class Util
       return a.Length > b.Length ? +1 : -1;
     else for ( int i=0; i < a.Length; i += 1 )
     {
-      if ( a[i] != b[i] ) return a[i] > b[i] ? +1 : -1;
+      if ( a[ i ] != b[ i ] ) return a[ i ] > b[ i ] ? +1 : -1;
     }
     return 0;
   }
@@ -244,8 +244,8 @@ class Util
     sb.Append( "0x" );
     for ( int i = 0; i < b.Length; i += 1 )
     {
-      sb.Append( Hex[ b[i] / 16 ] );
-      sb.Append( Hex[ b[i] % 16 ] );
+      sb.Append( Hex[ b[ i ] / 16 ] );
+      sb.Append( Hex[ b[ i ] % 16 ] );
     }
     return sb.ToString();
   }

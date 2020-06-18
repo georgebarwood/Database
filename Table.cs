@@ -212,7 +212,7 @@ class Table : TableExpression // Represents a Database Table.
     foreach ( long id in IdSet.All( ee ) ) 
     if ( Get( id, tr, null ) )
     {
-      for ( int i=0; i<nr.Length; i +=1 ) nr[i] = tr[i];
+      for ( int i=0; i<nr.Length; i +=1 ) nr[ i ] = tr[ i ];
 
       if ( w( ee ) )
       {
@@ -247,7 +247,7 @@ class Table : TableExpression // Represents a Database Table.
   public int ColumnIx( string name, Exec e )
   {
     int n = Cols.Count;
-    for ( int i = 0; i < n; i += 1 ) if ( Cols.Names[i] == name ) return i;
+    for ( int i = 0; i < n; i += 1 ) if ( Cols.Names[ i ] == name ) return i;
     e.Error( "Column " + name + " not found" );
     return 0;
   }
@@ -264,7 +264,7 @@ class Table : TableExpression // Represents a Database Table.
     for ( long id = 1; id <= RowCount; id += 1 ) if ( rc.Get(id) )
     {
       // Create the IndexFileRecord to be inserted.
-      for ( int i = 0; i < n; i += 1 )ixr.Col[i] = rc.V[ ixf.Inf.BaseIx[i] ];
+      for ( int i = 0; i < n; i += 1 )ixr.Col[ i ] = rc.V[ ixf.Inf.BaseIx[ i ] ];
       ixr.Col[n].L = id; // Append the id of the row.
       ixf.Insert( ref ixr );
     }
@@ -274,8 +274,8 @@ class Table : TableExpression // Represents a Database Table.
   public override IndexFile FindIndex( int colIx ) // Finds an index to speed up a WHERE condition.
   {
     for ( int i = 0; i < Ix.Length; i += 1 )
-      if ( Ix[i].ColIx == colIx && Ix[i].IxNum == 0 )
-        return IxDict[ Ix[i].IndexId ];
+      if ( Ix[ i ].ColIx == colIx && Ix[ i ].IxNum == 0 )
+        return IxDict[ Ix[ i ].IndexId ];
     return null;
   }
 
@@ -294,7 +294,7 @@ class Table : TableExpression // Represents a Database Table.
 
     for ( int i=0; i<=info.Length; i += 1 )
     {
-      if ( i > 0 && ( i == info.Length || info[i].IndexId != curIndex ) )
+      if ( i > 0 && ( i == info.Length || info[ i ].IndexId != curIndex ) )
       {
         IndexFileInfo ci = new IndexFileInfo();
         dt.Add( DataType.Bigint ); // For id value
@@ -308,8 +308,8 @@ class Table : TableExpression // Represents a Database Table.
       }
       if ( i != info.Length )
       {
-        curIndex = info[i].IndexId;
-        int colIx = info[i].ColIx;
+        curIndex = info[ i ].IndexId;
+        int colIx = info[ i ].ColIx;
         dt.Add( Cols.Types[ colIx ] );
         cm.Add( colIx );
       }
@@ -369,7 +369,7 @@ class Table : TableExpression // Represents a Database Table.
 
       for ( int i = 0; i < newRow.Length; i += 1 )
       {
-        int m = map[i];
+        int m = map[ i ];
         if ( m >= 0 ) newRow[ i ] = oldRow[ m ];
       }
 
@@ -422,7 +422,7 @@ class Table : TableExpression // Represents a Database Table.
   {
     int result = 1; // Flag byte that indicates whether row is deleted.
     for ( int i = 1; i < c.Count; i += 1 )
-      result += DTI.Size( c.Types[i] ); 
+      result += DTI.Size( c.Types[ i ] ); 
     return result;
   }
 

@@ -399,7 +399,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         else 
           Error( "Undeclared local : " + name ); 
       }
-      else result = new ExpLocalVar( i, B.LocalType[i] );
+      else result = new ExpLocalVar( i, B.LocalType[ i ] );
     }
     return result;
   }
@@ -556,7 +556,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       if ( types == null )
       {
         types = new DataType[ v.Count ];
-        for ( int i = 0; i < v.Count; i += 1 ) types[ i ] = v[i].Type;
+        for ( int i = 0; i < v.Count; i += 1 ) types[ i ] = v[ i ].Type;
       }
       else
       {
@@ -622,7 +622,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
       for ( int i=0; i<exps.Count; i+=1 ) 
       {
-        if ( exps[i].GetAggOp() != AggOp.None )
+        if ( exps[ i ].GetAggOp() != AggOp.None )
         {
           if ( group == null ) 
           {
@@ -630,12 +630,12 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
             group = new Exp[0];
             System.Console.WriteLine("Auto-group");
           }
-          exps[i].BindAgg( this );
+          exps[ i ].BindAgg( this );
         }
         else 
         { 
           if ( group != null ) Error( "All exps in aggregate select must be aggregate functions" );
-          exps[i] = exps[i].Bind( this );
+          exps[ i ] = exps[ i ].Bind( this );
         }
       }
 
@@ -649,8 +649,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       {
         for ( int i=0; i<group.Length; i+=1 ) 
         {
-          group[i] = group[i].Bind( this );
-          exps.Add( group[i] );
+          group[ i ] = group[ i ].Bind( this );
+          exps.Add( group[ i ] );
         }
       }
 
@@ -660,7 +660,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       {
         var types = new DataType[ locals.Count ];
         for ( int i = 0; i < locals.Count; i += 1 )
-          types[i] = B.LocalType[ locals[i] ];
+          types[ i ] = B.LocalType[ locals[ i ] ];
         result.Convert( types, this );
       }
 
@@ -764,10 +764,10 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       var types = new DataType[ names.Count ];
       for ( int i=0; i < names.Count; i += 1 ) 
       {
-        int ci = t.ColumnIx( names[i], this );
+        int ci = t.ColumnIx( names[ i ], this );
         if ( ci == 0 ) idCol = i;
-        colIx[i] = ci;
-        types[i] = t.Cols.Types[ ci ];
+        colIx[ i ] = ci;
+        types[ i ] = t.Cols.Types[ ci ];
       }
       src.Convert( types, this );
       Add( () => B.ExecInsert( t, src, colIx, idCol ) );
@@ -803,16 +803,16 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       int idCol = -1;
       for ( int i=0; i < a.Length; i += 1 ) 
       {        
-        a[i].Lhs.Bind( this );
-        a[ i ].Rhs = a[i].Rhs.Bind( this );
+        a[ i ].Lhs.Bind( this );
+        a[ i ].Rhs = a[ i ].Rhs.Bind( this );
 
-        if ( a[i].Lhs.Type != a[i].Rhs.Type )
+        if ( a[ i ].Lhs.Type != a[ i ].Rhs.Type )
         {
-          Exp conv = a[i].Rhs.Convert( a[i].Lhs.Type );
+          Exp conv = a[ i ].Rhs.Convert( a[ i ].Lhs.Type );
           if ( conv == null ) Error( "Update type mismatch" );
-          else a[i].Rhs = conv;
+          else a[ i ].Rhs = conv;
         }
-        if ( a[i].Lhs.ColIx == 0 ) idCol = i;
+        if ( a[ i ].Lhs.ColIx == 0 ) idCol = i;
       }
       if ( where != null )
       {
@@ -906,7 +906,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         // Check parameter types.
         if ( b.Params.Count != parms.Count ) Error( "Param count error calling " + name + "." + name );
         for ( int i = 0;  i < parms.Count; i += 1 )
-          if ( parms[i].Type != b.Params.Types[i] ) 
+          if ( parms[ i ].Type != b.Params.Types[ i ] ) 
             Error( "Parameter Type Error calling procedure " + name );
 
 

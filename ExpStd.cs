@@ -23,7 +23,7 @@ abstract class StdExp : Exp
   {
     for ( int i = 0; i < Types.Length; i += 1 )
     {
-      Arg[ i ] = Arg[i].Bind( e );
+      Arg[ i ] = Arg[ i ].Bind( e );
       DataType t = Arg[ i ].Type;
       if ( t != Types[ i ] ) 
         e.Error( this + " parameter type error, arg " + i + " expected " 
@@ -64,7 +64,7 @@ class REPLACE : StdExp
     var s = Arg[0].GetDS();
     var pat = Arg[1].GetDS();
     var sub = Arg[2].GetDS();
-    return ( ee ) => s(ee).Replace( pat(ee), sub(ee) );
+    return ( ee ) => s( ee ).Replace( pat( ee ), sub( ee ) );
   }
 
 } // end class REPLACE
@@ -79,7 +79,7 @@ class SUBSTRING : StdExp
     var a0 = Arg[0].GetDS();
     var a1 = Arg[1].GetDL();
     var a2 = Arg[2].GetDL();
-    return ( ee ) => DoSub( a0(ee), (int)a1(ee), (int)a2(ee) );
+    return ( ee ) => DoSub( a0( ee ), (int)a1( ee ), (int)a2( ee ) );
   }
 
   public string DoSub( string s, int start, int len )
@@ -116,12 +116,12 @@ class LEN : UnaryExp
     if ( SType == DataType.String )
     {
       var a0 = E.GetDS();
-      return ( ee ) => a0(ee).Length;
+      return ( ee ) => a0( ee ).Length;
     }
     else
     {
       var a0 = E.GetDX();
-      return ( ee ) => a0(ee).Length;
+      return ( ee ) => a0( ee ).Length;
     }
   }
 } // end class LEN
@@ -133,7 +133,7 @@ class PARSEINT : StdExp
   public override DL GetDL()
   {
     var a = Arg[0].GetDS();
-    return ( ee ) => DoParse( a(ee) );
+    return ( ee ) => DoParse( a( ee ) );
   }
 
   long DoParse( string s )
@@ -157,7 +157,7 @@ class PARSEDECIMAL : StdExp
   {
     var a = Arg[0].GetDS();
     var t = Arg[1].GetDL();
-    return ( ee ) => DoParse( a(ee), (DataType)t(ee) );
+    return ( ee ) => DoParse( a( ee ), (DataType)t( ee ) );
   }
 
   long DoParse( string s, DataType t )
@@ -180,7 +180,7 @@ class PARSEDOUBLE : StdExp
   public override DD GetDD()
   {
     var a = Arg[0].GetDS();
-    return ( ee ) => DoParse( a(ee) );
+    return ( ee ) => DoParse( a( ee ) );
   }
 
   double DoParse( string s )
@@ -221,7 +221,7 @@ class ARG : StdExp
   {
     var k = Arg[0].GetDL();
     var n = Arg[1].GetDS();
-    return ( ee ) => ee.ResultSet.Arg( (int)k(ee), n(ee) );
+    return ( ee ) => ee.ResultSet.Arg( (int)k( ee ), n( ee ) );
   }
 } // end class ARG
 
@@ -234,7 +234,7 @@ class ARGNAME : StdExp
   {
     var k = Arg[0].GetDL();
     var x = Arg[1].GetDL();
-    return ( ee ) => ee.ResultSet.ArgName( (int)k(ee), (int)x(ee) );
+    return ( ee ) => ee.ResultSet.ArgName( (int)k( ee ), (int)x( ee ) );
   }
 } // end class ARGNAME
 
@@ -247,7 +247,7 @@ class FILEATTR : StdExp
   {
     var x = Arg[0].GetDL();
     var k = Arg[1].GetDL();
-    return ( ee ) => ee.ResultSet.FileAttr( (int)x(ee), (int)k(ee) );
+    return ( ee ) => ee.ResultSet.FileAttr( (int)x( ee ), (int)k( ee ) );
   }
 } // end class FILEATTR
 
@@ -259,7 +259,7 @@ class FILECONTENT : StdExp
   public override DX GetDX()
   {
     var x = Arg[0].GetDL();
-    return ( ee ) => ee.ResultSet.FileContent( (int)x(ee) );
+    return ( ee ) => ee.ResultSet.FileContent( (int)x( ee ) );
   }
 } // end class FILECONTENT
 
