@@ -107,23 +107,23 @@ INSERT INTO [browse].[Column](Id,[Position],[Label],[Description],[RefersTo],[De
 (60,9,'D','',0,'',0,'',0,0)
 (61,100,'','',0,'',100,'',10,0)
 INSERT INTO [dbo].[Cust](Id,[FirstName],[LastName],[Age],[Postcode]) VALUES 
-(1,'Mary','Poppins',62,'EC4 2NX')
+(1,'Mary','Poppins',65,'EC4 2NX')
 (2,'Clare','Smith',29,'GL3')
 (3,'Ron','Jones',0,'')
-(4,'Peter','Perfect',32,'')
-(5,'George','Washington',0,'')
+(4,'Peter','Perfect',36,'')
+(5,'George','Washington',250,'WC1')
 (6,'Ron','Williams',0,'')
 (7,'Adam','Baker',0,'')
 (8,'George','Barwood',62,'GL2 4LZ')
 INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES 
-(51,5,555.27)
+(51,5,75.27)
 (52,2,10.02)
 (53,3,20.04)
 (54,4,30.06)
 (55,5,40.08)
 (56,6,50.10)
 (57,7,60.12)
-(58,1,35.07)
+(58,1,35.77)
 (59,2,45.09)
 (60,3,55.11)
 (61,4,695.13)
@@ -134,7 +134,7 @@ INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES
 (66,2,25.05)
 (67,3,35.07)
 (68,4,445.09)
-(69,5,55.11)
+(69,5,5577.11)
 (70,6,65.13)
 (71,7,75.15)
 (72,1,50.10)
@@ -158,7 +158,7 @@ INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES
 (90,5,50.10)
 (91,6,60.12)
 (92,7,70.14)
-(93,1,45.09)
+(93,1,55.09)
 (94,2,55.11)
 (95,3,10.02)
 (96,4,20.04)
@@ -172,6 +172,10 @@ INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES
 (104,1,500.00)
 (105,1,99.53)
 (106,1,56600.78)
+(107,1,566.77)
+(108,5,99.00)
+(109,5,123467.89)
+(110,5,2900.00)
 CREATE INDEX ByRefersTo on [browse].[Column]([RefersTo])
 CREATE INDEX ByLastName on [dbo].[Cust]([LastName])
 CREATE FUNCTION [sys].[ColName]( table int, colId int ) RETURNS string AS
@@ -423,6 +427,17 @@ BEGIN
   RETURN result
 
 END
+CREATE FUNCTION [browse].[ColParser]( colId int, type int, f string ) RETURNS string AS
+BEGIN
+  -- ColId not currently used, but in future user-specified parser could be fetched from Parse.Column
+  RETURN CASE 
+    WHEN type = 3 OR type = 5 OR type = 7 OR type = 8  THEN 'PARSEINT(' | f |')'
+    WHEN type = 4 OR type = 6  THEN 'PARSEDOUBLE(' | f | ')'
+    WHEN type = 9 THEN 'browse.ParseBool(' | f | ')'
+    WHEN type >= 15 THEN 'PARSEDECIMAL(' | f | ',' | type | ')'
+    ELSE f
+  END
+END
 CREATE FUNCTION [browse].[ColPos]( c int ) RETURNS int AS
 BEGIN
   DECLARE pos int
@@ -589,18 +604,13 @@ BEGIN
 
   FOR f = 'web.Form(' | sys.SingleQuote(Name) | ')', type = Type, colId = Id
   FROM sys.Column WHERE Table = table 
-  SET vlist = 
-    CASE WHEN vlist = '' THEN '' ELSE vlist | ' , ' END | 
+  SET vlist = CASE WHEN vlist = '' THEN '' ELSE vlist | ' , ' END | 
     CASE 
     WHEN colId = pc THEN '' | p
-    WHEN type = 3 OR type = 5 OR type = 7 OR type = 8 THEN 'PARSEINT(' | f | ')'
-    WHEN type = 4 OR type = 6 THEN 'PARSEDOUBLE(' | f | ')'
-    WHEN type = 9 THEN 'browse.ParseBool(' | f | ')'
-    WHEN type >= 15 THEN 'PARSEDECIMAL(' | f | ',' | type | ')'
-    ELSE f
+    ELSE browse.ColParser( colId, type, f )
     END
 
-  RETURN 'INSERT INTO ' | sys.TableName( table ) | browse.InsertNames( table ) | ' VALUES ( ' | vlist | ')'
+  RETURN 'INSERT INTO ' | sys.TableName( table ) | browse.InsertNames( table ) | ' VALUES (' | vlist | ')'
 END
 CREATE FUNCTION [browse].[ParseBool]( s string ) returns bool AS
 BEGIN
@@ -707,24 +717,12 @@ END
 CREATE FUNCTION [browse].[UpdateSql]( table int, k int ) RETURNS string AS
 BEGIN
   DECLARE alist string, col string, type int, colId int
-
   FOR colId = Id, col = Name, type = Type FROM sys.Column WHERE Table = table
   BEGIN
-    DECLARE f string
-
-    SET f = 'web.Form(' | sys.SingleQuote(col) | ')'
-
+    DECLARE f string SET f = 'web.Form(' | sys.SingleQuote(col) | ')'
     SET alist = CASE WHEN alist = '' THEN '' ELSE alist | ' , ' END
-      | sys.QuoteName(col) | ' = ' | 
-      CASE 
-      WHEN type = 3 OR type = 5 OR type = 7 OR type = 8  THEN 'PARSEINT(' | f |')'
-      WHEN type = 4 OR type = 6  THEN 'PARSEDOUBLE(' | f | ')'
-      WHEN type = 9 THEN 'browse.ParseBool(' | f | ')'
-      WHEN type >= 15 THEN 'PARSEDECIMAL(' | f | ',' | type | ')'
-      ELSE f
-      END
+      | sys.QuoteName(col) | ' = ' | browse.ColParser( colId, type, f )
   END
-
   RETURN 'UPDATE ' | sys.TableName( table ) | ' SET ' | alist | ' WHERE Id =' | k
 END
 CREATE FUNCTION [dbo].[CustName]( cust int ) returns string as 
@@ -1132,17 +1130,19 @@ BEGIN
 
   /* Maybe results should be displayed by special Code which directs ResultSet to display tables as HTML */
 
-  SELECT '<p>Results:'
   IF sql != '' 
   BEGIN
+    SELECT '<p>Results:'
     EXEC SETMODE( 1 )
     EXECUTE( sql ) 
     EXEC SETMODE( 0 )
     DECLARE ex string SET ex = EXCEPTION()
-    IF ex != '' SELECT htm.Encode( '<p>Error : ' | ex ) ELSE SELECT '<p>ok'
+    IF ex != '' SELECT '<p>Error : ' | htm.Encode(ex)
   END
 
-  SELECT '<p>Example SQL: SELECT ''Hello World'''
+  SELECT '<p>Example SQL:'
+     | '<br>select dbo.CustName(Id) as Name, Age from dbo.Cust'
+     | '<br>select Cust, Total from dbo.Order'
      | '<br>CREATE TABLE dbo.Cust( LastName string, Age int )'
      | '<br>CREATE INDEX ByLastName on dbo.Cust(LastName)'
      | '<br>CREATE VIEW dbo.OrderSummary AS SELECT Cust, SUM(Total) as Total, COUNT() as Count FROM dbo.Order GROUP BY Cust'

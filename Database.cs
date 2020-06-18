@@ -203,8 +203,7 @@ class DatabaseImp : Database
 
     if ( alter ) r.Update( tableId ); else tableId = r.Insert();
 
-    if ( !isView) SaveColumns( tableId, cols );
-    if ( isView ) ResetCache();
+    if ( isView ) ResetCache(); else SaveColumns( tableId, cols );
   }
 
   public void DropTable( string schemaName, string tableName, Exec e )
