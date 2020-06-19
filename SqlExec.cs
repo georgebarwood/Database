@@ -1215,12 +1215,13 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   void While()
   {
     var exp = Exp();
-    if ( exp.TypeCheck( this ) != DataType.Bool ) Error( "WHILE expression must be boolean" );
     
     int start = B.GetHere();
     int breakid = B.GetJumpId();
     if (!ParseOnly)
     {
+      exp = exp.Bind( this );
+      if ( exp.Type != DataType.Bool ) Error( "WHILE expression must be boolean" );
       var db = exp.GetDB();
       Add( () => B.ExecuteIf( db, breakid ) );
     }
@@ -1237,11 +1238,12 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   void If()
   {
     var exp = Exp();
-    if ( !ParseOnly && exp.TypeCheck( this ) != DataType.Bool ) Error( "IF expression must be boolean" );
 
     int falseid = B.GetJumpId();
     if (!ParseOnly)
     {
+      exp = exp.Bind( this );
+      if ( exp.Type != DataType.Bool ) Error( "IF expression must be boolean" );
       var db = exp.GetDB();
       Add( () => B.ExecuteIf( db, falseid ) );
     }

@@ -21,7 +21,6 @@ abstract class Exp
   public virtual Exp Bind( SqlExec e ){ return this; }
   public virtual IdSet GetIdSet(  TableExpression te, EvalEnv ee ) { return null; }
   public virtual bool IsConstant() { return false; } // Evaluation doesn't depend on table row.
-  public virtual DataType TypeCheck( SqlExec e ) { return Type; }
 
   // Methods related to implementation of "IN".
   public virtual bool TestIn( Value x, EvalEnv e ){ return false; }
@@ -380,10 +379,10 @@ class ExpBinary : Exp
       list.Add(this); 
   }
 
-  public override DataType TypeCheck( SqlExec e )
+  DataType TypeCheck( SqlExec e )
   {
-    DataType tL = Left.TypeCheck( e );
-    DataType tR = Right.TypeCheck( e );
+    DataType tL = Left.Type;
+    DataType tR = Right.Type;
 
     if ( tL == DataType.Bigint && tR == DataType.Double )
     {
@@ -568,7 +567,7 @@ class ExpFuncCall : Exp
     return this;
   }
 
-  public override DataType TypeCheck( SqlExec e )
+  DataType TypeCheck( SqlExec e )
   {
     if ( B.Params.Count != Plist.Length ) e.Error( "Param count error calling function " + FuncName );
     for ( int i = 0; i < Plist.Length; i += 1 )
