@@ -36,9 +36,9 @@ public class WebServer
       outStream.Position = 0;
       outStream.CopyTo( ctx.Response.OutputStream );
     }
-    catch ( System.Exception e )
+    catch ( System.Exception )
     { 
-      System.Console.WriteLine( "Handle Request Exception: " + e ); 
+      // System.Console.WriteLine( "Handle Request Exception: " + e );
     }
     finally
     {

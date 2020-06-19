@@ -57,7 +57,7 @@ class Grouper : StoredResultSet, G.IEqualityComparer<Value[]>
           if ( !first ) switch ( Agg[ i ].Type )
           {
             case DataType.Double: v[ cix ].D += row[ cix ].D; break;
-            default: v[ cix].L += row[ cix ].L; break;
+            default: v[ cix ].L += row[ cix ].L; break;
           }
           break;  
         case AggOp.Min: 
@@ -95,7 +95,7 @@ class Grouper : StoredResultSet, G.IEqualityComparer<Value[]>
     foreach ( GroupSpec s in Group )
     {
       int ix = s.ColIx;
-      hash += Util.GetHashCode( a[ix], s.Type );
+      hash += s.Type > DataType.String ? (int)a[ix].L : Util.GetHashCode( a[ix], s.Type );
     }
     return hash;
   }
