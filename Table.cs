@@ -502,11 +502,4 @@ struct IndexInfo
   }    
 }
 
-struct Assign
-{
-  public ExpName Lhs;
-  public Exp Rhs;
-  public Assign( string name, Exp rhs ) { Lhs = new ExpName(name); Rhs = rhs; }
-}
-
 } // end namespace DBNS

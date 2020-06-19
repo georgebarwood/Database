@@ -774,6 +774,13 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     }
   }
 
+  struct Assign // Is this really needed now?
+  {
+    public ExpName Lhs;
+    public Exp Rhs;
+    public Assign( string name, Exp rhs ) { Lhs = new ExpName(name); Rhs = rhs; }
+  }
+
   void Update()
   {
     bool save = DynScope; DynScope = true;
