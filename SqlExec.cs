@@ -722,7 +722,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   TableExpression Select( bool exec )
   {
     var te = Expressions( null );
-    if ( exec ) Add( () => B.ExecuteSelect( te ) );
+    if ( exec ) Add( () => B.Select( te ) );
     return te;
   }
 
@@ -730,7 +730,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   {
     var locals = new G.List<int>();
     var te = Expressions( locals );
-    Add( () => B.ExecuteAssign( te, locals.ToArray() ) );
+    var la = locals.ToArray();
+    Add( () => B.Set( te, la ) );
   }
 
   void Insert()
@@ -770,7 +771,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         types[ i ] = t.Cols.Types[ ci ];
       }
       src.Convert( types, this );
-      Add( () => B.ExecInsert( t, src, colIx, idCol ) );
+      Add( () => B.Insert( t, src, colIx, idCol ) );
     }
   }
 
@@ -836,7 +837,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         dvs[ i ] = a[ i ].Rhs.GetDV();
       }
 
-      Add( () => t.ExecUpdate( ixs, dvs, where, w, used, idCol, B ) ); 
+      Add( () => t.Update( ixs, dvs, where, w, used, idCol, B ) ); 
 
       Used = save1; CI = save2; 
     }
@@ -865,7 +866,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       }
       var used = Used; // Need to take a copy.
       var w = where.GetDB();
-      Add( () => t.ExecDelete( where, w, used, B ) );
+      Add( () => t.Delete( where, w, used, B ) );
 
       Used = save1; CI = save2;
     }
@@ -946,7 +947,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     Add( () => B.InitFor( forid, te, locals.ToArray() ) );
     int start = B.GetStatementId();
     int breakid = B.GetJumpId();
-    Add( () => B.ExecuteFor( forid, breakid ) );
+    Add( () => B.For( forid, breakid ) );
     
     int save = BreakId;
     BreakId = breakid;
@@ -1230,7 +1231,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       exp = exp.Bind( this );
       if ( exp.Type != DataType.Bool ) Error( "WHILE expression must be boolean" );
       var db = exp.GetDB();
-      Add( () => B.ExecuteIf( db, breakid ) );
+      Add( () => B.If( db, breakid ) );
     }
     
     int save = BreakId;
@@ -1252,7 +1253,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       exp = exp.Bind( this );
       if ( exp.Type != DataType.Bool ) Error( "IF expression must be boolean" );
       var db = exp.GetDB();
-      Add( () => B.ExecuteIf( db, falseid ) );
+      Add( () => B.If( db, falseid ) );
     }
 
     Statement();
@@ -1260,7 +1261,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     if ( Test("ELSE") ) 
     {
       int endid = B.GetJumpId();
-      Add( () => B.ExecuteGoto( endid ) ); // Skip over the else clause
+      Add( () => B.Goto( endid ) ); // Skip over the else clause
       B.SetJump( falseid );
       Statement();
       B.SetJump( endid );
@@ -1271,7 +1272,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   void Goto()
   {
     string label = Name();
-    Add( B.Goto( label ) );
+    Add( B.GetGoto( label ) );
   }
 
   void LabelStatement()
@@ -1285,7 +1286,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   {
     int breakId = BreakId; // Need to take a copy of current value.
     if ( breakId < 0 ) Error( "No enclosing loop for break" );
-    Add( () => B.ExecuteGoto( breakId ) );
+    Add( () => B.Goto( breakId ) );
   }
 
   void Return()
@@ -1304,7 +1305,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         }     
       }
       var dv = e == null ? null : e.GetDV();
-      Add( () => B.ExecuteReturn( dv ) );
+      Add( () => B.Return( dv ) );
     }
   }
 

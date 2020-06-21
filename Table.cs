@@ -191,14 +191,14 @@ class Table : TableExpression // Represents a Database Table.
 
   // Higher level functions.
 
-  public long ExecInsert( TableExpression te, int[] colIx, int idCol, EvalEnv ee )
+  public long Insert( TableExpression te, int[] colIx, int idCol, EvalEnv ee )
   {
     var ins = new Inserter( this, colIx, idCol, te );
     te.FetchTo( ins, ee );
     return ins.LastIdInserted;
   }
 
-  public void ExecUpdate( int [] ixs, Exp.DV [] dvs, Exp where, Exp.DB w, bool [] used, int idCol, EvalEnv ee  )
+  public void Update( int [] ixs, Exp.DV [] dvs, Exp where, Exp.DB w, bool [] used, int idCol, EvalEnv ee  )
   {
     Value [] tr = new Value[ Cols.Count ];
     Value [] nr = new Value[ Cols.Count ]; // The new row.
@@ -231,7 +231,7 @@ class Table : TableExpression // Represents a Database Table.
     }
   }
 
-  public void ExecDelete( Exp where, Exp.DB w, bool[] used, EvalEnv ee )
+  public void Delete( Exp where, Exp.DB w, bool[] used, EvalEnv ee )
   {
     Value [] tr = new Value[ Cols.Count ];
     ee.Row = tr;

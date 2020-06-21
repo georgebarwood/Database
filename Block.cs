@@ -58,18 +58,6 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
   public void SetJump( int jumpid ) { Jump[ jumpid ] = Statements.Count; }
 
-  public System.Action Goto( string name )
-  {
-    int jumpid = LookupJumpId( name );
-    if ( jumpid < 0 )
-    {
-      LabelMap[ name ] = GetJumpId();
-      JumpUndefined += 1;
-      return () => ExecuteGoto( jumpid );
-    }
-    else return () => JumpBack( Jump[ jumpid ] );
-  }
-
   public bool SetLabel( string name ) // returns true if label already defined ( an error ).
   {
     int i = Statements.Count;
@@ -99,6 +87,18 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     int forid = LocalType.Count;
     LocalType.Add( DataType.None );
     return forid;
+  }
+
+  public System.Action GetGoto( string name )
+  {
+    int jumpid = LookupJumpId( name );
+    if ( jumpid < 0 )
+    {
+      LabelMap[ name ] = GetJumpId();
+      JumpUndefined += 1;
+      return () => Goto( jumpid );
+    }
+    else return () => JumpBack( Jump[ jumpid ] );
   }
 
   // Statement execution.
@@ -151,48 +151,45 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     }
   }
 
-  public void ExecuteGoto( int jumpId )
+  public void Goto( int jumpId )
   {
     NextStatement = Jump[ jumpId ];
   }
 
-  public void ExecuteReturn( Exp.DV e )
+  public void Return( Exp.DV e )
   {
     if ( IsFunc ) FunctionResult = e( this );
     NextStatement = Statements.Count;
   }
 
-  public void ExecuteIf( Exp.DB test, int jumpid )
+  public void If( Exp.DB test, int jumpid )
   {
     if ( !test( this ) ) NextStatement = Jump[ jumpid ];
   }
 
   public void JumpBack( int statementId ) { NextStatement = statementId; }
 
-  public void ExecuteSelect( TableExpression te )
+  public void Select( TableExpression te ) { te.FetchTo( ResultSet, this ); }
+
+  public void Set( TableExpression te, int [] assigns )
   {
-    te.FetchTo( ResultSet, this );
+    te.FetchTo( new SetResultSet( assigns, this ), this );
   }
 
-  public void ExecuteAssign( TableExpression te, int [] assigns )
+  public void InitFor( int forid, TableExpression te, int[] assigns )
   {
-    te.FetchTo( new AssignResultSet( assigns, this ), this );
+    Locals[ forid ]._O = new For( te, assigns, this );
   }
 
-  public void InitFor( int c, TableExpression te, int[] assigns )
-  {
-    Locals[ c ]._O = new For( te, assigns, this );
-  }
-
-  public void ExecuteFor( int forid, int breakid )
+  public void For( int forid, int breakid )
   {
     For f = (For) Locals[ forid ]._O;
     if ( f == null || !f.Fetch() ) NextStatement = Jump[ breakid ];
   }
 
-  public void ExecInsert( Table t, TableExpression te, int[] colIx, int idCol )
+  public void Insert( Table t, TableExpression te, int[] colIx, int idCol )
   {
-    long lastId = t.ExecInsert( te, colIx, idCol, this );
+    long lastId = t.Insert( te, colIx, idCol, this );
     if ( ResultSet != null ) ResultSet.LastIdInserted = lastId;
   }
 
@@ -204,12 +201,12 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 } // end class Block
 
 
-class AssignResultSet : ResultSet // Implements SET assignment of local variables.
+class SetResultSet : ResultSet // Implements SET assignment of local variables.
 {
   int [] Assigns;
   Block B;
 
-  public AssignResultSet( int [] assigns, Block b )
+  public SetResultSet( int [] assigns, Block b )
   {
     Assigns = assigns;
     B = b;
@@ -220,7 +217,7 @@ class AssignResultSet : ResultSet // Implements SET assignment of local variable
     for ( int i=0; i < Assigns.Length; i += 1 ) B.Locals[ Assigns[ i ] ] = r[ i ];
     return false; // Only one row is assigned.
   }  
-} // end class AssignResultSet
+} // end class SetResultSet
 
 
 class For // Implements FOR statement.
