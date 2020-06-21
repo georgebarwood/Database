@@ -781,7 +781,8 @@ class ExpIn : Exp
   public override DB GetDB()
   {
     var lhs = Lhs.GetDV();
-    return ( ee ) => Rhs.TestIn( lhs( ee ), ee );
+    var rhs = Rhs;
+    return ( ee ) => rhs.TestIn( lhs( ee ), ee );
   }
 
   public override IdSet GetIdSet( TableExpression te, EvalEnv ee )
