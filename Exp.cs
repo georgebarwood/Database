@@ -364,23 +364,7 @@ class ExpBinary : Exp
     } 
     Left = Left.Bind( e );
     Right = Right.Bind( e );
-    TypeCheck( e );
-    return this;
-  }
 
-  public override void GetConcat( G.List<Exp> list )
-  { 
-    if ( Operator == Token.VBar )
-    {
-      Left.GetConcat( list );
-      Right.GetConcat( list );
-    }
-    else
-      list.Add(this); 
-  }
-
-  DataType TypeCheck( SqlExec e )
-  {
     DataType tL = Left.Type;
     DataType tR = Right.Type;
 
@@ -430,7 +414,19 @@ class ExpBinary : Exp
       }
     }
     else e.Error( "Binary operator datatype error");
-    return Type;
+
+    return this;
+  }
+
+  public override void GetConcat( G.List<Exp> list )
+  { 
+    if ( Operator == Token.VBar )
+    {
+      Left.GetConcat( list );
+      Right.GetConcat( list );
+    }
+    else
+      list.Add(this); 
   }
 
   public override IdSet GetIdSet( TableExpression te, EvalEnv ee )
@@ -563,12 +559,6 @@ class ExpFuncCall : Exp
     for ( int i = 0; i < Plist.Length; i += 1 )
       Plist[ i ] = Plist[ i ].Bind( e );
 
-    TypeCheck( e );
-    return this;
-  }
-
-  DataType TypeCheck( SqlExec e )
-  {
     if ( B.Params.Count != Plist.Length ) e.Error( "Param count error calling function " + FuncName );
     for ( int i = 0; i < Plist.Length; i += 1 )
       if ( Plist[ i ].Type != B.Params.Types[ i ] )
@@ -579,7 +569,8 @@ class ExpFuncCall : Exp
            + " required type=" + DTI.Name( B.Params.Types[ i ] ) 
            + " supplied type=" + DTI.Name( Plist[ i ].Type ) + " exp=" + Plist[ i ] );
       }
-    return Type;
+
+    return this;
   }
 
   public override DV GetDV()
