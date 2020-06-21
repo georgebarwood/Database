@@ -722,7 +722,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   TableExpression Select( bool exec )
   {
     var te = Expressions( null );
-    if ( exec ) Add( () => B.ExecuteSelect( te, null ) );
+    if ( exec ) Add( () => B.ExecuteSelect( te ) );
     return te;
   }
 
@@ -730,7 +730,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   {
     var locals = new G.List<int>();
     var te = Expressions( locals );
-    Add( () => B.ExecuteSelect( te, locals.ToArray() ) );
+    Add( () => B.ExecuteAssign( te, locals.ToArray() ) );
   }
 
   void Insert()
@@ -944,7 +944,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
     int forid = B.GetForId();
     Add( () => B.InitFor( forid, te, locals.ToArray() ) );
-    int start = B.GetHere();
+    int start = B.GetStatementId();
     int breakid = B.GetJumpId();
     Add( () => B.ExecuteFor( forid, breakid ) );
     
@@ -1223,7 +1223,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   {
     var exp = Exp();
     
-    int start = B.GetHere();
+    int start = B.GetStatementId();
     int breakid = B.GetJumpId();
     if (!ParseOnly)
     {
