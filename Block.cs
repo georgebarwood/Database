@@ -15,20 +15,17 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   public DataType ReturnType;
   public G.List<DataType> LocalType = new G.List<DataType>(); // Type of the ith local variable.
 
+  System.Action[] Statements; // List of statements to be executed.
+  int [] Jumps; // The resolution of the ith jumpid.
   int NextStatement; // Index into Statements, can be assigned to change execution control flow.
-  System.Action[] Statements;
-
-  G.List<System.Action> StatementList = new G.List<System.Action>(); // List of statements to be executed.
   Value FunctionResult;
 
-  // Lookup dictionaries for local variables.
-  G.Dictionary<string,int> VarMap = new G.Dictionary<string,int>();
-
-  // Lookup dictionary for local labels.
-  G.Dictionary<string,int> LabelMap = new G.Dictionary<string,int>();
-  G.List<int> Jump = new G.List<int>(); // The resolution of the ith jumpid.
-  int JumpUndefined = 0; // Number of jump labels awaiting definition.
-
+  // Construction fields.
+  G.List<System.Action> StatementList = new G.List<System.Action>(); // For building Statements.
+  G.List<int> JumpList = new G.List<int>(); // For building Jumps.
+  int JumpUndefined = 0; // Number of jump labels awaiting definition.  
+  G.Dictionary<string,int> VarMap = new G.Dictionary<string,int>(); // Lookup dictionary for local variables.
+  G.Dictionary<string,int> LabelMap = new G.Dictionary<string,int>(); // Lookup dictionary for local labels.
 
   // Statement execution loop.
   public void ExecuteStatements( ResultSet rs )
@@ -37,6 +34,8 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     {
       Statements = StatementList.ToArray();
       StatementList = null;
+      Jumps = JumpList.ToArray();
+      JumpList = null;
     }
     ResultSet = rs;
     NextStatement = 0;
@@ -59,11 +58,11 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   public int LookupJumpId( string label ) // Gets jumpid for a label.
   { int result; return LabelMap.TryGetValue( label, out result ) ? result : -1; }
 
-  public int GetJumpId() { int jumpid = Jump.Count; Jump.Add( -1 ); return jumpid; }
+  public int GetJumpId() { int jumpid = JumpList.Count; JumpList.Add( -1 ); return jumpid; }
 
   public int GetStatementId() { return StatementList.Count; }
 
-  public void SetJump( int jumpid ) { Jump[ jumpid ] = GetStatementId(); }
+  public void SetJump( int jumpid ) { JumpList[ jumpid ] = GetStatementId(); }
 
   public bool SetLabel( string name ) // returns true if label already defined ( an error ).
   {
@@ -71,14 +70,14 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     int jumpid = LookupJumpId( name );
     if ( jumpid < 0 )
     {
-      jumpid = Jump.Count;
+      jumpid = JumpList.Count;
       LabelMap[ name ] = jumpid;
-      Jump.Add( i );
+      JumpList.Add( i );
     }
     else 
     {
-      if ( Jump[ jumpid ] >= 0 ) return true;
-      Jump[ jumpid ] = i;
+      if ( Jumps[ jumpid ] >= 0 ) return true;
+      JumpList[ jumpid ] = i;
       JumpUndefined -= 1;
     }
     return false;
@@ -105,7 +104,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
       JumpUndefined += 1;
       return () => Goto( jumpid );
     }
-    else return () => JumpBack( Jump[ jumpid ] );
+    else return () => JumpBack( Jumps[ jumpid ] );
   }
 
   // Statement execution.
@@ -159,7 +158,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
   public void Goto( int jumpId )
   {
-    NextStatement = Jump[ jumpId ];
+    NextStatement = Jumps[ jumpId ];
   }
 
   public void Return( Exp.DV e )
@@ -170,7 +169,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
   public void If( Exp.DB test, int jumpid )
   {
-    if ( !test( this ) ) NextStatement = Jump[ jumpid ];
+    if ( !test( this ) ) NextStatement = Jumps[ jumpid ];
   }
 
   public void JumpBack( int statementId ) { NextStatement = statementId; }
@@ -190,7 +189,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   public void For( int forid, int breakid )
   {
     For f = (For) Locals[ forid ]._O;
-    if ( f == null || !f.Fetch() ) NextStatement = Jump[ breakid ];
+    if ( f == null || !f.Fetch() ) NextStatement = Jumps[ breakid ];
   }
 
   public void Insert( Table t, TableExpression te, int[] colIx, int idCol )
