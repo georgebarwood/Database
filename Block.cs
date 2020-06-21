@@ -22,7 +22,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   public DataType ReturnType; // Function return type.
   DataType [] LocalTypes; // Types of local variables.
 
-  // Compilation fields.
+  // Compilation lists and maps.
   G.List<System.Action> StatementList; // For building Statements.
   G.List<int> JumpList; // For building Jumps.
   int JumpUndefined = 0; // Number of jump labels awaiting definition.  
@@ -39,12 +39,15 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
   public void Init()
   {
+    Statements = null;
+    Jumps = null;
+    LocalTypes = null;
+
     StatementList = new G.List<System.Action>();
     JumpList = new G.List<int>();
+    LocalTypeList = new G.List<DataType>();
     VarMap = new G.Dictionary<string,int>();
     LabelMap = new G.Dictionary<string,int>();
-    LocalTypeList = new G.List<DataType>();
-    Statements = null;
   }
 
   public void Complete()
@@ -52,9 +55,10 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     Statements = StatementList.ToArray();
     Jumps = JumpList.ToArray();
     LocalTypes = LocalTypeList.ToArray();
+
     StatementList = null;
-    LocalTypeList = null;
     JumpList = null;
+    LocalTypeList = null;
     VarMap = null;
     LabelMap = null;
   }
