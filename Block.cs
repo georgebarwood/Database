@@ -16,7 +16,9 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   public G.List<DataType> LocalType = new G.List<DataType>(); // Type of the ith local variable.
 
   int NextStatement; // Index into Statements, can be assigned to change execution control flow.
-  G.List<System.Action> Statements = new G.List<System.Action>(); // List of statements to be executed.
+  System.Action[] Statements;
+
+  G.List<System.Action> StatementList = new G.List<System.Action>(); // List of statements to be executed.
   Value FunctionResult;
 
   // Lookup dictionaries for local variables.
@@ -31,14 +33,19 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   // Statement execution loop.
   public void ExecuteStatements( ResultSet rs )
   {
+    if ( Statements == null )
+    {
+      Statements = StatementList.ToArray();
+      StatementList = null;
+    }
     ResultSet = rs;
     NextStatement = 0;
-    while ( NextStatement < Statements.Count ) Statements[ NextStatement++ ]();
+    while ( NextStatement < Statements.Length ) Statements[ NextStatement++ ]();
   }
 
   // Statement preparation ( parse phase ).
 
-  public void AddStatement( System.Action a ) { Statements.Add( a ); }
+  public void AddStatement( System.Action a ) { StatementList.Add( a ); }
 
   public void Declare( string varname, DataType type ) // Declare a local variable.
   {
@@ -54,13 +61,13 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
   public int GetJumpId() { int jumpid = Jump.Count; Jump.Add( -1 ); return jumpid; }
 
-  public int GetStatementId() { return Statements.Count; }
+  public int GetStatementId() { return StatementList.Count; }
 
-  public void SetJump( int jumpid ) { Jump[ jumpid ] = Statements.Count; }
+  public void SetJump( int jumpid ) { Jump[ jumpid ] = GetStatementId(); }
 
   public bool SetLabel( string name ) // returns true if label already defined ( an error ).
   {
-    int i = Statements.Count;
+    int i = GetStatementId();
     int jumpid = LookupJumpId( name );
     if ( jumpid < 0 )
     {
@@ -105,7 +112,6 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
   public void AllocLocalValues( Exec e )
   {
-    CheckLabelsDefined( e );
     Locals = InitLocals();
   }
 
@@ -159,7 +165,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   public void Return( Exp.DV e )
   {
     if ( IsFunc ) FunctionResult = e( this );
-    NextStatement = Statements.Count;
+    NextStatement = Statements.Length;
   }
 
   public void If( Exp.DB test, int jumpid )

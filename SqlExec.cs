@@ -79,6 +79,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   { 
     B = new Block( Db, false );
     while ( T != Token.Eof ) Statement(); 
+    B.CheckLabelsDefined( this );
     B.AllocLocalValues( this );
     B.ExecuteStatements( rs );
   }
@@ -1309,7 +1310,10 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     }
   }
 
-  void Block() { while ( !Test( "END" ) ) Statement(); }
+  void Block() 
+  { 
+    while ( !Test( "END" ) ) Statement(); 
+  }
 
   void Statement()
   {
