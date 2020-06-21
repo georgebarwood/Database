@@ -36,6 +36,8 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
       StatementList = null;
       Jumps = JumpList.ToArray();
       JumpList = null;
+      VarMap = null;
+      LabelMap = null;
     }
     ResultSet = rs;
     NextStatement = 0;
@@ -124,7 +126,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
   public Value ExecuteRoutine( EvalEnv e, Exp.DV [] parms )
   {
-    // Allocate the local variables for the called function.
+    // Allocate the local variables.
     var locals = InitLocals();
 
     // Evaluate the parameters to be passed, saving them in the newly allocated local variables.
