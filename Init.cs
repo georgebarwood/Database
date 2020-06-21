@@ -16,6 +16,7 @@ INSERT INTO [sys].[Schema](Id,[Name]) VALUES
 (5,'browse')
 (6,'dbo')
 (7,'ft')
+GO
 INSERT INTO [sys].[Table](Id,[Schema],[Name],[IsView],[Definition]) VALUES 
 (8,3,'File',0,'')
 (9,5,'Table',0,'')
@@ -30,6 +31,7 @@ INSERT INTO [sys].[Table](Id,[Schema],[Name],[IsView],[Definition]) VALUES
 FROM dbo.Order 
 GROUP BY Cust')
 (14,7,'Person',0,'')
+GO
 INSERT INTO [sys].[Column](Id,[Table],[Name],[Type]) VALUES 
 (21,8,'Path',2)
 (22,8,'ContentType',2)
@@ -64,15 +66,14 @@ INSERT INTO [sys].[Column](Id,[Table],[Name],[Type]) VALUES
 (55,14,'BirthYear',7)
 (56,14,'BirthMonth',8)
 (57,14,'BirthDay',8)
-(58,14,'DeathYear',5)
+(58,14,'DeathYear',7)
 (59,14,'DeathMonth',8)
 (60,14,'DeathDay',8)
 (61,14,'Notes',2)
-", null );
-
-    d.Sql( @"
+GO
 INSERT INTO [web].[File](Id,[Path],[ContentType],[ContentLength],[Content]) VALUES 
 (1,'/img/fav.ico','image/x-icon',1086,0x00000100010010100000010020002804000016000000280000001000000020000000010020000000000000000000000000000000000000000000000000000000ffbf0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff00000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff00000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff00000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffbf)
+GO
 INSERT INTO [browse].[Table](Id,[NameFunction],[SelectFunction],[DefaultOrder],[Title],[Description],[Role]) VALUES 
 (1,'sys.SchemaName','browse.SchemaSelect','','','',0)
 (2,'sys.TableName','browse.TableSelect','','','',0)
@@ -81,6 +82,7 @@ INSERT INTO [browse].[Table](Id,[NameFunction],[SelectFunction],[DefaultOrder],[
 (11,'dbo.CustName','dbo.CustSelect','','Customer','',0)
 (12,'','','','','',0)
 (14,'ft.PersonName','','BirthYear DESC, BirthMonth DESC, BirthDay DESC','','',0)
+GO
 INSERT INTO [browse].[Column](Id,[Position],[Label],[Description],[RefersTo],[Default],[InputCols],[InputFunction],[InputRows],[Style]) VALUES 
 (2,0,'','',1,'',0,'',0,0)
 (6,0,'','',2,'',0,'',0,0)
@@ -106,15 +108,17 @@ INSERT INTO [browse].[Column](Id,[Position],[Label],[Description],[RefersTo],[De
 (59,8,'M','',0,'',0,'',0,0)
 (60,9,'D','',0,'',0,'',0,0)
 (61,100,'','',0,'',100,'',10,0)
+GO
 INSERT INTO [dbo].[Cust](Id,[FirstName],[LastName],[Age],[Postcode]) VALUES 
 (1,'Mary','Poppins',65,'EC4 2NX')
 (2,'Clare','Smith',29,'GL3')
-(3,'Ron','Jones',0,'')
+(3,'Ron','Jones',45,'')
 (4,'Peter','Perfect',36,'')
 (5,'George','Washington',250,'WC1')
 (6,'Ron','Williams',0,'')
 (7,'Adam','Baker',0,'')
 (8,'George','Barwood',62,'GL2 4LZ')
+GO
 INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES 
 (51,5,75.27)
 (52,2,10.02)
@@ -167,7 +171,7 @@ INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES
 (99,7,50.10)
 (100,1,25.05)
 (101,1,99.85)
-(102,5,9999.00)
+(102,5,988999.00)
 (103,4,111.11)
 (104,1,500.00)
 (105,1,99.53)
@@ -176,8 +180,14 @@ INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES
 (108,5,99.00)
 (109,5,123467.89)
 (110,5,2900.00)
+(111,1,11293899.22)
+(112,4,19.99)
+(113,4,123.45)
+GO
 CREATE INDEX ByRefersTo on [browse].[Column]([RefersTo])
+GO
 CREATE INDEX ByLastName on [dbo].[Cust]([LastName])
+GO
 CREATE FUNCTION [sys].[ColName]( table int, colId int ) RETURNS string AS
 BEGIN
   IF colId = 0 return 'Id'
@@ -191,6 +201,7 @@ BEGIN
   END
   RETURN '?bad colId?'  
 END
+GO
 CREATE FUNCTION [sys].[ColNames]( table int ) RETURNS string AS
 BEGIN
   DECLARE result string, col string
@@ -199,6 +210,7 @@ BEGIN
     SET result = result | ',' | sys.QuoteName(col)
   RETURN result | ')'
 END
+GO
 CREATE FUNCTION [sys].[Cols]( table int ) RETURNS string AS
 BEGIN
   DECLARE col string, list string
@@ -208,12 +220,14 @@ BEGIN
 
   RETURN '(' | list | ')'
 END
+GO
 CREATE FUNCTION [sys].[ColumnLevel]( column int ) returns int AS 
 BEGIN
   DECLARE table int
   SET table = Table FROM sys.Column WHERE Id = column
   RETURN sys.TableLevel( table )
 END
+GO
 CREATE FUNCTION [sys].[ColValues]( table int ) RETURNS string AS
 BEGIN
   DECLARE result string, col string
@@ -226,10 +240,12 @@ BEGIN
     SET result = result | '|'',''|' | col
   RETURN result
 END
+GO
 CREATE FUNCTION [sys].[Dot]( schema string, name string ) RETURNS string AS
 BEGIN
   RETURN sys.QuoteName( schema ) | '.' | sys.QuoteName( name )
 END
+GO
 CREATE FUNCTION [sys].[IndexCols]( index int ) RETURNS string AS
 BEGIN
   DECLARE table int, list string, col string
@@ -241,16 +257,19 @@ BEGIN
 
   RETURN '(' | list | ')'
 END
+GO
 CREATE FUNCTION [sys].[IndexName]( index int ) RETURNS string AS
 BEGIN
   DECLARE result string
   SET result = sys.QuoteName(Name) FROM sys.Index WHERE Id = index
   RETURN result
 END
+GO
 CREATE FUNCTION [sys].[QuoteName]( s string ) RETURNS string AS
 BEGIN
   RETURN '[' | REPLACE( s, ']', ']]' ) | ']'
 END
+GO
 CREATE FUNCTION [sys].[RenameObject]( objtype string, sch string, name string, newsch string, newname string ) 
 RETURNS string AS 
 
@@ -282,6 +301,7 @@ BEGIN
  
   RETURN ''
 END
+GO
 CREATE FUNCTION [sys].[SchemaLevel]( schema int ) returns int AS 
 BEGIN
   /* This controls what is dumped by handler.Dump. Levels are 
@@ -296,22 +316,26 @@ BEGIN
        ELSE 1
   END
 END
+GO
 CREATE FUNCTION [sys].[SchemaName]( schema int) RETURNS string AS 
 BEGIN 
   DECLARE s string
   SET s = Name FROM sys.Schema WHERE Id = schema
   RETURN s
 END
+GO
 CREATE FUNCTION [sys].[SingleQuote]( s string ) RETURNS string AS
 BEGIN
   RETURN '''' | REPLACE( s, '''', '''''' ) | ''''
 END
+GO
 CREATE FUNCTION [sys].[TableLevel]( table int ) returns int AS 
 BEGIN
   DECLARE schema int
   SET schema = Schema FROM sys.Table WHERE Id = table
   RETURN sys.SchemaLevel( schema )
 END
+GO
 CREATE FUNCTION [sys].[TableName]( table int ) returns string as
 begin
   DECLARE schema int, name string, result string
@@ -325,6 +349,7 @@ begin
   
   return result
 end
+GO
 CREATE FUNCTION [sys].[TypeName]( t int ) RETURNS string AS 
 BEGIN 
   RETURN CASE 
@@ -340,34 +365,41 @@ BEGIN
     ELSE 'decimal(' | ( t / 16 ) % 64 | ',' | t / 1024 | ')'
   END
 END
+GO
 CREATE FUNCTION [web].[Cookie]( name string ) RETURNS string as
 BEGIN
   RETURN ARG( 3, name )
 END
+GO
 CREATE FUNCTION [web].[Form]( name string ) RETURNS string AS
 BEGIN
   return ARG( 2, name )
 END
+GO
 CREATE FUNCTION [web].[Path]() RETURNS string AS
 BEGIN
   return ARG(0,'')
 END
+GO
 CREATE FUNCTION [web].[Query]( name string ) RETURNS string AS
 BEGIN
   return ARG( 1, name )
 END
+GO
 CREATE FUNCTION [htm].[Attr]( s string ) RETURNS string AS
 BEGIN
   set s = REPLACE( s, '&', '&amp;' )
   set s = REPLACE( s, '""', '&quot;' )
   RETURN '""' | s | '""'
 END
+GO
 CREATE FUNCTION [htm].[Encode]( s string ) RETURNS string AS
 BEGIN
   set s = REPLACE( s,'&', '&amp;' )
   set s = REPLACE( s, '<', '&lt;' )
   RETURN s
 END
+GO
 CREATE FUNCTION [browse].[BrowseColumnName]( k int ) RETURNS string AS 
 BEGIN
   DECLARE result string
@@ -375,6 +407,7 @@ BEGIN
   FROM sys.Column WHERE Id = k
   RETURN result
 END
+GO
 CREATE FUNCTION [browse].[ChildSql]( colId int, k int ) RETURNS string AS 
 BEGIN 
   /* Returns SQL to display a child table, with hyperlinks where a column refers to another table */
@@ -413,6 +446,7 @@ BEGIN
 
    | ' SELECT ''</TABLE>'''
 END
+GO
 CREATE FUNCTION [browse].[ColNames]( table int ) RETURNS string AS
 BEGIN
 
@@ -427,6 +461,7 @@ BEGIN
   RETURN result
 
 END
+GO
 CREATE FUNCTION [browse].[ColParser]( colId int, type int, f string ) RETURNS string AS
 BEGIN
   -- ColId not currently used, but in future user-specified parser could be fetched from Parse.Column
@@ -438,12 +473,14 @@ BEGIN
     ELSE f
   END
 END
+GO
 CREATE FUNCTION [browse].[ColPos]( c int ) RETURNS int AS
 BEGIN
   DECLARE pos int
   SET pos = Position FROM browse.Column WHERE Id = c
   RETURN pos
 END
+GO
 CREATE FUNCTION [browse].[ColValues]( table int ) RETURNS string AS
 BEGIN
   DECLARE result string, col string, colid int
@@ -467,6 +504,7 @@ BEGIN
   END
   RETURN result
 END
+GO
 CREATE FUNCTION [browse].[DefaultDefault]( type int, ref int ) RETURNS string AS
 BEGIN
   RETURN CASE
@@ -476,6 +514,7 @@ BEGIN
     ELSE '0'
     END
 END
+GO
 CREATE FUNCTION [browse].[DefaultInput]( type int ) RETURNS string AS
 BEGIN
   RETURN CASE 
@@ -486,6 +525,7 @@ BEGIN
   ELSE 'browse.InputString'
   END
 END
+GO
 CREATE FUNCTION [browse].[FormInsertSql]( table int, pc int ) returns string AS
 BEGIN
   DECLARE sql string, col string, type int, colId int
@@ -511,6 +551,7 @@ BEGIN
   END
   RETURN 'SELECT ' | sql
 END
+GO
 CREATE FUNCTION [browse].[FormUpdateSql]( table int, k int ) returns string AS
 BEGIN
   DECLARE sql string, col string, colId int, type int
@@ -534,6 +575,7 @@ BEGIN
 
   RETURN 'SELECT ' | sql | ' FROM ' | sys.TableName( table ) | ' WHERE Id =' | k
 END
+GO
 CREATE FUNCTION [browse].[InputBinary]( colId int, value binary ) RETURNS string AS 
 BEGIN 
   DECLARE cn string SET cn = Name FROM sys.Column WHERE Id = colId
@@ -544,12 +586,14 @@ BEGIN
 
   RETURN '<input id=""' | cn | '"" name=""' | cn | '"" size=' | size | ' value=""' | value | '"">'
 END
+GO
 CREATE FUNCTION [browse].[InputBool]( colId int, value bool ) RETURNS string AS
 BEGIN
   DECLARE cn string 
   SET cn = Name FROM sys.Column WHERE Id = colId
   RETURN '<input type=checkbox id=""' | cn | '"" name=""' | cn | '""' | CASE WHEN value THEN ' checked' ELSE '' END | '>'
 END
+GO
 CREATE FUNCTION [browse].[InputDouble]( colId int, value double ) RETURNS string AS 
 BEGIN 
   DECLARE cn string SET cn = Name FROM sys.Column WHERE Id = colId
@@ -560,6 +604,7 @@ BEGIN
 
   RETURN '<input id=""' | cn | '"" name=""' | cn | '"" size=""' | size | '""' | ' value=""' | value | '"">'
 END
+GO
 CREATE FUNCTION [browse].[InputInt]( colId int, value int) RETURNS string AS 
 BEGIN 
   DECLARE cn string 
@@ -573,6 +618,7 @@ BEGIN
 
   RETURN '<input type=number id=""' | cn | '"" name=""' | cn | '"" size=' | size | ' value=' | value | '>'
 END
+GO
 CREATE FUNCTION [browse].[InputString]( colId int, value string ) RETURNS string AS 
 BEGIN 
   DECLARE cn string SET cn = Name FROM sys.Column WHERE Id = colId 
@@ -590,6 +636,7 @@ BEGIN
   ELSE
     RETURN '<input id=""' | cn | '"" name=""' | cn | '"" size=""' | cols | '""' | ' value=' | htm.Attr(value) | '>'
 END
+GO
 CREATE FUNCTION [browse].[InsertNames]( table int ) RETURNS string AS
 BEGIN
   DECLARE result string, col string
@@ -598,6 +645,7 @@ BEGIN
     SET result = CASE WHEN result = '' THEN '' ELSE result | ',' END | sys.QuoteName(col)
   RETURN '(' | result | ')'
 END
+GO
 CREATE FUNCTION [browse].[InsertSql]( table int, pc int, p int ) RETURNS string AS
 BEGIN
   DECLARE vlist string, f string, type int, colId int
@@ -612,10 +660,12 @@ BEGIN
 
   RETURN 'INSERT INTO ' | sys.TableName( table ) | browse.InsertNames( table ) | ' VALUES (' | vlist | ')'
 END
+GO
 CREATE FUNCTION [browse].[ParseBool]( s string ) returns bool AS
 BEGIN
   return s = 'on'
 END
+GO
 CREATE FUNCTION [browse].[SchemaSelect]( colId int, sel int ) RETURNS string AS
 BEGIN
   DECLARE col string SET col = Name from sys.Column WHERE Id = colId
@@ -634,6 +684,7 @@ BEGIN
      '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
      | '</select>'
 END
+GO
 CREATE FUNCTION [browse].[ShowSql]( table int, k int ) RETURNS string AS
 BEGIN
   DECLARE cols string, col string, colname string, colid int
@@ -688,6 +739,7 @@ BEGIN
   EXEC web.Trailer()
 '
 END
+GO
 CREATE FUNCTION [browse].[TableSelect]( colId int, sel int ) RETURNS string AS
 BEGIN
   DECLARE col string SET col = Name from sys.Column WHERE Id = colId
@@ -704,6 +756,7 @@ BEGIN
      '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
      | '</select>'
 END
+GO
 CREATE FUNCTION [browse].[TableTitle]( table int ) RETURNS string AS
 BEGIN
   DECLARE result string
@@ -714,6 +767,7 @@ BEGIN
 
   RETURN result
 END
+GO
 CREATE FUNCTION [browse].[UpdateSql]( table int, k int ) RETURNS string AS
 BEGIN
   DECLARE alist string, col string, type int, colId int
@@ -725,6 +779,7 @@ BEGIN
   END
   RETURN 'UPDATE ' | sys.TableName( table ) | ' SET ' | alist | ' WHERE Id =' | k
 END
+GO
 CREATE FUNCTION [dbo].[CustName]( cust int ) returns string as 
 BEGIN
   DECLARE result string 
@@ -732,6 +787,7 @@ BEGIN
   SET result = FirstName | ' ' | LastName FROM dbo.Cust where Id = cust
   RETURN result
 END
+GO
 CREATE FUNCTION [dbo].[CustSelect]( colId int, sel int ) RETURNS string AS
 BEGIN
   DECLARE col string SET col = Name FROM sys.Column where Id = colId
@@ -747,6 +803,7 @@ BEGIN
     | '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
     | '</select>'
 END
+GO
 CREATE FUNCTION [ft].[FatherSelect]( colId int, sel int ) RETURNS string AS
 BEGIN
   DECLARE col string SET col = Name FROM sys.Column where Id = colId
@@ -767,6 +824,7 @@ BEGIN
     | '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
     | '</select>'
 END
+GO
 CREATE FUNCTION [ft].[MotherSelect]( colId int, sel int ) RETURNS string AS
 BEGIN
   DECLARE col string SET col = Name FROM sys.Column where Id = colId
@@ -788,6 +846,7 @@ BEGIN
     | '<option ' | CASE WHEN sel = 0 THEN ' selected' ELSE '' END | ' value=0></option>'
     | '</select>'
 END
+GO
 CREATE FUNCTION [ft].[PersonName]( id int ) returns string AS
 BEGIN
   DECLARE result string
@@ -798,6 +857,7 @@ BEGIN
   FROM ft.Person WHERE Id = id
   RETURN result
 END
+GO
 CREATE PROCEDURE [sys].[DroppedColumn]( t int, colId int ) AS 
 BEGIN 
   /* Called internally during ALTER TABLE */
@@ -811,6 +871,7 @@ BEGIN
   END
   UPDATE sys.IndexCol SET ColId = ColId - 1 WHERE Table = t AND ColId >= colId
 END
+GO
 CREATE PROCEDURE [sys].[DropSchema]( schema string ) AS
 /* Note: this should not be called directly, instead use DROP SCHEMA statement */
 BEGIN
@@ -822,6 +883,7 @@ BEGIN
   FOR name = Name FROM sys.Table WHERE Schema = sid AND IsView = 0 EXECUTE( 'DROP TABLE ' | sys.Dot(schema,name) )
   DELETE FROM sys.Schema WHERE Id = sid
 END
+GO
 CREATE PROCEDURE [sys].[DropTable]( t int ) AS 
 BEGIN
   DELETE FROM browse.Column WHERE Id in ( SELECT Id FROM sys.Column WHERE Table = t )
@@ -831,10 +893,12 @@ BEGIN
   DELETE FROM sys.Index WHERE Table = t
   DELETE FROM sys.IndexCol WHERE Table = t
 END
+GO
 CREATE PROCEDURE [sys].[ModifiedColumn]( t int, colId int ) AS 
 BEGIN
   UPDATE sys.Index SET Modified = 1 WHERE Id IN ( SELECT Index FROM sys.IndexCol WHERE Table = t AND ColId = colId )
 END
+GO
 CREATE PROCEDURE [sys].[RecreateModifiedIndexes]() AS 
 BEGIN
   DECLARE table int, name string, cols string
@@ -846,6 +910,7 @@ BEGIN
     EXECUTE( 'CREATE INDEX ' | name | ' ON ' | sys.TableName( table ) | cols )
   END
 END
+GO
 CREATE PROCEDURE [handler].[/AddChild]() AS
 BEGIN
   DECLARE c int SET c = PARSEINT( web.Query('c') )
@@ -878,6 +943,7 @@ BEGIN
     
   EXEC web.Trailer()
 END
+GO
 CREATE PROCEDURE [handler].[/AddRow]() AS 
 BEGIN 
   DECLARE t int SET t = PARSEINT( web.Query('t') )
@@ -906,6 +972,7 @@ BEGIN
   EXEC web.Trailer()
 
 END
+GO
 CREATE PROCEDURE [handler].[/BrowseColInfo]() AS 
 BEGIN 
   DECLARE tid int SET tid = 10
@@ -932,6 +999,7 @@ BEGIN
     EXEC web.Trailer()
   END
 END
+GO
 CREATE PROCEDURE [handler].[/BrowseInfo]() AS 
 BEGIN 
   DECLARE k int SET k = PARSEINT( web.Query( 'k' ) )
@@ -956,6 +1024,7 @@ BEGIN
     EXEC web.Trailer()
   END
 END
+GO
 CREATE PROCEDURE [handler].[/Dump]() AS 
 BEGIN 
 
@@ -981,17 +1050,23 @@ BEGIN
   BEGIN
     SELECT ins
     EXECUTE( val )
+    SELECT 'GO
+'
   END
 
   SELECT 'CREATE INDEX ' | Name | ' on ' | sys.TableName( Table ) | sys.IndexCols(Id) | '
+GO
 ' FROM sys.Index WHERE Id > 6
 
   SELECT 'CREATE FUNCTION ' | sys.Dot( sys.SchemaName(Schema),Name) | Definition | '
+GO
 ' FROM sys.Function  WHERE sys.SchemaLevel( Schema ) > 1 ORDER BY Schema, Name
 
   SELECT 'CREATE PROCEDURE ' | sys.Dot( sys.SchemaName(Schema),Name) | Definition | '
+GO
 ' FROM sys.Procedure WHERE sys.SchemaLevel( Schema ) > 1 ORDER BY Schema, Name
 END
+GO
 CREATE PROCEDURE [handler].[/EditFile]() AS
 BEGIN
   DECLARE k int SET k = PARSEINT( web.Query('k') )
@@ -1010,6 +1085,7 @@ BEGIN
   EXEC web.Trailer()
 
 END
+GO
 CREATE PROCEDURE [handler].[/EditFunc]() AS
 BEGIN
   DECLARE s string SET s = web.Query('s')
@@ -1037,6 +1113,7 @@ BEGIN
 
   EXEC web.Trailer()
 END
+GO
 CREATE PROCEDURE [handler].[/EditProc]() AS
 BEGIN
   DECLARE s string SET s = web.Query('s')
@@ -1065,6 +1142,7 @@ BEGIN
 
   EXEC web.Trailer()
 END
+GO
 CREATE PROCEDURE [handler].[/EditRow]() AS 
 BEGIN 
   DECLARE t int SET t = PARSEINT( web.Query('t') )
@@ -1090,6 +1168,7 @@ BEGIN
   SELECT '<p><input name=""$submit"" type=submit value=Save></form>'
   EXEC web.Trailer()
 END
+GO
 CREATE PROCEDURE [handler].[/EditView]() AS
 BEGIN
   DECLARE s string SET s = web.Query('s')
@@ -1116,6 +1195,7 @@ BEGIN
      | '</form>'
   EXEC web.Trailer()
 END
+GO
 CREATE PROCEDURE [handler].[/Execute]() AS 
 BEGIN
   DECLARE sql string SET sql = web.Form('sql')
@@ -1152,6 +1232,7 @@ BEGIN
    EXEC web.Trailer()
 
 END
+GO
 CREATE PROCEDURE [handler].[/FileUpload]() AS
 BEGIN
   EXEC web.Head( 'File upload' )
@@ -1170,6 +1251,7 @@ BEGIN
 
   EXEC web.Trailer()
 END
+GO
 CREATE PROCEDURE [handler].[/ListFile]() AS
 BEGIN
   EXEC web.Head( 'Files' )
@@ -1179,6 +1261,7 @@ BEGIN
   FROM web.File
   EXEC web.Trailer()
 END
+GO
 CREATE PROCEDURE [handler].[/Manual]() AS BEGIN
 
 EXEC web.Head('Manual')
@@ -1420,6 +1503,7 @@ SELECT '<h2>Guide to the pre-defined schemas</h2>
 EXEC web.Trailer()
 
 END
+GO
 CREATE PROCEDURE [handler].[/Menu]() AS
 BEGIN
    EXEC web.Head('Menu')
@@ -1438,6 +1522,7 @@ BEGIN
 
    EXEC web.Trailer()
 END
+GO
 CREATE PROCEDURE [handler].[/OrderSummary]() AS
 BEGIN
   EXEC web.Head( 'Order Summary' )
@@ -1458,6 +1543,7 @@ BEGIN
 
   EXEC web.Trailer()
 END
+GO
 CREATE PROCEDURE [handler].[/ShowRow]() AS 
 BEGIN
   DECLARE t int SET t = PARSEINT( web.Query('t') )
@@ -1465,6 +1551,7 @@ BEGIN
 
   EXECUTE( browse.ShowSql( t, k ) )
 END
+GO
 CREATE PROCEDURE [handler].[/ShowSchema]() AS
 BEGIN
   DECLARE s string SET s = web.Query('s')
@@ -1493,6 +1580,7 @@ BEGIN
 
   EXEC web.Trailer()
 END
+GO
 CREATE PROCEDURE [handler].[/ShowTable]() AS 
 BEGIN 
   DECLARE t int SET t = PARSEINT( web.Query('k') )
@@ -1523,6 +1611,7 @@ BEGIN
 
   EXEC web.Trailer()
 END
+GO
 CREATE PROCEDURE [web].[Head]( title string ) AS 
 BEGIN 
   EXEC web.SetContentType( 'text/html;charset=utf-8' )
@@ -1546,6 +1635,7 @@ BEGIN
 | <a target=_blank href=""EditProc?s=handler&n=' | web.Path() | '"">Code</a>
 </div>'
 END
+GO
 CREATE PROCEDURE [web].[Main]() AS 
 BEGIN 
   DECLARE path string SET path = web.Path()
@@ -1580,27 +1670,33 @@ BEGIN
     END
   END
 END
+GO
 CREATE PROCEDURE [web].[Redirect]( url string ) AS
 BEGIN
   select 15, url
 END
+GO
 CREATE PROCEDURE [web].[SendBinary]( contenttype string, content binary ) AS
 BEGIN
   exec web.SetContentType( contenttype )
   select 11, content
 END
+GO
 CREATE PROCEDURE [web].[SetContentType]( ct string ) AS
 BEGIN
   SELECT 10, ct
 END
+GO
 CREATE PROCEDURE [web].[SetCookie]( name string, value string, expires string ) as
 BEGIN
   SELECT 16, name, value, expires /* e.g. 01 Jan 2050 */
 END
+GO
 CREATE PROCEDURE [web].[Trailer]() AS
 BEGIN
   SELECT '</body></html>'
 END
+GO
 CREATE PROCEDURE [dbo].[MakeOrders]() AS
 BEGIN 
   DELETE FROM dbo.Order WHERE 1 = 1
@@ -1612,6 +1708,7 @@ BEGIN
     SET @I=@I+1 
   END
 END
+GO
 ", null );
 
   }
