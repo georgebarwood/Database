@@ -71,9 +71,14 @@ abstract class Exp
     return null;
   }
 
-  // Either GetDV or the relevant GetD? must be implemented.
+  public delegate Value  DV( EvalEnv e );
+  public delegate bool   DB( EvalEnv e );
+  public delegate long   DL( EvalEnv e );
+  public delegate double DD( EvalEnv e );
+  public delegate string DS( EvalEnv e );
+  public delegate byte[] DX( EvalEnv e );
 
-  public delegate Value DV( EvalEnv e );
+  // Either GetDV or the relevant GetD? must be implemented.
   public virtual DV GetDV()
   { 
     switch( DTI.Base( Type ) )
@@ -86,19 +91,10 @@ abstract class Exp
     }
   }
 
-  public delegate bool DB( EvalEnv e );
   public virtual DB GetDB(){ var dv = GetDV(); return ( ee ) => dv( ee ).B; }
-
-  public delegate long DL( EvalEnv e );
   public virtual DL GetDL(){ var dv = GetDV(); return ( ee ) => dv( ee ).L; }
-
-  public delegate double DD( EvalEnv e );
   public virtual DD GetDD(){ var dv = GetDV(); return ( ee ) => dv( ee ).D; }
-
-  public delegate string DS( EvalEnv e );
   public virtual DS GetDS(){ var dv = GetDV(); return ( ee ) => (string)dv( ee )._O; }
-
-  public delegate byte[] DX( EvalEnv e );
   public virtual DX GetDX(){ var dv = GetDV(); return ( ee ) => (byte[])dv( ee )._O; }
 
   public Value Eval( EvalEnv e ) { var dv = GetDV(); return dv( e ); }
@@ -653,6 +649,8 @@ class CASE : Exp
 class ExpList : Exp // Implements the list of expressions in an SQL conditional expression X IN ( e1, e2, e3 .... )
 {
   Exp [] List;
+  DV [] Dvs;
+
   DataType ElementType;
   public ExpList( G.List<Exp> list )
   { 
@@ -662,12 +660,14 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
 
   public override Exp Bind( SqlExec e  )
   {
+    Dvs = new DV[ List.Length ];
     for ( int i = 0; i < List.Length; i += 1 ) 
     {
       List[ i ] = List[ i ].Bind( e );
       DataType dt = List[ i ].Type;
       if ( i == 0 ) ElementType = dt;
       else if ( dt != ElementType ) e.Error( "Tuple type error" ); // Maybe should apply Exp.Convert if possible.
+      Dvs[ i ] = List[ i ].GetDV();
     } 
     return this;
   }
@@ -676,7 +676,7 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
   {
     for ( int i=0; i < List.Length; i += 1 )
     {
-      Value y = List[ i ].Eval( e );
+      Value y = Dvs[ i ]( e );
       if ( Util.Equal( x, y, ElementType ) ) return true;
     }
     return false;
