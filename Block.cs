@@ -30,7 +30,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   G.Dictionary<string,int> LabelMap; // Lookup dictionary for local labels.
   public G.List<DataType> LocalTypeList; // Type of the ith local variable.
 
-  public void ExecuteStatements( ResultSet rs ) // Statement execution loop.
+  void ExecuteStatements( ResultSet rs ) // Statement execution loop.
   {
     ResultSet = rs;
     NextStatement = 0;
@@ -130,17 +130,18 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
   // Statement execution.
 
-  public void AllocLocalValues( Exec e )
-  {
-    Locals = InitLocals();
-  }
-
-  public Value [] InitLocals()
+  Value [] InitLocals()
   {
     int n = LocalTypes.Length;
     var result = new Value[ n ];
     for ( int i = 0; i < n; i += 1 ) result[ i ] = DTI.Default( LocalTypes[ i ] );
     return result;
+  }
+
+  public void ExecuteBatch( ResultSet rs )
+  {
+    Locals = InitLocals();
+    ExecuteStatements( rs );
   }
 
   public Value ExecuteRoutine( EvalEnv e, Exp.DV [] parms )

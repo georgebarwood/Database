@@ -85,8 +85,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       while ( T != Token.Eof && !Test("GO") ) Statement(); 
       B.CheckLabelsDefined( this );
       B.Complete();
-      B.AllocLocalValues( this );
-      B.ExecuteStatements( rs );
+      B.ExecuteBatch( rs );
       B.Init();
     } while ( T != Token.Eof );
   }
