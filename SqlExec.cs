@@ -23,6 +23,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     SqlExec e = new SqlExec( sql, d, name );
     e.B = new Block( d, func );
     e.B.Params = e.RoutineDef( func, out e.B.ReturnType );
+    e.B.Complete();
     return e.B;
   }
 
@@ -78,10 +79,16 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   void Batch( ResultSet rs ) 
   { 
     B = new Block( Db, false );
-    while ( T != Token.Eof ) Statement(); 
-    B.CheckLabelsDefined( this );
-    B.AllocLocalValues( this );
-    B.ExecuteStatements( rs );
+    do
+    {
+
+      while ( T != Token.Eof && !Test("GO") ) Statement(); 
+      B.CheckLabelsDefined( this );
+      B.Complete();
+      B.AllocLocalValues( this );
+      B.ExecuteStatements( rs );
+      B.Init();
+    } while ( T != Token.Eof );
   }
 
   void Add( System.Action a )
@@ -400,7 +407,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         else 
           Error( "Undeclared local : " + name ); 
       }
-      else result = new ExpLocalVar( i, B.LocalType[ i ] );
+      else result = new ExpLocalVar( i, B.LocalTypeList[ i ] );
     }
     return result;
   }
@@ -661,7 +668,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       {
         var types = new DataType[ locals.Count ];
         for ( int i = 0; i < locals.Count; i += 1 )
-          types[ i ] = B.LocalType[ locals[ i ] ];
+          types[ i ] = B.LocalTypeList[ locals[ i ] ];
         result.Convert( types, this );
       }
 
@@ -723,7 +730,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   TableExpression Select( bool exec )
   {
     var te = Expressions( null );
-    if ( exec ) Add( () => B.Select( te ) );
+    var b = B;
+    if ( exec ) Add( () => b.Select( te ) );
     return te;
   }
 
@@ -732,7 +740,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     var locals = new G.List<int>();
     var te = Expressions( locals );
     var la = locals.ToArray();
-    Add( () => B.Set( te, la ) );
+    var b = B;
+    Add( () => b.Set( te, la ) );
   }
 
   void Insert()
@@ -772,7 +781,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         types[ i ] = t.Cols.Types[ ci ];
       }
       src.Convert( types, this );
-      Add( () => B.Insert( t, src, colIx, idCol ) );
+      var b = B;
+      Add( () => b.Insert( t, src, colIx, idCol ) );
     }
   }
 
@@ -883,7 +893,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       exp = exp.Bind( this );
       if ( exp.Type != DataType.String ) Error( "Argument of EXECUTE must be a string" );
       var ds = exp.GetDS();
-      Add( () => B.Execute( ds ) );
+      var b = B;
+      Add( () => b.Execute( ds ) );
     }
   }
 
@@ -921,8 +932,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
         var pdv = new Exp.DV[ parms.Count ];
         for ( int i = 0; i < parms.Count; i += 1 ) pdv[ i ] = parms[ i ].GetDV();
-
-        Add( () => b.ExecuteRoutine( B, pdv ) ); 
+        var caller = B;
+        Add( () => b.ExecuteRoutine( caller, pdv ) ); 
       }   
     }
     else if ( name == "SETMODE" )
@@ -934,7 +945,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         if ( parms[ 0 ].Type != DataType.Bigint ) Error( "SETMODE param error" );
       }
       var dl = parms[0].GetDL();
-      Add( () => B.SetMode( dl ) );
+      var b = B;
+      Add( () => b.SetMode( dl ) );
     }
     else Error( "Unrecognised procedure" );
   }
@@ -944,19 +956,21 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     var locals = new G.List<int>();
     TableExpression te = Expressions( locals );
 
-    int forid = B.GetForId();
-    Add( () => B.InitFor( forid, te, locals.ToArray() ) );
-    int start = B.GetStatementId();
-    int breakid = B.GetJumpId();
-    Add( () => B.For( forid, breakid ) );
+    var b = B;
+    int forid = b.GetForId();
+    var la = locals.ToArray();
+    Add( () => b.InitFor( forid, te, la ) );
+    int start = b.GetStatementId();
+    int breakid = b.GetJumpId();
+    Add( () => b.For( forid, breakid ) );
     
     int save = BreakId;
     BreakId = breakid;
     Statement();
     BreakId = save;
 
-    Add( () => B.JumpBack( start ) );
-    B.SetJump( breakid );
+    Add( () => b.JumpBack( start ) );
+    b.SetJump( breakid );
   }
 
   // ****************** Create Statements
@@ -981,7 +995,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       ReadToken();
     }
     string source = Source.Substring( sourceStart, TokenStart - sourceStart );
-    Add( () => Db.CreateTable( schema, tableName, ColInfo.New( names, types ), source, false, false, this ) );
+    var ci = ColInfo.New( names, types );
+    Add( () => Db.CreateTable( schema, tableName, ci, source, false, false, this ) );
   }
 
   void CreateView( bool alter )
@@ -1007,20 +1022,21 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     return Select( false );
   }
 
-  void CreateRoutine( bool func, bool alter )
+  void CreateRoutine( bool isFunc, bool alter )
   {
     string schema = Name();
     Read( Token.Dot );
-    string funcName = Name();
+    string routineName = Name();
     int sourceStart = SourceIx-1;
 
     Block save1 = B; bool save2 = ParseOnly; 
-    B = new Block( B.Db, func ); ParseOnly = true;
-    DataType retType; var parms = RoutineDef( func, out retType );
+    B = new Block( B.Db, isFunc ); ParseOnly = true;
+    DataType retType; var parms = RoutineDef( isFunc, out retType );
+    B.CheckLabelsDefined( this );
     B = save1; ParseOnly = save2;
 
     string source = Source.Substring( sourceStart, TokenStart - sourceStart );
-    Add( () => Db.CreateRoutine( schema, funcName, source, func, alter, this ) );
+    Add( () => Db.CreateRoutine( schema, routineName, source, isFunc, alter, this ) );
   }
 
   ColInfo RoutineDef( bool func, out DataType retType )
@@ -1049,7 +1065,6 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     Read( "AS" );
     Read( "BEGIN" );
     Block();
-    B.CheckLabelsDefined( this );
     return ColInfo.New( names, types );
   }
 
@@ -1196,7 +1211,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         Read( "TO" );
         action.NewName = Name();
       }
-      else if ( Test("MODIFY" ) ) // DataType change, e.g. Int => BitInt
+      else if ( Test("MODIFY" ) )
       {
         action.Operation = Action.Modify;
         action.Name = Name();
@@ -1224,6 +1239,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   void While()
   {
     var exp = Exp();
+    var b = B;
     
     int start = B.GetStatementId();
     int breakid = B.GetJumpId();
@@ -1232,42 +1248,42 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       exp = exp.Bind( this );
       if ( exp.Type != DataType.Bool ) Error( "WHILE expression must be boolean" );
       var db = exp.GetDB();
-      Add( () => B.If( db, breakid ) );
+      Add( () => b.If( db, breakid ) );
     }
     
     int save = BreakId;
     BreakId = breakid;
     Statement();
     BreakId = save;
-
-    Add( () => B.JumpBack( start ) );
-    B.SetJump( breakid );
+    Add( () => b.JumpBack( start ) );
+    b.SetJump( breakid );
   }
 
   void If()
   {
     var exp = Exp();
+    var b = B;
 
-    int falseid = B.GetJumpId();
+    int falseid = b.GetJumpId();
     if (!ParseOnly)
     {
       exp = exp.Bind( this );
       if ( exp.Type != DataType.Bool ) Error( "IF expression must be boolean" );
       var db = exp.GetDB();
-      Add( () => B.If( db, falseid ) );
+      Add( () => b.If( db, falseid ) );
     }
 
     Statement();
 
     if ( Test("ELSE") ) 
     {
-      int endid = B.GetJumpId();
-      Add( () => B.Goto( endid ) ); // Skip over the else clause
-      B.SetJump( falseid );
+      int endid = b.GetJumpId();
+      Add( () => b.Goto( endid ) ); // Skip over the else clause
+      b.SetJump( falseid );
       Statement();
-      B.SetJump( endid );
+      b.SetJump( endid );
     }  
-    else B.SetJump( falseid );  
+    else b.SetJump( falseid );  
   }
 
   void Goto()
@@ -1287,12 +1303,14 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   {
     int breakId = BreakId; // Need to take a copy of current value.
     if ( breakId < 0 ) Error( "No enclosing loop for break" );
-    Add( () => B.Goto( breakId ) );
+    var b = B;
+    Add( () => b.Goto( breakId ) );
   }
 
   void Return()
   {
-    Exp e = B.IsFunc ? Exp() : null;
+    var b = B;
+    Exp e = b.IsFunc ? Exp() : null;
     if ( !ParseOnly )
     {
       if ( e != null ) e = e.Bind( this );
@@ -1306,7 +1324,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         }     
       }
       var dv = e == null ? null : e.GetDV();
-      Add( () => B.Return( dv ) );
+      Add( () => b.Return( dv ) );
     }
   }
 

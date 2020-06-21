@@ -6,42 +6,57 @@ using DBNS;
 
 class Block : EvalEnv // Result of compiling a batch of statements or a routine (stored function or procedure) definition.
 {
-  public Block( DatabaseImp d, bool isFunc ) { Db = d; IsFunc = isFunc; }
+  public Block( DatabaseImp d, bool isFunc ) { Db = d; IsFunc = isFunc; Init(); }
 
   public readonly DatabaseImp Db;
   public readonly bool IsFunc;
 
-  public ColInfo Params;
-  public DataType ReturnType;
-  public G.List<DataType> LocalType = new G.List<DataType>(); // Type of the ith local variable.
-
+  // Execution fields.
   System.Action[] Statements; // List of statements to be executed.
-  int [] Jumps; // The resolution of the ith jumpid.
+  int [] Jumps; // Resolution of the ith jumpid.
   int NextStatement; // Index into Statements, can be assigned to change execution control flow.
   Value FunctionResult;
 
-  // Construction fields.
-  G.List<System.Action> StatementList = new G.List<System.Action>(); // For building Statements.
-  G.List<int> JumpList = new G.List<int>(); // For building Jumps.
-  int JumpUndefined = 0; // Number of jump labels awaiting definition.  
-  G.Dictionary<string,int> VarMap = new G.Dictionary<string,int>(); // Lookup dictionary for local variables.
-  G.Dictionary<string,int> LabelMap = new G.Dictionary<string,int>(); // Lookup dictionary for local labels.
+  // Type information.
+  public ColInfo Params; // Types of routine parameters.
+  public DataType ReturnType; // Function return type.
+  DataType [] LocalTypes; // Types of local variables.
 
-  // Statement execution loop.
-  public void ExecuteStatements( ResultSet rs )
+  // Compilation fields.
+  G.List<System.Action> StatementList; // For building Statements.
+  G.List<int> JumpList; // For building Jumps.
+  int JumpUndefined = 0; // Number of jump labels awaiting definition.  
+  G.Dictionary<string,int> VarMap; // Lookup dictionary for local variables.
+  G.Dictionary<string,int> LabelMap; // Lookup dictionary for local labels.
+  public G.List<DataType> LocalTypeList; // Type of the ith local variable.
+
+  public void ExecuteStatements( ResultSet rs ) // Statement execution loop.
   {
-    if ( Statements == null )
-    {
-      Statements = StatementList.ToArray();
-      StatementList = null;
-      Jumps = JumpList.ToArray();
-      JumpList = null;
-      VarMap = null;
-      LabelMap = null;
-    }
     ResultSet = rs;
     NextStatement = 0;
     while ( NextStatement < Statements.Length ) Statements[ NextStatement++ ]();
+  }
+
+  public void Init()
+  {
+    StatementList = new G.List<System.Action>();
+    JumpList = new G.List<int>();
+    VarMap = new G.Dictionary<string,int>();
+    LabelMap = new G.Dictionary<string,int>();
+    LocalTypeList = new G.List<DataType>();
+    Statements = null;
+  }
+
+  public void Complete()
+  {
+    Statements = StatementList.ToArray();
+    Jumps = JumpList.ToArray();
+    LocalTypes = LocalTypeList.ToArray();
+    StatementList = null;
+    LocalTypeList = null;
+    JumpList = null;
+    VarMap = null;
+    LabelMap = null;
   }
 
   // Statement preparation ( parse phase ).
@@ -50,8 +65,8 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
   public void Declare( string varname, DataType type ) // Declare a local variable.
   {
-    VarMap[ varname ] = LocalType.Count;
-    LocalType.Add( type );
+    VarMap[ varname ] = LocalTypeList.Count;
+    LocalTypeList.Add( type );
   }  
 
   public int Lookup( string varname ) // Gets the number of a local variable, -1 if not declared.
@@ -92,8 +107,8 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
   public int GetForId()
   {
-    int forid = LocalType.Count;
-    LocalType.Add( DataType.None );
+    int forid = LocalTypeList.Count;
+    LocalTypeList.Add( DataType.None );
     return forid;
   }
 
@@ -118,9 +133,9 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
 
   public Value [] InitLocals()
   {
-    int n = LocalType.Count;
+    int n = LocalTypes.Length;
     var result = new Value[ n ];
-    for ( int i = 0; i < n; i += 1 ) result[ i ] = DTI.Default( LocalType[ i ] );
+    for ( int i = 0; i < n; i += 1 ) result[ i ] = DTI.Default( LocalTypes[ i ] );
     return result;
   }
 
