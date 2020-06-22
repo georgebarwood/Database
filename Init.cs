@@ -1160,7 +1160,7 @@ BEGIN
   END
  
   EXEC web.Head( 'Edit ' | browse.TableTitle( t ) )
-  IF ex != '' SELECT '<p> Error: ' | htm.Encode(ex)
+  IF ex != '' SELECT '<p>Error: ' | htm.Encode(ex)
 
   SELECT '<form method=post>' 
   EXECUTE( browse.FormUpdateSql( t, k ) )
