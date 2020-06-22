@@ -260,27 +260,24 @@ class SetResultSet : ResultSet // Implements SET assignment of local variables.
 
 class For // Implements FOR statement.
 {
-  G.List<Value[]> Rows;
+  G.IEnumerator<bool> Cursor;
+  Value[] Row;
   int [] Assigns;
   Value[] Locals; 
-  int Fetched;
 
   public For( TableExpression te, int[] assigns, Block b )
   {
-    Fetched = 0;
     Assigns = assigns;
     Locals = b.Locals;
-    var rs = new SingleResultSet();
-    te.FetchTo( rs, b );
-    Rows = rs.Table.Rows;
+    Row = new Value[ te.ColumnCount ];
+    Cursor = te.GetAll( Row, null, b ).GetEnumerator();
   }
 
   public bool Fetch()
   {
-    if ( Fetched >= Rows.Count ) return false;
-    Value [] r = Rows[ Fetched ++ ];
+    if ( !Cursor.MoveNext() ) return false;
     for ( int i = 0; i < Assigns.Length; i += 1 )
-      Locals[ Assigns[ i ] ] = r[ i ];
+      Locals[ Assigns[ i ] ] = Row[ i ];
     return true;
   }
 
