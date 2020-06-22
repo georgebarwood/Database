@@ -11,24 +11,24 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   public readonly DatabaseImp Db;
   public readonly bool IsFunc;
 
-  // Execution fields.
+  // Run-time fields.
   System.Action[] Statements; // List of statements to be executed.
   int [] Jumps; // Resolution of the ith jumpid.
   int NextStatement; // Index into Statements, can be assigned to change execution control flow.
-  Value FunctionResult;
+  Value FunctionResult; // Holds result if block is a function.
 
   // Type information.
   public ColInfo Params; // Types of routine parameters.
   public DataType ReturnType; // Function return type.
   DataType [] LocalTypes; // Types of local variables.
 
-  // Compilation lists and maps.
+  // Compile-time lists and maps.
   G.List<System.Action> StatementList; // For building Statements.
   G.List<int> JumpList; // For building Jumps.
-  int LabelUndefined = 0; // Number of labels awaiting definition.  
+  public G.List<DataType> LocalTypeList; // For building LocalTypes.
   G.Dictionary<string,int> VarMap; // Lookup dictionary for local variables.
   G.Dictionary<string,int> LabelMap; // Lookup dictionary for local labels.
-  public G.List<DataType> LocalTypeList; // Type of the ith local variable.
+  int LabelUndefined = 0; // Number of labels awaiting definition.
 
   void ExecuteStatements( ResultSet rs ) // Statement execution loop.
   {
@@ -63,7 +63,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     LabelMap = null;
   }
 
-  // Statement preparation ( parse phase ).
+  // Statement preparation ( compile phase ).
 
   public void AddStatement( System.Action a ) { StatementList.Add( a ); }
 
@@ -176,7 +176,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     return FunctionResult;
   }
 
-  public void Execute( Exp.DS e )
+  public void Execute( Exp.DS e ) // Execute a string expression.
   {
     string s = e( this );
     try
@@ -206,9 +206,15 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     if ( !test( this ) ) NextStatement = Jumps[ jumpid ];
   }
 
-  public void JumpBack( int statementId ) { NextStatement = statementId; }
+  public void JumpBack( int statementId ) 
+  { 
+    NextStatement = statementId; 
+  }
 
-  public void Select( TableExpression te ) { te.FetchTo( ResultSet, this ); }
+  public void Select( TableExpression te ) 
+  { 
+    te.FetchTo( ResultSet, this ); 
+  }
 
   public void Set( TableExpression te, int [] assigns )
   {
