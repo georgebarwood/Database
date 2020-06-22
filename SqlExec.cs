@@ -1378,7 +1378,8 @@ class Exception : System.Exception
     + ( t == Token.Eof ? "" : " at Line " + line + " Col " + col + " Token=" + token 
     // + "(" + t + ")"
     )
-    + " source=" + src // May help when debugging dynamic SQL    
+    + @" source=
+" + src // May help when debugging dynamic SQL    
   )
   {
     Routine = routine;

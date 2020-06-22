@@ -469,7 +469,7 @@ class DatabaseImp : Database
     string sql = (string) ScalarSql( "SELECT Definition from sys." + (func?"Function":"Procedure") 
       + " where Name=" + Util.Quote(name) + " AND Schema=" + schema.Id )._O;
 
-    if ( sql == null ) e.Error( "Function not found " + name );
+    if ( sql == null ) e.Error( "Function " + schemaName + "." + name + " not found" );
 
     result = SqlExec.LoadRoutine( func, sql, this, schemaName + "." + name );
 

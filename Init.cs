@@ -963,7 +963,7 @@ BEGIN
   
   EXEC web.Head( 'Add ' | browse.TableTitle( t ) )
 
-  IF ex != '' SELECT '<p>Error: ' | ex
+  IF ex != '' SELECT '<p>Error: ' | htm.Encode( ex )
 
   SELECT '<form method=post>' 
   EXECUTE( browse.FormInsertSql( t, 0 ) )
@@ -1130,7 +1130,7 @@ BEGIN
 
   EXEC web.Head( 'Edit ' | n )
 
-  IF ex != '' SELECT 'Error: ' | htm.Encode( ex )
+  IF ex != '' SELECT '<p>Error: ' | htm.Encode( ex )
 
   SELECT 
      '<p><form method=post>'
@@ -1160,7 +1160,7 @@ BEGIN
   END
  
   EXEC web.Head( 'Edit ' | browse.TableTitle( t ) )
-  IF ex != '' SELECT '<p>Error: ' | htm.Encode(ex)
+  IF ex != '' SELECT '<p> Error: ' | htm.Encode(ex)
 
   SELECT '<form method=post>' 
   EXECUTE( browse.FormUpdateSql( t, k ) )
@@ -1375,7 +1375,7 @@ SELECT '<p>BREAK
 SELECT '<h2>Batch execution</h2>'
 SELECT '<p>EXECUTE ( string-expression )
    <p>Evaluates the string expression, and then executes the result ( which should be a list of SQL statements ).
-   <p>Note that database objects ( tables, views, stored routines ) must be created in a prior batch before being used.'
+   <p>Note that database objects ( tables, views, stored routines ) must be created in a prior batch before being used. A GO statement may be used to signify the start of a new batch.'
 
 SELECT '<h2>Stored Procedures and Functions</h2>'  
 
@@ -1386,6 +1386,9 @@ SELECT '<p>CREATE PROCEDURE schema.name ( param1 type1, param2 type2... ) AS BEG
 SELECT '<h3>EXEC</h3>'
 SELECT '<p>EXEC schema.name( exp1, exp2 ... )
    <p>The stored procedure is called with the supplied parameters.'
+
+SELECT '<h3>Exceptions</h3>'
+SELECT '<p>An exception will terminate the execution of a procedure or EXECUTE batch. EXCEPTION() can be used to obtain a string describing the most recent exception (and clears the exception string). If any exception occurs within a batch, the database is left unchanged.'
 
 SELECT '<h3>CREATE FUNCTION</h3>'
 SELECT '<p>CREATE FUNCTION schema.name ( param1 type1, param2 type2... ) RETURNS type AS BEGIN statements END
@@ -1463,6 +1466,7 @@ SELECT '<p>object-type can be any one of SCHEMA,TABLE,VIEW,PROCEDURE or FUNCTION
 SELECT '<h3>DROP INDEX</h3>'
 SELECT '<p>DROP INDEX indexname ON schema.tablename'
 SELECT '<p>The specified index is removed from the database.'
+
 
 SELECT '<h2>Comments</h2>'
 SELECT '<p>There are two kinds of comments. Single line comments start with -- and extend to the end of the line. Delimited comments start with /* and are terminated by */. Comments have no effect, they are simply to help document the code.'
@@ -1647,9 +1651,9 @@ BEGIN
     IF ex != ''
     BEGIN
       EXEC web.Head( 'Error' )
-      SELECT '<h1>Error</h1>'
+      SELECT '<h1>Error</h1><pre>'
       SELECT htm.Encode( ex )
-      SELECT '<p>Use browser back to correct'
+      SELECT '</pre>'
       EXEC web.Trailer()
     END
   END
