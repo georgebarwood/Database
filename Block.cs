@@ -156,7 +156,19 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     var save1 = Locals; var save2 = NextStatement;
 
     Locals = locals;
-    ExecuteStatements( e.ResultSet );
+
+    if ( IsFunc )
+      ExecuteStatements( e.ResultSet );
+    else 
+    try
+    {
+      ExecuteStatements( e.ResultSet );
+    }
+    catch ( System.Exception exception )
+    {
+      Db.SetRollback();
+      ResultSet.Exception = exception;
+    }
 
     // Restore local state.
     NextStatement = save2; Locals = save1;
