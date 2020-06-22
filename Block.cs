@@ -25,7 +25,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
   // Compilation lists and maps.
   G.List<System.Action> StatementList; // For building Statements.
   G.List<int> JumpList; // For building Jumps.
-  int JumpUndefined = 0; // Number of jump labels awaiting definition.  
+  int LabelUndefined = 0; // Number of labels awaiting definition.  
   G.Dictionary<string,int> VarMap; // Lookup dictionary for local variables.
   G.Dictionary<string,int> LabelMap; // Lookup dictionary for local labels.
   public G.List<DataType> LocalTypeList; // Type of the ith local variable.
@@ -99,14 +99,14 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     {
       if ( Jumps[ jumpid ] >= 0 ) return true;
       JumpList[ jumpid ] = i;
-      JumpUndefined -= 1;
+      LabelUndefined -= 1;
     }
     return false;
   }
 
   public void CheckLabelsDefined( Exec e )
   {
-    if ( JumpUndefined != 0 ) e.Error( "Undefined Goto Label" );
+    if ( LabelUndefined != 0 ) e.Error( "Undefined Goto Label" );
   }
 
   public int GetForId()
@@ -122,7 +122,7 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     if ( jumpid < 0 )
     {
       LabelMap[ name ] = GetJumpId();
-      JumpUndefined += 1;
+      LabelUndefined += 1;
       return () => Goto( jumpid );
     }
     else return () => JumpBack( Jumps[ jumpid ] );
