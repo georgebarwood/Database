@@ -38,14 +38,19 @@ abstract class TableExpression
 
   public virtual void FetchTo( ResultSet rs, EvalEnv ee ){} // Fetchs the table to the specified ResultSet
 
-  public virtual G.IEnumerable<bool> GetAll( Value[] row, bool [] used, EvalEnv ee ){ yield return false; } // Iterates through the table.
+  public virtual G.IEnumerable<bool> GetAll( Value[] row, int [] used, EvalEnv ee ){ yield return false; } // Iterates through the table.
 
   // Index optimisation.
   public virtual IndexFile FindIndex( int colIx ){ return null; }
-  public virtual bool Get( long id, Value[] row, bool [] used ){ return false; } // Only called if FindIndex is implemented.
+  public virtual bool Get( long id, Value[] row, int [] used ){ return false; } // Only called if FindIndex is implemented.
 
   // Atomic update.  
   public virtual void Commit( CommitStage c ) { }
+}
+
+abstract class StoredResultSet : ResultSet
+{
+  public abstract G.IEnumerable<bool> GetStoredRows( Value[] outrow );
 }
 
 class Select : TableExpression
@@ -56,14 +61,15 @@ class Select : TableExpression
   Exp Where;
   Exp.DB WhereD;
   OrderByExp[] Order;
-  bool [] Used;
+  int [] Used;
   SortSpec [] SortSpec;
   GroupSpec [] GroupSpec;
   AggSpec [] AggSpec;
 
   public Select( G.List<Exp> exps, TableExpression te, Exp where, Exp[] group, OrderByExp[] order, bool [] used, SqlExec x )
   {
-    Exps = exps; TE = te; Where = where; Order = order; Used = used;
+    Exps = exps; TE = te; Where = where; Order = order; 
+    Used = Util.ToList( used );
 
     ColumnCount = exps.Count; 
     var names = new string[ ColumnCount ];
@@ -169,7 +175,7 @@ class Select : TableExpression
     }
   }
 
-  public override G.IEnumerable<bool> GetAll( Value[] final, bool [] used, EvalEnv e )
+  public override G.IEnumerable<bool> GetAll( Value[] final, int [] used, EvalEnv e )
   {
     Value[] tr = new Value[ TE.Cols.Count ];
     EvalEnv ee = new EvalEnv( e.Locals, tr, e.ResultSet );
@@ -227,7 +233,7 @@ class Select : TableExpression
           srs.NewRow( outrow ); 
         }
       }
-      foreach( bool b in srs.GetAll( final ) ) yield return true;
+      foreach( bool b in srs.GetStoredRows( final ) ) yield return true;
     }
   }
 
@@ -353,7 +359,7 @@ class DummyFrom : TableExpression // Used where there is a SELECT with no FROM c
   {
     Cols = new ColInfo( new string[0], new DataType[0] );
   }
-  public override G.IEnumerable<bool> GetAll( Value[] row, bool [] used, EvalEnv ee )
+  public override G.IEnumerable<bool> GetAll( Value[] row, int [] used, EvalEnv ee )
   {
     yield return true;
   }

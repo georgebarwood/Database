@@ -17,6 +17,7 @@ class Table : TableExpression // Represents a Database Table.
   public long RowCount; // Includes deleted rows.
   IndexInfo[] Ix;
   bool Dirty;
+  public int [] AllCols;
 
   public Table ( DatabaseImp db, Schema schema, string name, ColInfo cols, long tableId )
   {
@@ -25,6 +26,7 @@ class Table : TableExpression // Represents a Database Table.
     Name = name;
     Cols = cols;
     TableId = tableId;
+    AllCols = Util.ToList( Cols.Count - 1 );
 
     schema.TableDict[ name ] = this;
     Ix = new IndexInfo[0];
@@ -59,35 +61,36 @@ class Table : TableExpression // Represents a Database Table.
 
   // Basic read/write functions ( indexes not updated ).
 
-  public override G.IEnumerable<bool> GetAll( Value[] row, bool [] used, EvalEnv ee )
+  public override G.IEnumerable<bool> GetAll( Value[] row, int [] used, EvalEnv ee )
   { 
     long n = RowCount;
     for ( long id = 1; id <= n; id += 1 )
       if ( Get( id, row, used ) ) yield return true;  
   }
 
-  public override bool Get( long id, Value[] row, bool [] used )
+  public override bool Get( long id, Value[] row, int [] cols )
   {
     if ( id <= 0 || id > RowCount ) return false;
+    // if ( cols == null ) cols = AllCols;
 
     DF.Position = (id-1) * RowSize;
     int ix; byte [] RowBuffer = DF.FastRead( RowSize, out ix );
     if ( RowBuffer[ix++] == 0 ) return false; // Row has been deleted
+
     row[ 0 ].L = id;
-    DataType [] types = Cols.Types;
-    byte [] sizes = Cols.Sizes;
-    for ( int i=1; i < types.Length; i += 1 )
+    for ( int c = 0; c < cols.Length; c += 1 )
     {
-      int size = sizes[ i ];
-      if ( used == null || used [ i ] ) // Column not skipped
+      int col = cols[ c ];
+      if ( col != 0 )
       {
-        DataType t = types[ i ];
-        long x = (long)Util.Get( RowBuffer, ix, size, t ); 
-        row[ i ].L = x;
-        if ( t <= DataType.String ) row[ i ]._O =       
-          t == DataType.Binary ? (object)Db.DecodeBinary( x ): (object)Db.DecodeString( x );
+        int size = Cols.Sizes[ col ];
+        DataType t = Cols.Types[ col ];
+        int off = Cols.Offsets [ col ];
+        long x = (long)Util.Get( RowBuffer, ix + off , size, t ); 
+        row[ col ].L = x;
+          if ( t <= DataType.String ) row[ col ]._O =       
+            t == DataType.Binary ? (object)Db.DecodeBinary( x ): (object)Db.DecodeString( x );
       }
-      ix += size;
     }  
     return true;
   }
@@ -448,13 +451,13 @@ class RowCursor
   public void Update( long id )
   {
     var old = new Value[ T.Cols.Count ];
-    T.Get( id, old, null );
+    T.Get( id, old, T.AllCols );
     T.Update( id, old, V );
   }
 
   public bool Get( long id ) // Fetch the specified Row from the underlying Table
   { 
-    return T.Get( id, V, null );
+    return T.Get( id, V, T.AllCols );
   }
 
 } // end class RowCursor

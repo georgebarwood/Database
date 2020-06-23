@@ -297,6 +297,23 @@ class Util
     return x;
   }
 
+  public static int [] ToList( bool [] a )
+  {
+    int n = 0;
+    for ( int i = 0; i < a.Length; i += 1 ) if ( a[ i ] ) n += 1;
+    int [] result = new int[ n ];
+    n = 0;
+    for ( int i = 0; i < a.Length; i += 1 ) if ( a[ i ] ) result[ n++ ] = i;
+    return result;
+  }
+
+  public static int [] ToList( int n )
+  {
+    int [] result = new int[ n ];
+    for ( int i = 0; i < n; i += 1 ) result[ i ] = i + 1;
+    return result;
+  }
+
 } // end class Util
 
 class ValueStart

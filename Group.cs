@@ -79,7 +79,7 @@ class Grouper : StoredResultSet, G.IEqualityComparer<Value[]>
     Output.EndTable();
   }
 
-  public override G.IEnumerable<bool> GetAll( Value[] outrow )
+  public override G.IEnumerable<bool> GetStoredRows( Value[] outrow )
   {
     foreach ( Value[] r in Rows )
     {

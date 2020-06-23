@@ -3,18 +3,15 @@ namespace SQLNS {
 using G = System.Collections.Generic;
 using DBNS;
 
-/* Implementation of ORDER BY */
+// Implementation of ORDER BY. The rows are stored in the Sorter by calls to NewRow.
+// When all the rows have been stored, either EndTable is called to output the sorted rows,
+// or GetStoredRows is called to fetch the sorted rows.
 
 struct SortSpec
 {
   public int ColIx;
   public DataType Type;
   public bool Desc;
-}
-
-abstract class StoredResultSet : ResultSet
-{
-  public abstract G.IEnumerable<bool> GetAll( Value[] outrow );
 }
 
 class Sorter : StoredResultSet, G.IComparer<Value[]>
@@ -39,17 +36,15 @@ class Sorter : StoredResultSet, G.IComparer<Value[]>
   public override void EndTable()
   {    
     // Output the sorted rows.
-    foreach ( Value[] r in Rows ) 
-      if ( !Output.NewRow( r ) ) break;
+    foreach ( Value[] r in Rows ) if ( !Output.NewRow( r ) ) break;
     Output.EndTable();
   }
 
-  public override G.IEnumerable<bool> GetAll( Value[] outrow )
+  public override G.IEnumerable<bool> GetStoredRows( Value[] outrow )
   {
     foreach ( Value[] r in Rows )
     {
-      for ( int i = 0; i < outrow.Length; i += 1 )
-        outrow[ i ] = r[ i ];
+      for ( int i = 0; i < outrow.Length; i += 1 ) outrow[ i ] = r[ i ];
       yield return true;
     }
   }
@@ -66,7 +61,7 @@ class Sorter : StoredResultSet, G.IComparer<Value[]>
         return cf;
       }
     }
-    return 1;
+    return 0;
   }
 } // end class Sorter
 
