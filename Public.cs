@@ -56,11 +56,11 @@ public class ColInfo
     Count = Types.Length;
     Sizes = new byte[ Count ];
     Offsets = new int[ Count ];
-    int offset = 0;
+    int offset = -8; // -8 to allow for the Id value not being stored.
     for ( int i = 0; i < Count; i += 1 ) 
     {
       Sizes[ i ] = (byte)DTI.Size( Types[ i ] );  
-      Offsets[ i ] = offset - 8; // -8 to allow for the Id value not being stored.
+      Offsets[ i ] = offset;
       offset += Sizes[ i ];
     }
   }

@@ -297,8 +297,9 @@ class Util
     return x;
   }
 
-  public static int [] ToList( bool [] a ) // Note: 0 is ignored ( as it is the unstored Id field )
+  public static int [] ToList( bool [] a )
   {
+    // Note : a[0] is ignored, as it is the unstored id field.
     int n = 0;
     for ( int i = 1; i < a.Length; i += 1 ) if ( a[ i ] ) n += 1;
     int [] result = new int[ n ];

@@ -69,7 +69,6 @@ class Select : TableExpression
   public Select( G.List<Exp> exps, TableExpression te, Exp where, Exp[] group, OrderByExp[] order, bool [] used, SqlExec x )
   {
     Exps = exps; TE = te; Where = where; Order = order; 
-    Used = Util.ToList( used );
 
     ColumnCount = exps.Count; 
     var names = new string[ ColumnCount ];
@@ -82,6 +81,8 @@ class Select : TableExpression
     Cols = new ColInfo( names, types );
 
     if ( x.ParseOnly ) return;
+
+    Used = Util.ToList( used );
 
     if ( group != null )
     {
