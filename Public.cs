@@ -24,11 +24,12 @@ public abstract class ResultSet
   public abstract bool NewRow( Value [] row ); // Called for each selected row. If result is false, sending is aborted ( no more rows are sent ).
   public virtual  void EndTable(){} // Called when all rows have been sent ( or sending is aborted ).
 
-  /* As well as accepting SELECT results, ResultSet is also used to pass parameters in, via the pre-defined functions ARG,FILEATTR,FILECONTENT. */
+  // As well as accepting SELECT results, ResultSet is also used to pass http parameters in, via the pre-defined functions ARG,FILEATTR,FILECONTENT.
+  // kind values : AbsPath = 0, QueryString = 1, FormString = 2, Cookie = 3; */
   public virtual string Arg( int kind, string name ){ return null; }
-  public virtual string ArgName( int kind, int ix ){ return null; } /* Can be used to obtain names of unknown fields */
+  public virtual string ArgName( int kind, int ix ){ return null; } // Can be used to obtain names of unknown fields.
 
-  /* FileAttr and FileContent give access to uploaded files. */
+  // FileAttr and FileContent give access to http uploaded files.
   public virtual string FileAttr( int ix, int kind /*0=Name,1=ContentType,2=Filename*/ ){ return null; }
   public virtual byte [] FileContent ( int ix ){ return null; }
 
