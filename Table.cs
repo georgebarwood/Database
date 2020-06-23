@@ -12,16 +12,16 @@ class Table : TableExpression // Represents a Database Table.
   readonly FullyBufferedStream DF;
   int RowSize;
   byte [] RowBuffer;
-  readonly DatabaseImp Db;
+  readonly DatabaseImp Database;
 
   public long RowCount; // Includes deleted rows.
-  IndexInfo[] Ix;
+  IndexInfo[] IxInfo;
   bool Dirty;
   public int [] AllCols;
 
-  public Table ( DatabaseImp db, Schema schema, string name, ColInfo cols, long tableId )
+  public Table ( DatabaseImp database, Schema schema, string name, ColInfo cols, long tableId )
   {
-    Db = db;
+    Database = database;
     Schema = schema.Name;
     Name = name;
     Cols = cols;
@@ -29,8 +29,8 @@ class Table : TableExpression // Represents a Database Table.
     AllCols = Util.OneToN( Cols.Count - 1 );
 
     schema.TableDict[ name ] = this;
-    Ix = new IndexInfo[0];
-    DF = Db.OpenFile( FileType.Table, tableId );
+    IxInfo = new IndexInfo[0];
+    DF = Database.OpenFile( FileType.Table, tableId );
 
     RowSize = CalcRowSize( Cols );
     RowCount = (long)( DF.Length / RowSize );
@@ -53,10 +53,10 @@ class Table : TableExpression // Represents a Database Table.
     {
       IndexFile f = p.Value;
       f.F.Close();
-      Db.DeleteFile( FileType.Index, f.IndexId  );
+      Database.DeleteFile( FileType.Index, f.IndexId  );
     }
     DF.Close();
-    Db.DeleteFile( FileType.Table, TableId );
+    Database.DeleteFile( FileType.Table, TableId );
   }
 
   // Basic read/write functions ( indexes not updated ).
@@ -85,7 +85,7 @@ class Table : TableExpression // Represents a Database Table.
       int off = Cols.Offsets [ col ];
       long x = (long)Util.Get( RowBuffer, ix + off , size, t ); 
       row[ col ].L = x;
-      if ( t <= DataType.String ) row[ col ]._O = Db.Decode( x, t );      
+      if ( t <= DataType.String ) row[ col ]._O = Database.Decode( x, t );      
     }  
     return true;
   }
@@ -111,7 +111,7 @@ class Table : TableExpression // Represents a Database Table.
         if ( t <= DataType.String && x == 0 )
         {
           object o = row[ i ]._O;
-          x = ( t == DataType.Binary ? (ulong)Db.EncodeBinary( (byte[]) o ) : (ulong)Db.EncodeString( (string) o ) );
+          x = ( t == DataType.Binary ? (ulong)Database.EncodeBinary( (byte[]) o ) : (ulong)Database.EncodeString( (string) o ) );
           row[ i ].L = (long) x;
         }
         else if ( t == DataType.Float ) x = Conv.PackFloat( x );
@@ -271,26 +271,26 @@ class Table : TableExpression // Represents a Database Table.
 
   public override IndexFile FindIndex( int colIx ) // Finds an index to speed up a WHERE condition.
   {
-    for ( int i = 0; i < Ix.Length; i += 1 )
-      if ( Ix[ i ].ColIx == colIx && Ix[ i ].IxNum == 0 )
-        return IxDict[ Ix[ i ].IndexId ];
+    for ( int i = 0; i < IxInfo.Length; i += 1 )
+      if ( IxInfo[ i ].ColIx == colIx && IxInfo[ i ].IxNum == 0 )
+        return IxDict[ IxInfo[ i ].IndexId ];
     return null;
   }
 
   public void OpenIndexes()
   {
-    OpenIndexes( Db.ReadIndexes( TableId ) );
+    OpenIndexes( Database.ReadIndexes( TableId ) );
   }
 
   public void OpenIndexes( IndexInfo[] info )
   {
-    Ix = info;
+    IxInfo = info;
 
     long curIndex = -1;
     var dt = new G.List<DataType>();
     var cm = new G.List<int>();
 
-    for ( int i=0; i<=info.Length; i += 1 )
+    for ( int i = 0; i <= info.Length; i += 1 )
     {
       if ( i > 0 && ( i == info.Length || info[ i ].IndexId != curIndex ) )
       {
@@ -320,8 +320,8 @@ class Table : TableExpression // Represents a Database Table.
     IxDict.TryGetValue( indexId, out ixf );
     if ( ixf == null )
     {
-      var stream = Db.OpenFile( FileType.Index, indexId );
-      IxDict[ indexId ] = new IndexFile( stream, ci, Db, indexId );
+      var stream = Database.OpenFile( FileType.Index, indexId );
+      IxDict[ indexId ] = new IndexFile( stream, ci, Database, indexId );
     }
   }
 
@@ -333,7 +333,7 @@ class Table : TableExpression // Represents a Database Table.
     {
       ixf.F.Close();
       IxDict.Remove( indexId );
-      Db.DeleteFile( FileType.Index, indexId );
+      Database.DeleteFile( FileType.Index, indexId );
     }
   }
 
