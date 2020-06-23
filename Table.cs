@@ -71,7 +71,6 @@ class Table : TableExpression // Represents a Database Table.
   public override bool Get( long id, Value[] row, int [] cols )
   {
     if ( id <= 0 || id > RowCount ) return false;
-    // if ( cols == null ) cols = AllCols;
 
     DF.Position = (id-1) * RowSize;
     int ix; byte [] RowBuffer = DF.FastRead( RowSize, out ix );
