@@ -172,14 +172,6 @@ struct IndexFileRecord
     Child = 0;
   }
 
-  public IndexFileRecord Copy()
-  {
-    IndexFileRecord result = new IndexFileRecord( Col.Length );
-    result.Child = Child;
-    for ( int i=0; i<Col.Length; i += 1 ) result.Col[ i ] = Col[ i ];
-    return result;
-  }
-
   public string ToString( IndexFileInfo Inf ) // For debugging / testing only.
   {
     string s = "";

@@ -145,14 +145,14 @@ class IndexPage
     int count = Count / 2;
     foreach ( int x in Nodes( Root ) )
     {
-      GetRecord( x, ref r );
+      GetRecord( x, ref r );;
       if ( count > 0 )
         L.Insert( ref r, true );
       else
       {
         if ( count == 0 ) 
         {
-          div = r.Copy();
+          div = r;
           if ( IsLeafPage() ) R.Insert( ref div, true );
         }
         else 
