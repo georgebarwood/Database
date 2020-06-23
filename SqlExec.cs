@@ -575,21 +575,21 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     return new ValueTable( types.Length, values );
   }
 
-  TableExpression Expressions( G.List<int> locals )
+  TableExpression Expressions( G.List<int> assigns )
   {
     // locals has the indexes of local variables being assigned in a SET or FOR statement.
     bool save = DynScope; DynScope = true; // Suppresses Binding of expressions until table is known.
     var exps = new G.List<Exp>();
     do
     {
-      if ( locals != null )
+      if ( assigns != null )
       {
         var name = Name();
         int i = B.Lookup( name );
         if ( i < 0 ) Error( "Undeclared local variable : " + name );
         Read( Token.Equal ); 
-        if ( locals.Contains( i ) ) Error( "Duplicated local name in SET or FOR" );       
-        locals.Add( i );
+        if ( assigns.Contains( i ) ) Error( "Duplicated local name in SET or FOR" );       
+        assigns.Add( i );
       }
       Exp exp = ExpOrAgg();
       if ( Test( "AS" ) ) exp.Name = Name();
@@ -654,7 +654,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       
       if ( group != null ) 
       {
-        for ( int i=0; i<group.Length; i+=1 ) 
+        for ( int i = 0; i < group.Length; i += 1 ) 
         {
           group[ i ] = group[ i ].Bind( this );
           exps.Add( group[ i ] );
@@ -663,11 +663,11 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
       result = new Select( exps, te, where, group, order, Used, this );
       
-      if ( locals != null ) 
+      if ( assigns != null ) // COnvert the Rhs of each assign to be compatible with the Lhs.
       {
-        var types = new DataType[ locals.Count ];
-        for ( int i = 0; i < locals.Count; i += 1 )
-          types[ i ] = B.LocalTypeList[ locals[ i ] ];
+        var types = new DataType[ assigns.Count ];
+        for ( int i = 0; i < assigns.Count; i += 1 )
+          types[ i ] = B.LocalTypeList[ assigns[ i ] ];
         result.Convert( types, this );
       }
 

@@ -333,10 +333,10 @@ class ValueTable : TableExpression
 class ViewOrTable : TableExpression
 {
   public string Schema, Name;
-  public ViewOrTable( string s, string tname )
+  public ViewOrTable( string schema, string name )
   {
-    Schema = s;
-    Name = tname;
+    Schema = schema;
+    Name = name;
   }
 
   public override TableExpression Load( SqlExec e )
@@ -347,7 +347,7 @@ class ViewOrTable : TableExpression
 
 // ********************************************************************
 
-class DummyFrom : TableExpression // USed where there is a SELECT with no FROM clause.
+class DummyFrom : TableExpression // Used where there is a SELECT with no FROM clause.
 {
   public DummyFrom()
   {
