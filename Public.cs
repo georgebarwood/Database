@@ -72,11 +72,11 @@ public struct Value
 
   public object O { set { _O = value; L = 0; } } // Encoding needs to be be set to zero when _O is assigned.
 
-  public static Value New( bool b ){ Value v = new Value(); v.B = b; return v; }
-  public static Value New( long l ){ Value v = new Value(); v.L = l; return v; }
-  public static Value New( double d ){ Value v = new Value(); v.D = d; return v; }
-  public static Value New( string s ){ Value v = new Value(); v._O = s; return v; }
-  public static Value New( byte [] x ){ Value v = new Value(); v._O = x; return v; }
+  public static Value New( bool b ){ return new Value{ B = b }; }
+  public static Value New( long l ){ return new Value{ L = l }; }
+  public static Value New( double d ){ return new Value{ D = d }; }
+  public static Value New( string s ){ return new Value{ _O = s }; }
+  public static Value New( byte [] x ){ return new Value{ _O = x }; }
 
 } // end struct Value
 

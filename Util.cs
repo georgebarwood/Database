@@ -97,8 +97,7 @@ class DTI // "Data Type Info"
   public static DataType Base( DataType t ) 
   { 
     if ( t < DataType.Decimal ) return BaseData[(int)t]; 
-    DataType result = Decimal( 18, Scale( t ) );
-    return result;
+    return Decimal( 18, Scale( t ) );
   }
 
   public static int Size( DataType t )
