@@ -18,6 +18,8 @@ class Table : TableExpression // Represents a Database Table.
   IndexInfo[] IxInfo;
   bool Dirty;
   public int [] AllCols;
+  readonly byte [] Sizes;
+  readonly int [] Offsets;
 
   public Table ( DatabaseImp database, Schema schema, string name, ColInfo cols, long tableId )
   {
@@ -26,11 +28,22 @@ class Table : TableExpression // Represents a Database Table.
     Name = name;
     Cols = cols;
     TableId = tableId;
-    AllCols = Util.OneToN( Cols.Count - 1 );
 
     schema.TableDict[ name ] = this;
     IxInfo = new IndexInfo[0];
     DF = Database.OpenFile( FileType.Table, tableId );
+
+    int count = Cols.Count;
+    AllCols = Util.OneToN( count -  1 );
+    Sizes = new byte[ count ];
+    Offsets = new int[ count ];
+    int offset = -8; // -8 to allow for the Id value not being stored.
+    for ( int i = 0; i < count; i += 1 ) 
+    {
+      Sizes[ i ] = (byte)DTI.Size( Cols.Types[ i ] );  
+      Offsets[ i ] = offset;
+      offset += Sizes[ i ];
+    }
 
     RowSize = CalcRowSize( Cols );
     RowCount = (long)( DF.Length / RowSize );
@@ -80,9 +93,9 @@ class Table : TableExpression // Represents a Database Table.
     for ( int c = 0; c < cols.Length; c += 1 )
     {
       int col = cols[ c ];
-      int size = Cols.Sizes[ col ];
       DataType t = Cols.Types[ col ];
-      int off = Cols.Offsets [ col ];
+      int size = Sizes[ col ];
+      int off = Offsets [ col ];
       long x = (long)Util.Get( RowBuffer, ix + off , size, t ); 
       row[ col ].L = x;
       if ( t <= DataType.String ) row[ col ]._O = Database.Decode( x, t );      
@@ -101,7 +114,6 @@ class Table : TableExpression // Represents a Database Table.
     else
     {
       DataType [] types = Cols.Types;
-      byte [] sizes = Cols.Sizes;
       RowBuffer[ 0 ] = 1;
       int ix = 1;
       for ( int i = 1; i < types.Length; i += 1 )
@@ -115,7 +127,7 @@ class Table : TableExpression // Represents a Database Table.
           row[ i ].L = (long) x;
         }
         else if ( t == DataType.Float ) x = Conv.PackFloat( x );
-        int size = sizes[ i ];
+        int size = Sizes[ i ];
         Util.Set( RowBuffer, ix, x, size );     
         ix += size;
       }
