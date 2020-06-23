@@ -837,7 +837,6 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         where = where.Bind( this );
         if ( where.Type != DataType.Bool ) Error( "WHERE expression must be boolean" );
       }
-      var used = Used; // Need to take a copy
       var w = where.GetDB();
       var dvs = new Exp.DV[ a.Length ];
       var ixs = new int[ a.Length ];
@@ -847,7 +846,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         dvs[ i ] = a[ i ].Rhs.GetDV();
       }
 
-      Add( () => t.Update( ixs, dvs, where, w, used, idCol, B ) ); 
+      Add( () => t.Update( ixs, dvs, where, w, idCol, B ) ); 
 
       Used = save1; CI = save2; 
     }
@@ -874,9 +873,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         where = where.Bind( this );
         if ( where.Type != DataType.Bool ) Error( "WHERE expression must be boolean" );
       }
-      var used = Used; // Need to take a copy.
       var w = where.GetDB();
-      Add( () => t.Delete( where, w, used, B ) );
+      Add( () => t.Delete( where, w, B ) );
 
       Used = save1; CI = save2;
     }

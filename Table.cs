@@ -197,7 +197,7 @@ class Table : TableExpression // Represents a Database Table.
     return ins.LastIdInserted;
   }
 
-  public void Update( int [] ixs, Exp.DV [] dvs, Exp where, Exp.DB w, bool [] used, int idCol, EvalEnv ee  )
+  public void Update( int [] ixs, Exp.DV [] dvs, Exp where, Exp.DB w, int idCol, EvalEnv ee  )
   {
     Value [] tr = new Value[ Cols.Count ];
     Value [] nr = new Value[ Cols.Count ]; // The new row.
@@ -230,7 +230,7 @@ class Table : TableExpression // Represents a Database Table.
     }
   }
 
-  public void Delete( Exp where, Exp.DB w, bool[] used, EvalEnv ee )
+  public void Delete( Exp where, Exp.DB w, EvalEnv ee )
   {
     Value [] tr = new Value[ Cols.Count ];
     ee.Row = tr;
