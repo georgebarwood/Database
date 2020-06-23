@@ -545,12 +545,16 @@ class DatabaseImp : Database
     return sid + 1; // + 1 because zero indicates the encoding has not yet been done.
   }
 
+  public object Decode( long sid, DataType t )
+  {
+    return t == DataType.Binary ? (object)DecodeBinary( sid ): (object)DecodeString( sid );
+  }
+
   public string DecodeString( long sid ) 
   { 
     if ( sid <= 0 ) return "";
     SysString.Position = sid-1;
-    string result = SysStringReader.ReadString();
-    return result;
+    return SysStringReader.ReadString();
   }
 
   public long EncodeBinary( byte [] data ) 

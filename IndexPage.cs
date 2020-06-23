@@ -287,10 +287,7 @@ class IndexPage
       else if ( t == DataType.Tinyint ) u = (ulong)(long)(sbyte)(byte) u;
 
       r.Col[ i ].L = (long) u;
-      if ( t == DataType.String  )
-        r.Col[ i ]._O = Database.DecodeString( (long)u );
-      else if ( t == DataType.Binary  ) 
-        r.Col[ i ]._O = Database.DecodeBinary( (long)u );
+      if ( t <= DataType.String ) r.Col[ i ]._O = Database.Decode( (long) u, t );
     }
   }
 

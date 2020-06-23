@@ -297,17 +297,17 @@ class Util
     return x;
   }
 
-  public static int [] ToList( bool [] a )
+  public static int [] ToList( bool [] a ) // Note: 0 is ignored ( as it is the unstored Id field )
   {
     int n = 0;
-    for ( int i = 0; i < a.Length; i += 1 ) if ( a[ i ] ) n += 1;
+    for ( int i = 1; i < a.Length; i += 1 ) if ( a[ i ] ) n += 1;
     int [] result = new int[ n ];
     n = 0;
-    for ( int i = 0; i < a.Length; i += 1 ) if ( a[ i ] ) result[ n++ ] = i;
+    for ( int i = 1; i < a.Length; i += 1 ) if ( a[ i ] ) result[ n++ ] = i;
     return result;
   }
 
-  public static int [] ToList( int n )
+  public static int [] OneToN( int n ) // returns a list of integers 1..n.
   {
     int [] result = new int[ n ];
     for ( int i = 0; i < n; i += 1 ) result[ i ] = i + 1;

@@ -26,7 +26,7 @@ class Table : TableExpression // Represents a Database Table.
     Name = name;
     Cols = cols;
     TableId = tableId;
-    AllCols = Util.ToList( Cols.Count - 1 );
+    AllCols = Util.OneToN( Cols.Count - 1 );
 
     schema.TableDict[ name ] = this;
     Ix = new IndexInfo[0];
@@ -81,16 +81,12 @@ class Table : TableExpression // Represents a Database Table.
     for ( int c = 0; c < cols.Length; c += 1 )
     {
       int col = cols[ c ];
-      if ( col != 0 )
-      {
-        int size = Cols.Sizes[ col ];
-        DataType t = Cols.Types[ col ];
-        int off = Cols.Offsets [ col ];
-        long x = (long)Util.Get( RowBuffer, ix + off , size, t ); 
-        row[ col ].L = x;
-          if ( t <= DataType.String ) row[ col ]._O =       
-            t == DataType.Binary ? (object)Db.DecodeBinary( x ): (object)Db.DecodeString( x );
-      }
+      int size = Cols.Sizes[ col ];
+      DataType t = Cols.Types[ col ];
+      int off = Cols.Offsets [ col ];
+      long x = (long)Util.Get( RowBuffer, ix + off , size, t ); 
+      row[ col ].L = x;
+      if ( t <= DataType.String ) row[ col ]._O = Db.Decode( x, t );      
     }  
     return true;
   }
@@ -213,7 +209,7 @@ class Table : TableExpression // Represents a Database Table.
     else IdSet = new IdCopy( IdSet, ee ); // Need to take a copy of the id values if an index is used.
 
     foreach ( long id in IdSet.All( ee ) ) 
-    if ( Get( id, tr, null ) )
+    if ( Get( id, tr, AllCols ) )
     {
       for ( int i=0; i<nr.Length; i +=1 ) nr[ i ] = tr[ i ];
 
@@ -244,7 +240,7 @@ class Table : TableExpression // Represents a Database Table.
     else IdSet = new IdCopy( IdSet, ee ); // Need to take a copy of the id values, as indexes may be updated.
 
     foreach ( long id in IdSet.All( ee ) ) 
-      if ( Get( id, tr, null ) && w( ee ) ) Delete( id, tr );
+      if ( Get( id, tr, AllCols ) && w( ee ) ) Delete( id, tr );
   }
 
   public int ColumnIx( string name, Exec e )
