@@ -11,16 +11,16 @@ class Table : TableExpression // Represents a Database Table.
 
   readonly DatabaseImp Database;
   readonly string Schema, Name;
-  readonly FullyBufferedStream DF;
+  readonly FullyBufferedStream DataFile; // The file in which data for the table is stored.
 
   readonly byte [] Size;   // Stored size of a column
   readonly int [] Offset;  // Offset of column within stored record.
   readonly G.Dictionary<long,IndexFile> IxDict = new G.Dictionary<long,IndexFile>();
 
-  int RowSize;
-  byte [] RowBuffer;
-  IndexInfo[] IxInfo;
-  bool Dirty;
+  int RowSize; // The size in bytes of a stored row.
+  byte [] RowBuffer; // Buffer for updating a row.
+  IndexInfo[] IxInfo; // Information about table indexes.
+  bool Dirty; // Has the table been modified since the last commit or rollback?
 
   public Table ( DatabaseImp database, Schema schema, string name, ColInfo ci, long tableId )
   {
@@ -32,7 +32,7 @@ class Table : TableExpression // Represents a Database Table.
 
     schema.TableDict[ name ] = this;
     IxInfo = new IndexInfo[0];
-    DF = Database.OpenFile( FileType.Table, tableId );
+    DataFile = Database.OpenFile( FileType.Table, tableId );
 
     int count = CI.Count;
     AllCols = Util.OneToN( count -  1 );
@@ -47,7 +47,7 @@ class Table : TableExpression // Represents a Database Table.
     }
 
     RowSize = 1 + offset; // +1 is for byte that indicates whether row exists.
-    RowCount = DF.Length / RowSize;
+    RowCount = DataFile.Length / RowSize;
     RowBuffer = new byte[ RowSize ];
 
     // System.Console.WriteLine( "Opened " + Schema + "." + name + " RowSize=" + RowSize + " RowCount=" + RowCount );
@@ -56,7 +56,7 @@ class Table : TableExpression // Represents a Database Table.
   public override void Commit( CommitStage c )
   {
     if ( !Dirty ) return;
-    DF.Commit( c );
+    DataFile.Commit( c );
     foreach ( G.KeyValuePair<long,IndexFile> p in IxDict ) p.Value.Commit( c );
     if ( c >= CommitStage.Flush ) Dirty = false;
   }
@@ -69,7 +69,7 @@ class Table : TableExpression // Represents a Database Table.
       f.F.Close();
       Database.DeleteFile( FileType.Index, f.IndexId  );
     }
-    DF.Close();
+    DataFile.Close();
     Database.DeleteFile( FileType.Table, TableId );
   }
 
@@ -81,8 +81,8 @@ class Table : TableExpression // Represents a Database Table.
   {
     if ( id <= 0 || id > RowCount ) return false;
 
-    DF.Position = (id-1) * RowSize;
-    int ix; byte [] RowBuffer = DF.FastRead( RowSize, out ix );
+    DataFile.Position = (id-1) * RowSize;
+    int ix; byte [] RowBuffer = DataFile.FastRead( RowSize, out ix );
     if ( RowBuffer[ix++] == 0 ) return false; // Row has been deleted
 
     row[ 0 ].L = id;
@@ -106,7 +106,7 @@ class Table : TableExpression // Represents a Database Table.
 
   void Save( long id, Value [] row, bool checkNew )
   { 
-    DF.Position = (id-1) * RowSize;
+    DataFile.Position = (id-1) * RowSize;
 
     if ( row == null ) // Delete record
     {
@@ -131,7 +131,7 @@ class Table : TableExpression // Represents a Database Table.
         ix += size;
       }
     }
-    if ( !DF.Write( RowBuffer, 0, RowSize, checkNew ) ) 
+    if ( !DataFile.Write( RowBuffer, 0, RowSize, checkNew ) ) 
     {
       throw new System.Exception( "Duplicate id, id=" + id + " Table=" + Schema + "." + Name );
     }
@@ -373,7 +373,7 @@ class Table : TableExpression // Represents a Database Table.
     long n = RowCount;
     while ( n > 0 )
     {
-      DF.Position = id * RowSize;
+      DataFile.Position = id * RowSize;
       bool ok = AlterRead( CI.Type, oldRow );
 
       for ( int i = 0; i < newRow.Length; i += 1 )
@@ -382,13 +382,13 @@ class Table : TableExpression // Represents a Database Table.
         if ( m >= 0 ) newRow[ i ] = oldRow[ m ];
       }
 
-      DF.Position = id * newRowSize;
+      DataFile.Position = id * newRowSize;
       if ( ok ) AlterWrite( newcols.Type, newRow, newRowSize );
-      else DF.Write( blank, 0, blank.Length );
+      else DataFile.Write( blank, 0, blank.Length );
       n -= 1;
       id = desc ? id - 1 : id + 1;
     }
-    if (!desc) DF.SetLength( RowCount * newRowSize );
+    if (!desc) DataFile.SetLength( RowCount * newRowSize );
     Dirty = true;
     RowSize = newRowSize;
     CI = newcols;
@@ -396,7 +396,7 @@ class Table : TableExpression // Represents a Database Table.
 
   bool AlterRead( DataType [] types, long [] row ) 
   {
-    int ix; byte [] RowBuffer = DF.FastRead( RowSize, out ix );
+    int ix; byte [] RowBuffer = DataFile.FastRead( RowSize, out ix );
     if ( RowBuffer[ix++] == 0 ) return false; // Row has been deleted
     for ( int i=1; i < types.Length; i += 1 )
     {
@@ -422,7 +422,7 @@ class Table : TableExpression // Represents a Database Table.
       Util.Set( RowBuffer, ix, x, size );
       ix += size;       
     }
-    DF.Write( RowBuffer, 0, newRowSize, false );
+    DataFile.Write( RowBuffer, 0, newRowSize, false );
   }
 
   // end Alter section
