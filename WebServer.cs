@@ -36,14 +36,8 @@ public class WebServer
       outStream.Position = 0;
       outStream.CopyTo( ctx.Response.OutputStream );
     }
-    catch ( System.Exception )
-    { 
-      // System.Console.WriteLine( "Handle Request Exception: " + e );
-    }
-    finally
-    {
-      ctx.Response.OutputStream.Close();
-    }
+    catch ( System.Exception ) { }
+    finally { ctx.Response.OutputStream.Close(); }
   }
   
   class Request
@@ -114,6 +108,42 @@ class Program
 
 class WebResultSet : DBNS.ResultSet
 {
+  System.Net.HttpListenerContext Ctx;
+  System.IO.MemoryStream OutStream;
+
+  System.Collections.Specialized.NameValueCollection Form;
+  FormFile [] Files;
+  G.List<string>CookieNames;
+
+  int Mode;
+  DBNS.ColInfo CI;
+
+  public WebResultSet( System.Net.HttpListenerContext ctx, System.IO.MemoryStream outStream )
+  {
+    Ctx = ctx;
+    OutStream = outStream;
+
+    if ( ctx.Request.HasEntityBody )
+    {
+      if ( ctx.Request.ContentType == "application/x-www-form-urlencoded" )
+      {
+        string input = null;
+        using ( System.IO.StreamReader reader = new System.IO.StreamReader( ctx.Request.InputStream ) )
+        {
+          input = reader.ReadToEnd( );
+        }
+        Form = System.Web.HttpUtility.ParseQueryString( input );
+      }
+      else /* Assume multipart/form-data */
+      {
+        Files = ParseMultipart( ctx.Request );
+      }
+    }
+
+    CookieNames = new G.List<string>();
+    foreach ( string k in ctx.Request.Cookies ) CookieNames.Add( k );
+  }
+
   public override bool NewRow( DBNS.Value [] row )
   {
     if ( Mode == 0 )
@@ -170,41 +200,7 @@ class WebResultSet : DBNS.ResultSet
     }
   }
 
-  System.Net.HttpListenerContext Ctx;
-  System.Collections.Specialized.NameValueCollection Form;
-  FormFile [] Files;
-  G.List<string>CookieNames;
-  System.IO.MemoryStream OutStream;
-  int Mode;
-  DBNS.ColInfo CI;
-
-  public WebResultSet( System.Net.HttpListenerContext ctx, System.IO.MemoryStream outStream )
-  {
-    Ctx = ctx;
-    OutStream = outStream;
-
-    if ( ctx.Request.HasEntityBody )
-    {
-      if ( ctx.Request.ContentType == "application/x-www-form-urlencoded" )
-      {
-        string input = null;
-        using ( System.IO.StreamReader reader = new System.IO.StreamReader( ctx.Request.InputStream ) )
-        {
-          input = reader.ReadToEnd( );
-        }
-        Form = System.Web.HttpUtility.ParseQueryString( input );
-      }
-      else /* Assume multipart/form-data */
-      {
-        Files = ParseMultipart( ctx.Request );
-      }
-    }
-
-    CookieNames = new G.List<string>();
-    foreach ( string k in ctx.Request.Cookies ) CookieNames.Add( k );
-  }
-
-   /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
 
   void PutBytes( byte[] b )
   {
