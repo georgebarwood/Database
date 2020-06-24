@@ -6,20 +6,21 @@ using SQLNS;
 
 class Table : TableExpression // Represents a Database Table.
 {
-  readonly string Schema, Name;
-  readonly G.Dictionary<long,IndexFile> IxDict = new G.Dictionary<long,IndexFile>();
-
-  readonly FullyBufferedStream DF;
-  int RowSize;
-  byte [] RowBuffer;
-  readonly DatabaseImp Database;
-
   public long RowCount; // Includes deleted rows.
-  IndexInfo[] IxInfo;
-  bool Dirty;
   public int [] AllCols;
+
+  readonly DatabaseImp Database;
+  readonly string Schema, Name;
+  readonly FullyBufferedStream DF;
+
   readonly byte [] Size;   // Stored size of a column
   readonly int [] Offset;  // Offset of column within stored record.
+  readonly G.Dictionary<long,IndexFile> IxDict = new G.Dictionary<long,IndexFile>();
+
+  int RowSize;
+  byte [] RowBuffer;
+  IndexInfo[] IxInfo;
+  bool Dirty;
 
   public Table ( DatabaseImp database, Schema schema, string name, ColInfo cols, long tableId )
   {
@@ -37,7 +38,7 @@ class Table : TableExpression // Represents a Database Table.
     AllCols = Util.OneToN( count -  1 );
     Size = new byte[ count ];
     Offset = new int[ count ];
-    int offset = -8; // -8 to allow for the Id value not being stored.
+    int offset = -8; // -8 to allow for the Id column not being stored.
     for ( int i = 0; i < count; i += 1 ) 
     {
       Size[ i ] = (byte)DTI.Size( Cols.Type[ i ] );  
@@ -45,8 +46,8 @@ class Table : TableExpression // Represents a Database Table.
       offset += Size[ i ];
     }
 
-    RowSize = CalcRowSize( Cols );
-    RowCount = (long)( DF.Length / RowSize );
+    RowSize = 1 + offset; // +1 is for byte that indicates whether row exists.
+    RowCount = DF.Length / RowSize;
     RowBuffer = new byte[ RowSize ];
 
     // System.Console.WriteLine( "Opened " + Schema + "." + name + " RowSize=" + RowSize + " RowCount=" + RowCount );
