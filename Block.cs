@@ -4,7 +4,7 @@ namespace SQLNS
 using G = System.Collections.Generic;
 using DBNS;
 
-class Block : EvalEnv // Result of compiling a batch of statements or a routine (stored function or procedure) definition.
+class Block : EvalEnv // Represents a batch of statements or a routine (stored function or procedure) definition.
 {
   public Block( DatabaseImp d, bool isFunc ) { Db = d; IsFunc = isFunc; Init(); }
 
@@ -37,6 +37,8 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     while ( NextStatement < Statements.Length ) Statements[ NextStatement++ ]();
   }
 
+  // Statement preparation ( compile phase ).
+
   public void Init()
   {
     Statements = null;
@@ -62,8 +64,6 @@ class Block : EvalEnv // Result of compiling a batch of statements or a routine 
     VarMap = null;
     LabelMap = null;
   }
-
-  // Statement preparation ( compile phase ).
 
   public void AddStatement( System.Action a ) { StatementList.Add( a ); }
 
