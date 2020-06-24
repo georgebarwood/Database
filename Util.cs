@@ -213,7 +213,7 @@ class Util
   {
     decimal d = x;
     int scale = DTI.Scale( t );
-    d = d / Util.PowerTen( scale );
+    d = d / PowerTen( scale );
     return d.ToString( "F" + scale, System.Globalization.CultureInfo.InvariantCulture );
   }
 
