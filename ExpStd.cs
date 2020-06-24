@@ -48,7 +48,7 @@ class EXCEPTION : Exp
   string GetException( EvalEnv ee )
   {
     var ex = ee.ResultSet.Exception;
-    string result = ex == null ? "" : ex.ToString(); // .Message or .ToString() for full debug info.
+    string result = ex == null ? "" : ex.Message; // .Message or .ToString() for full debug info.
     ee.ResultSet.Exception = null;
     return result;
   }
