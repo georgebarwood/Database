@@ -87,18 +87,18 @@ class Block : EvalEnv // Represents a batch of statements or a routine (stored f
 
   public bool SetLabel( string name ) // returns true if label already defined ( an error ).
   {
-    int i = GetStatementId();
+    int sid = GetStatementId();
     int jumpid = LookupJumpId( name );
     if ( jumpid < 0 )
     {
       jumpid = JumpList.Count;
       LabelMap[ name ] = jumpid;
-      JumpList.Add( i );
+      JumpList.Add( sid );
     }
     else 
     {
-      if ( Jumps[ jumpid ] >= 0 ) return true;
-      JumpList[ jumpid ] = i;
+      if ( JumpList[ jumpid ] >= 0 ) return true;
+      JumpList[ jumpid ] = sid;
       LabelUndefined -= 1;
     }
     return false;
@@ -121,11 +121,16 @@ class Block : EvalEnv // Represents a batch of statements or a routine (stored f
     int jumpid = LookupJumpId( name );
     if ( jumpid < 0 )
     {
-      LabelMap[ name ] = GetJumpId();
+      jumpid = GetJumpId();
+      LabelMap[ name ] = jumpid;
       LabelUndefined += 1;
       return () => Goto( jumpid );
     }
-    else return () => JumpBack( Jumps[ jumpid ] );
+    else 
+    {
+      int sid = JumpList[ jumpid ];
+      return () => JumpBack( sid );
+    }
   }
 
   // Statement execution.
