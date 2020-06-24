@@ -27,14 +27,19 @@ abstract class IdSet
 
 class ExpListIdSet : IdSet
 {
-  Exp[] List;
-  public ExpListIdSet( Exp[] list ) { List = list; }
+  Exp.DL [] List;
+  public ExpListIdSet( Exp[] list ) 
+  { 
+    List = new Exp.DL[ list.Length ];
+    for ( int i = 0; i < list.Length; i += 1 )
+      List[i] = list[ i ].GetDL(); 
+  }
 
   public override G.IEnumerable<long>All( EvalEnv ee )
   { 
     for ( int i = 0; i < List.Length; i += 1 )
     {
-      yield return List[ i ].Eval( ee ).L;
+      yield return List[ i ]( ee );
     }
   }  
 }
@@ -83,12 +88,11 @@ class IdCopy : IdSet
 
 class SingleId : IdSet
 {
-  Exp X;
-  public SingleId( Exp x ){ X = x; }
+  Exp.DL X;
+  public SingleId( Exp x ){ X = x.GetDL(); }
   public override G.IEnumerable<long>All( EvalEnv ee )
   { 
-    Value v = X.Eval( ee );
-    yield return v.L;
+    yield return X( ee );
   }
 }
 

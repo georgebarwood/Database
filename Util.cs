@@ -315,6 +315,13 @@ class Util
     return result;
   }
 
+  public static SQLNS.Exp.DV [] GetDVList( SQLNS.Exp [] exps )
+  {
+    var result = new SQLNS.Exp.DV[ exps.Length ];
+    for ( int i = 0; i < exps.Length; i += 1 ) result[ i ] = exps[ i ].GetDV();
+    return result;
+  }
+
 } // end class Util
 
 class ValueStart

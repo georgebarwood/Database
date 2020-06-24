@@ -149,8 +149,8 @@ class Select : TableExpression
       SortSpec = sortSpec;
     }
 
-    Dvs = new Exp.DV [ Exps.Count ];
-    for ( int i = 0; i < Exps.Count; i += 1 ) Dvs[ i ] = Exps[ i ].GetDV();
+    Dvs = Util.GetDVList( Exps.ToArray() );
+
     if ( Where != null ) WhereD = Where.GetDB();
 
     Ids = Where == null ? null : Where.GetIdSet( TE );
@@ -326,7 +326,7 @@ class ValueTable : TableExpression
       var e = Values[ j ];
       for ( int i=0; i < ColumnCount; i += 1 )
       {
-        row[ i ] = e[ i ].Eval( ee );
+        row[ i ] = e[ i ].GetDV()( ee );
       }
       if ( !rs.NewRow( row ) ) break;
     }

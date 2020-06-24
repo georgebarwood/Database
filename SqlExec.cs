@@ -930,8 +930,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
             Error( "Parameter Type Error calling procedure " + name );
 
 
-        var pdv = new Exp.DV[ parms.Count ];
-        for ( int i = 0; i < parms.Count; i += 1 ) pdv[ i ] = parms[ i ].GetDV();
+        var pdv = Util.GetDVList( parms.ToArray() );
         var caller = B;
         Add( () => b.ExecuteRoutine( caller, pdv ) ); 
       }   

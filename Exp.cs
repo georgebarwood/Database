@@ -78,7 +78,7 @@ abstract class Exp
   public delegate string DS( EvalEnv e );
   public delegate byte[] DX( EvalEnv e );
 
-  // Either GetDV or the relevant GetD? must be implemented.
+  // At least one of GetDV or the relevant GetD? must be implemented ( or an infinite recursion will happen ).
   public virtual DV GetDV()
   { 
     switch( DTI.Base( Type ) )
@@ -97,14 +97,6 @@ abstract class Exp
   public virtual DS GetDS(){ var dv = GetDV(); return ( ee ) => (string)dv( ee )._O; }
   public virtual DX GetDX(){ var dv = GetDV(); return ( ee ) => (byte[])dv( ee )._O; }
 
-  public Value Eval( EvalEnv e ) { var dv = GetDV(); return dv( e ); }
-
-  public DV[] GetDV( Exp [] exps )
-  {
-    var result = new DV[ exps.Length ];
-    for ( int i = 0; i < exps.Length; i += 1 ) result[ i ] = exps[ i ].GetDV();
-    return result;
-  }
 }
 
 abstract class UnaryExp : Exp
@@ -571,7 +563,7 @@ class ExpFuncCall : Exp
 
   public override DV GetDV()
   {
-    var dvs = GetDV( Plist );
+    var dvs = Util.GetDVList( Plist );
     return ( ee ) => B.ExecuteRoutine( ee, dvs );
   }
 } // end class ExpFuncCall
@@ -660,15 +652,14 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
 
   public override Exp Bind( SqlExec e  )
   {
-    Dvs = new DV[ List.Length ];
     for ( int i = 0; i < List.Length; i += 1 ) 
     {
       List[ i ] = List[ i ].Bind( e );
       DataType dt = List[ i ].Type;
       if ( i == 0 ) ElementType = dt;
       else if ( dt != ElementType ) e.Error( "Tuple type error" ); // Maybe should apply Exp.Convert if possible.
-      Dvs[ i ] = List[ i ].GetDV();
     } 
+    Dvs = Util.GetDVList( List );
     return this;
   }
 
@@ -700,7 +691,7 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
   {
     for ( int i = 0; i < List.Length; i += 1 )
     {
-      yield return List[ i ].Eval( ee );
+      yield return Dvs[ i ]( ee );
     }
   }
 
