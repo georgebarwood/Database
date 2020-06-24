@@ -19,14 +19,14 @@ abstract class Exp
   public DataType Type;
 
   public virtual Exp Bind( SqlExec e ){ return this; }
-  public virtual IdSet GetIdSet(  TableExpression te, EvalEnv ee ) { return null; }
+  public virtual IdSet GetIdSet(  TableExpression te ) { return null; }
   public virtual bool IsConstant() { return false; } // Evaluation doesn't depend on table row.
 
   // Methods related to implementation of "IN".
   public virtual bool TestIn( Value x, EvalEnv e ){ return false; }
   public virtual DataType GetElementType() { return DataType.None; }
 
-  public virtual IdSet ListIdSet( EvalEnv e ){ return null; } // Index optimisation.
+  public virtual IdSet ListIdSet(){ return null; } // Index optimisation.
   public virtual G.IEnumerable<Value> Values( EvalEnv ee ){ yield break; } // ScalarSelect implementation.
 
   // Methods related to implementation of aggregates.
@@ -425,7 +425,7 @@ class ExpBinary : Exp
       list.Add(this); 
   }
 
-  public override IdSet GetIdSet( TableExpression te, EvalEnv ee )
+  public override IdSet GetIdSet( TableExpression te )
   {
     if ( Operator <= Token.Equal && Right.IsConstant() && Left is ExpName )
     {
@@ -443,8 +443,8 @@ class ExpBinary : Exp
     }
     else if ( Operator == Token.And )
     {
-      var left = Left.GetIdSet( te, ee );   if ( left != null )  return left;
-      var right = Right.GetIdSet( te ,ee ); if ( right != null ) return right;
+      var left = Left.GetIdSet( te );   if ( left != null )  return left;
+      var right = Right.GetIdSet( te ); if ( right != null ) return right;
     }
     return null;
   }
@@ -691,9 +691,9 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
     return true;
   }
 
-  public override IdSet ListIdSet( EvalEnv e )
+  public override IdSet ListIdSet()
   {
-    return new ExpListIdSet( List, e );
+    return new ExpListIdSet( List );
   }
 
   public override G.IEnumerable<Value> Values( EvalEnv ee )
@@ -725,9 +725,9 @@ class ScalarSelect : Exp
     return rs.Found;
   }
 
-  public override IdSet ListIdSet( EvalEnv ee )
+  public override IdSet ListIdSet()
   {
-    return new TableExpressionIdSet( TE, ee );
+    return new TableExpressionIdSet( TE ); 
   }
 
   public override G.IEnumerable<Value> Values( EvalEnv ee )
@@ -785,19 +785,19 @@ class ExpIn : Exp
     return ( ee ) => rhs.TestIn( lhs( ee ), ee );
   }
 
-  public override IdSet GetIdSet( TableExpression te, EvalEnv ee )
+  public override IdSet GetIdSet( TableExpression te )
   {
     if ( Lhs is ExpName && Rhs.IsConstant() )
     {
       ExpName e = (ExpName)Lhs;
       if ( e.ColName == "Id" ) // select ... from t where id in ( .... )
       {
-        return Rhs.ListIdSet( ee );
+        return Rhs.ListIdSet();
       }
       IndexFile ix = te.FindIndex( e.ColIx );
       if ( ix != null ) // select ... from t where indexedcol in ( .... )
       {        
-        return new Lookup( ix, Rhs.Values( ee ) ); // For each value in the Rhs list, lookup it's ids, and return them in the IdSet.
+        return new Lookup( ix, Rhs ); // For each value in the Rhs list, lookup it's ids, and return them in the IdSet.
       }
     }
     return null;

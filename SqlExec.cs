@@ -846,7 +846,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         dvs[ i ] = a[ i ].Rhs.GetDV();
       }
 
-      Add( () => t.Update( ixs, dvs, where, w, idCol, B ) ); 
+      var ids = where.GetIdSet( t );
+      Add( () => t.Update( ixs, dvs, where, w, idCol, ids, B ) ); 
 
       Used = save1; CI = save2; 
     }
@@ -874,7 +875,9 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         if ( where.Type != DataType.Bool ) Error( "WHERE expression must be boolean" );
       }
       var w = where.GetDB();
-      Add( () => t.Delete( where, w, B ) );
+      var ids = where.GetIdSet( t );
+
+      Add( () => t.Delete( where, w, ids, B ) );
 
       Used = save1; CI = save2;
     }

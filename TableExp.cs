@@ -60,6 +60,7 @@ class Select : TableExpression
   TableExpression TE;
   Exp Where;
   Exp.DB WhereD;
+  IdSet Ids;
   OrderByExp[] Order;
   int [] Used;
   SortSpec [] SortSpec;
@@ -151,6 +152,9 @@ class Select : TableExpression
     Dvs = new Exp.DV [ Exps.Count ];
     for ( int i = 0; i < Exps.Count; i += 1 ) Dvs[ i ] = Exps[ i ].GetDV();
     if ( Where != null ) WhereD = Where.GetDB();
+
+    Ids = Where == null ? null : Where.GetIdSet( TE );
+    if ( Ids != null ) Ids = new IdCopy( Ids ); // Need to take a copy of the id values if an index is used.
   }
 
   public override void CheckNames( Exec  e )
@@ -181,9 +185,6 @@ class Select : TableExpression
     Value[] tr = new Value[ TE.CI.Count ];
     EvalEnv ee = new EvalEnv( e.Locals, tr, e.ResultSet );
 
-    IdSet idSet = Where == null ? null : Where.GetIdSet( TE, ee );
-    if ( idSet != null ) idSet = new IdCopy( idSet, ee ); // Need to take a copy of the id values if an index is used.
-
     StoredResultSet srs = Order == null ? null : new Sorter( null, SortSpec );
     srs = GroupSpec == null ? srs : new Grouper( srs, GroupSpec, AggSpec );
 
@@ -191,9 +192,9 @@ class Select : TableExpression
 
     if ( srs == null )
     {
-      if ( idSet != null ) 
+      if ( Ids != null ) 
       {
-        foreach ( long id in idSet.All( ee ) ) if ( TE.Get( id, tr, Used ) )
+        foreach ( long id in Ids.All( ee ) ) if ( TE.Get( id, tr, Used ) )
         {
           if ( WhereD == null || WhereD( ee ) )
           {
@@ -214,9 +215,9 @@ class Select : TableExpression
     }
     else
     {
-      if ( idSet != null ) 
+      if ( Ids != null ) 
       {
-        foreach ( long id in idSet.All( ee ) ) if ( TE.Get( id, tr, Used ) )
+        foreach ( long id in Ids.All( ee ) ) if ( TE.Get( id, tr, Used ) )
         {
           if ( WhereD == null || WhereD( ee ) )
           {
@@ -247,17 +248,14 @@ class Select : TableExpression
 
     EvalEnv ee = new EvalEnv( e.Locals, tr, e.ResultSet );
 
-    IdSet idSet = Where == null ? null : Where.GetIdSet( TE, ee );
-    if ( idSet != null ) idSet = new IdCopy( idSet, ee ); // Need to take a copy of the id values if an index is used.
-
     rs.NewTable( CI );
 
     Value [] outrow = new Value[ Exps.Count ]; 
 
-    if ( idSet != null ) 
+    if ( Ids != null ) 
     // Fetch subset of source table using id values, send to ResultSet (if it satisfies any WHERE clause )
     {
-      foreach ( long id in idSet.All( ee ) ) if ( TE.Get( id, tr, Used ) )
+      foreach ( long id in Ids.All( ee ) ) if ( TE.Get( id, tr, Used ) )
       {
         if ( Where == null || WhereD( ee ) )
         {

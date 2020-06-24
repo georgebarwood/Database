@@ -2,7 +2,6 @@ namespace DBNS {
 using G = System.Collections.Generic;
 using SQLNS;
 
-
 /*
 
 IdSet is for optimising WHERE clauses for SELECT,UPDATE,DELETE.
@@ -29,7 +28,7 @@ abstract class IdSet
 class ExpListIdSet : IdSet
 {
   Exp[] List;
-  public ExpListIdSet( Exp[] list, EvalEnv e ) { List = list; }
+  public ExpListIdSet( Exp[] list ) { List = list; }
 
   public override G.IEnumerable<long>All( EvalEnv ee )
   { 
@@ -42,16 +41,19 @@ class ExpListIdSet : IdSet
 
 class TableExpressionIdSet : IdSet
 {
-  SingleResultSet S = new SingleResultSet(); 
+  TableExpression TE;
 
-  public TableExpressionIdSet( TableExpression te, EvalEnv ee ) 
+  public TableExpressionIdSet( TableExpression te ) 
   {
-    te.FetchTo( S, ee );
+    TE = te;
   }
 
   public override G.IEnumerable<long>All( EvalEnv ee )
   { 
-    StoredTable t = S.Table;
+    var s = new SingleResultSet(); 
+    TE.FetchTo( s, ee );
+
+    StoredTable t = s.Table;
     G.List<Value[]> rows = t.Rows;
 
     for ( int i = 0; i < rows.Count; i += 1 ) 
@@ -65,14 +67,17 @@ class TableExpressionIdSet : IdSet
 
 class IdCopy : IdSet
 {
-  G.SortedSet<long> Copy = new G.SortedSet<long>();
-  public IdCopy( IdSet x, EvalEnv ee )
+  IdSet X;
+
+  public IdCopy( IdSet x )
   {
-    foreach ( long id in x.All( ee ) ) Copy.Add( id );
+    X = x;
   }
   public override G.IEnumerable<long>All( EvalEnv ee )
   { 
-    foreach ( long id in Copy ) yield return id;
+    G.SortedSet<long> copy = new G.SortedSet<long>();
+    foreach ( long id in X.All( ee ) ) copy.Add( id );
+    foreach ( long id in copy ) yield return id;
   }
 }
 
@@ -97,18 +102,20 @@ class UpTo : IdSet
 // Uses an index to look up a set of id values, optimises select ... from t where indexedcol in ( .... )
 class Lookup : IdSet 
 {
-  G.IEnumerable<Value> Values;
+  Exp E;
   IndexFile Ix;
 
-  public Lookup( IndexFile ix, G.IEnumerable<Value> values )
+  public Lookup( IndexFile ix, Exp e )
   {
-    Values = values;
+    E = e;
     Ix = ix;
   }
 
   public override G.IEnumerable<long>All( EvalEnv ee )
   { 
-    foreach ( Value v in Values )
+    var values = E.Values( ee );
+
+    foreach ( Value v in values )
     {
       DataType t = Ix.Inf.Types[0];
       int idCol = Ix.Inf.KeyCount-1;
@@ -127,24 +134,26 @@ class Lookup : IdSet
 
 class IndexFrom : IdSet
 {
-  Exp K;
   IndexFile F;
+  Exp.DV K;
   DataType Type;
   Token Op;
   Value V;
 
   public IndexFrom( IndexFile f, Exp k, Token op )
   {
-    F = f; K = k; Op = op;
+    F = f; 
+    K = k.GetDV(); 
+    Type = k.Type;
+    Op = op;
   }
 
   public override G.IEnumerable<long>All( EvalEnv ee )
   { 
-    V = K.Eval( ee );
-    Type = K.Type;
+    V = K( ee );
     foreach ( IndexFileRecord r in F.From( Compare, Op <= Token.LessEqual  ) )
     {
-      if ( Op == Token.Equal && !Util.Equal( r.Col[0], V, K.Type ) ) yield break;
+      if ( Op == Token.Equal && !Util.Equal( r.Col[0], V, Type ) ) yield break;
       yield return r.Col[ F.Inf.KeyCount-1 ].L;
     }
   }

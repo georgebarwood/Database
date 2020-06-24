@@ -207,18 +207,16 @@ class Table : TableExpression // Represents a stored database Table.
     return ins.LastIdInserted;
   }
 
-  public void Update( int [] ixs, Exp.DV [] dvs, Exp where, Exp.DB w, int idCol, EvalEnv ee  )
+  public void Update( int [] ixs, Exp.DV [] dvs, Exp where, Exp.DB w, int idCol, IdSet ids, EvalEnv ee  )
   {
     Value [] tr = new Value[ CI.Count ];
     Value [] nr = new Value[ CI.Count ]; // The new row.
     ee.Row = tr;
 
-    IdSet IdSet = where == null ? null : where.GetIdSet( this, ee );
+    if ( ids == null ) ids = new UpTo( RowCount );
+    else ids = new IdCopy( ids ); // Need to take a copy of the id values if an index is used.
 
-    if ( IdSet == null ) IdSet = new UpTo( RowCount );
-    else IdSet = new IdCopy( IdSet, ee ); // Need to take a copy of the id values if an index is used.
-
-    foreach ( long id in IdSet.All( ee ) ) 
+    foreach ( long id in ids.All( ee ) ) 
     if ( Get( id, tr, AllCols ) )
     {
       for ( int i=0; i<nr.Length; i +=1 ) nr[ i ] = tr[ i ];
@@ -240,16 +238,15 @@ class Table : TableExpression // Represents a stored database Table.
     }
   }
 
-  public void Delete( Exp where, Exp.DB w, EvalEnv ee )
+  public void Delete( Exp where, Exp.DB w, IdSet ids, EvalEnv ee )
   {
     Value [] tr = new Value[ CI.Count ];
     ee.Row = tr;
 
-    IdSet IdSet = where == null ? null : where.GetIdSet( this, ee );
-    if ( IdSet == null ) IdSet = new UpTo( RowCount );
-    else IdSet = new IdCopy( IdSet, ee ); // Need to take a copy of the id values, as indexes may be updated.
+    if ( ids == null ) ids = new UpTo( RowCount );
+    else ids = new IdCopy( ids ); // Need to take a copy of the id values if an index is used.
 
-    foreach ( long id in IdSet.All( ee ) ) 
+    foreach ( long id in ids.All( ee ) ) 
       if ( Get( id, tr, AllCols ) && w( ee ) ) Delete( id, tr );
   }
 
