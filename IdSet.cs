@@ -133,68 +133,34 @@ class IndexFrom : IdSet
   Token Op;
   Value V;
 
-  int Compare( ref IndexFileRecord r ) // This make not be quite optimal for Less and Greater.
-  {
-    int cf = 0;
-    if ( Op <= Token.LessEqual ) // Op == Token.Less || Op == Token.LessEqual
-    {
-      switch ( Type ) 
-      { 
-        case DataType.Binary:
-          cf = Util.Compare( (byte[])V._O, (byte[])r.Col[0]._O );
-          if ( cf == 0 ) cf = +1; // Should be -1 if Op == Less ?
-          break;
-        case DataType.String: 
-          cf = string.Compare( (string)V._O, (string)r.Col[0]._O ); 
-          if ( cf == 0 ) cf = +1; // Should be -1 if Op == Less ?
-          break;
-        case DataType.Bigint: 
-          cf = V.L < r.Col[0].L ? -1 : +1; // Should be <= if Op == Less ?
-          break;   
-        default: throw new System.Exception( "Type error" );     
-      }
-    }
-    else // ( Op == Token.Greater || Op == Token.GreaterEqual || Op == Token.Equal )
-    {
-      switch ( Type ) 
-      { 
-        case DataType.Binary: 
-          cf = Util.Compare( (byte[])V._O, (byte[])r.Col[0]._O ); 
-          if ( cf == 0 ) cf = -1;
-          break;
-        case DataType.String: 
-          cf = string.Compare( (string)V._O, (string)r.Col[0]._O ); 
-          if ( cf == 0 ) cf = -1;
-          break;
-        case DataType.Bigint: 
-          cf = V.L <= r.Col[0].L ? -1 : +1; 
-          break;
-        default: throw new System.Exception( "Type error" );
-      }
-    }
-    return cf;    
-  }
-  
   public IndexFrom( IndexFile f, Exp k, Token op )
   {
     F = f; K = k; Op = op;
   }
+
   public override G.IEnumerable<long>All( EvalEnv ee )
   { 
     V = K.Eval( ee );
     Type = K.Type;
-    foreach ( IndexFileRecord r in F.From( Compare, Op <= Token.LessEqual /* Op == Token.Less || Op == Token.LessEqual */ ) )
+    foreach ( IndexFileRecord r in F.From( Compare, Op <= Token.LessEqual  ) )
     {
-      if ( Op == Token.Equal ) switch ( K.Type )
-      { 
-        case DataType.Bigint: if ( r.Col[0].L != V.L ) yield break; break;
-        case DataType.Binary: if ( Util.Compare( (byte[])r.Col[0]._O, (byte[])V._O ) != 0 ) yield break; break;
-        case DataType.String: if ( ((string)r.Col[0]._O) != (string)V._O ) yield break; break;
-        default: throw new System.Exception( "Type error" );
-      }
+      if ( Op == Token.Equal && !Util.Equal( r.Col[0], V, K.Type ) ) yield break;
       yield return r.Col[ F.Inf.KeyCount-1 ].L;
     }
   }
+
+  int Compare( ref IndexFileRecord r ) // This make not be quite optimal for Less and Greater.
+  {
+    int cf = Util.Compare( V, r.Col[0], Type );
+    if ( cf == 0 )
+    {
+      if ( Op <= Token.LessEqual ) // Op == Token.Less || Op == Token.LessEqual
+        cf = +1; // Should be -1 if Op == Less ?
+      else // ( Op == Token.Greater || Op == Token.GreaterEqual || Op == Token.Equal )
+        cf = -1;
+    }
+    return cf;    
+  }  
 } // end class IndexFrom
 
 } // end namespace DBNS
