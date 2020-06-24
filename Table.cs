@@ -7,7 +7,7 @@ using SQLNS;
 class Table : TableExpression // Represents a Database Table.
 {
   public long RowCount; // Includes deleted rows.
-  public int [] AllCols;
+  public int [] AllCols; // Use as 3rd parameter of Get if exact column list is not important.
 
   readonly DatabaseImp Database;
   readonly string Schema, Name;
@@ -22,26 +22,26 @@ class Table : TableExpression // Represents a Database Table.
   IndexInfo[] IxInfo;
   bool Dirty;
 
-  public Table ( DatabaseImp database, Schema schema, string name, ColInfo cols, long tableId )
+  public Table ( DatabaseImp database, Schema schema, string name, ColInfo ci, long tableId )
   {
     Database = database;
     Schema = schema.Name;
     Name = name;
-    Cols = cols;
+    CI = ci;
     TableId = tableId;
 
     schema.TableDict[ name ] = this;
     IxInfo = new IndexInfo[0];
     DF = Database.OpenFile( FileType.Table, tableId );
 
-    int count = Cols.Count;
+    int count = CI.Count;
     AllCols = Util.OneToN( count -  1 );
     Size = new byte[ count ];
     Offset = new int[ count ];
     int offset = -8; // -8 to allow for the Id column not being stored.
     for ( int i = 0; i < count; i += 1 ) 
     {
-      Size[ i ] = (byte)DTI.Size( Cols.Type[ i ] );  
+      Size[ i ] = (byte)DTI.Size( CI.Type[ i ] );  
       Offset[ i ] = offset;
       offset += Size[ i ];
     }
@@ -75,13 +75,8 @@ class Table : TableExpression // Represents a Database Table.
 
   // Basic read/write functions ( indexes not updated ).
 
-  public override G.IEnumerable<bool> GetAll( Value[] row, int [] used, EvalEnv ee )
-  { 
-    long n = RowCount;
-    for ( long id = 1; id <= n; id += 1 )
-      if ( Get( id, row, used ) ) yield return true;  
-  }
-
+  // Get fetchs the row identified by id from the file buffer into the Value array.
+  // cols specifies a subset of the columns to be fetched ( as an optimisation ). If not important, use AllCols.
   public override bool Get( long id, Value[] row, int [] cols )
   {
     if ( id <= 0 || id > RowCount ) return false;
@@ -94,12 +89,19 @@ class Table : TableExpression // Represents a Database Table.
     for ( int c = 0; c < cols.Length; c += 1 )
     {
       int col = cols[ c ];
-      DataType t = Cols.Type[ col ];
+      DataType t = CI.Type[ col ];
       long x = Util.Get( RowBuffer, ix + Offset[ col ], Size[ col ], t ); 
       row[ col ].L = x;
       if ( t <= DataType.String ) row[ col ]._O = Database.Decode( x, t );      
     }  
     return true;
+  }
+
+  public override G.IEnumerable<bool> GetAll( Value[] row, int [] cols, EvalEnv ee )
+  { 
+    long n = RowCount;
+    for ( long id = 1; id <= n; id += 1 )
+      if ( Get( id, row, cols ) ) yield return true;  
   }
 
   void Save( long id, Value [] row, bool checkNew )
@@ -114,9 +116,9 @@ class Table : TableExpression // Represents a Database Table.
     {
       RowBuffer[ 0 ] = 1;
       int ix = 1;
-      for ( int i = 1; i < Cols.Count; i += 1 )
+      for ( int i = 1; i < CI.Count; i += 1 )
       {
-        DataType t = Cols.Type[ i ];
+        DataType t = CI.Type[ i ];
         long x = row[ i ].L;
         if ( t <= DataType.String && x == 0 )
         {
@@ -207,8 +209,8 @@ class Table : TableExpression // Represents a Database Table.
 
   public void Update( int [] ixs, Exp.DV [] dvs, Exp where, Exp.DB w, int idCol, EvalEnv ee  )
   {
-    Value [] tr = new Value[ Cols.Count ];
-    Value [] nr = new Value[ Cols.Count ]; // The new row.
+    Value [] tr = new Value[ CI.Count ];
+    Value [] nr = new Value[ CI.Count ]; // The new row.
     ee.Row = tr;
 
     IdSet IdSet = where == null ? null : where.GetIdSet( this, ee );
@@ -240,7 +242,7 @@ class Table : TableExpression // Represents a Database Table.
 
   public void Delete( Exp where, Exp.DB w, EvalEnv ee )
   {
-    Value [] tr = new Value[ Cols.Count ];
+    Value [] tr = new Value[ CI.Count ];
     ee.Row = tr;
 
     IdSet IdSet = where == null ? null : where.GetIdSet( this, ee );
@@ -253,8 +255,8 @@ class Table : TableExpression // Represents a Database Table.
 
   public int ColumnIx( string name, Exec e )
   {
-    int n = Cols.Count;
-    for ( int i = 0; i < n; i += 1 ) if ( Cols.Name[ i ] == name ) return i;
+    int n = CI.Count;
+    for ( int i = 0; i < n; i += 1 ) if ( CI.Name[ i ] == name ) return i;
     e.Error( "Column " + name + " not found" );
     return 0;
   }
@@ -317,7 +319,7 @@ class Table : TableExpression // Represents a Database Table.
       {
         curIndex = info[ i ].IndexId;
         int colIx = info[ i ].ColIx;
-        dt.Add( Cols.Type[ colIx ] );
+        dt.Add( CI.Type[ colIx ] );
         cm.Add( colIx );
       }
     }
@@ -355,7 +357,7 @@ class Table : TableExpression // Represents a Database Table.
     // Map holds the old colId for eaach new column ( or -1 if it is a new column ).
     // Doesn't currently check for overflow.
 
-    long [] oldRow = new long[ Cols.Count ];
+    long [] oldRow = new long[ CI.Count ];
     long [] newRow = new long[ newcols.Count ];
     // Initialise newRow to default values.
     for ( int i = 0; i < newRow.Length; i += 1 )
@@ -372,7 +374,7 @@ class Table : TableExpression // Represents a Database Table.
     while ( n > 0 )
     {
       DF.Position = id * RowSize;
-      bool ok = AlterRead( Cols.Type, oldRow );
+      bool ok = AlterRead( CI.Type, oldRow );
 
       for ( int i = 0; i < newRow.Length; i += 1 )
       {
@@ -389,7 +391,7 @@ class Table : TableExpression // Represents a Database Table.
     if (!desc) DF.SetLength( RowCount * newRowSize );
     Dirty = true;
     RowSize = newRowSize;
-    Cols = newcols;
+    CI = newcols;
   }
 
   bool AlterRead( DataType [] types, long [] row ) 
@@ -444,7 +446,7 @@ class RowCursor
   public RowCursor( Table t )
   { 
     T = t; 
-    V = new Value[ T.Cols.Count ];
+    V = new Value[ T.CI.Count ];
   }
 
   public long Insert() // Insert the Row into the underlying Table
@@ -454,7 +456,7 @@ class RowCursor
 
   public void Update( long id )
   {
-    var old = new Value[ T.Cols.Count ];
+    var old = new Value[ T.CI.Count ];
     T.Get( id, old, T.AllCols );
     T.Update( id, old, V );
   }
@@ -478,7 +480,7 @@ class Inserter : ResultSet
   public Inserter( Table t, int[] colIx, int idCol, TableExpression te )
   {
     T = t; ColIx = colIx; IdCol = idCol; TE = te;
-    DataType [] types = t.Cols.Type; 
+    DataType [] types = t.CI.Type; 
     Row = new Value[ types.Length ];
     // Initialise row to default values.
     for ( int i = 0; i < types.Length; i += 1 ) Row[ i ] = DTI.Default( types[ i ] );

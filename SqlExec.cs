@@ -624,7 +624,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     {
       var save1 = Used; var save2 = CI;
       te = te.Load( this );
-      CI = te.Cols;
+      CI = te.CI;
       Used = new bool[ CI.Count ]; // Bitmap of columns that are referenced by any expression.
 
       for ( int i=0; i<exps.Count; i+=1 ) 
@@ -777,7 +777,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         int ci = t.ColumnIx( names[ i ], this );
         if ( ci == 0 ) idCol = i;
         colIx[ i ] = ci;
-        types[ i ] = t.Cols.Type[ ci ];
+        types[ i ] = t.CI.Type[ ci ];
       }
       src.Convert( types, this );
       var b = B;
@@ -815,8 +815,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       Table t = Db.GetTable( te.Schema, te.Name, this );
 
       var save1 = Used; var save2 = CI;
-      Used = new bool[ t.Cols.Count ]; // Bitmap of columns that are referenced by any expression.
-      CI = t.Cols;      
+      Used = new bool[ t.CI.Count ]; // Bitmap of columns that are referenced by any expression.
+      CI = t.CI;      
 
       int idCol = -1;
       for ( int i=0; i < a.Length; i += 1 ) 
@@ -865,8 +865,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     {
       Table t = Db.GetTable( te.Schema, te.Name, this );
       var save1 = Used; var save2 = CI;
-      Used = new bool[ t.Cols.Count ]; // Bitmap of columns that are referenced by any expression.
-      CI = t.Cols;
+      Used = new bool[ t.CI.Count ]; // Bitmap of columns that are referenced by any expression.
+      CI = t.CI;
 
       if ( where != null )
       {
@@ -1010,7 +1010,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     ParseOnly = save;
     se.CheckNames( this );
     string source = Source.Substring( sourceStart, TokenStart - sourceStart );
-    Add( () => Db.CreateTable( schema, viewName, se.Cols, source, true, alter, this ) );
+    Add( () => Db.CreateTable( schema, viewName, se.CI, source, true, alter, this ) );
   }
 
   TableExpression ViewDef()

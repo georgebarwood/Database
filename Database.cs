@@ -286,8 +286,8 @@ class DatabaseImp : Database
   {
     Table t = (Table) GetTable( schemaName, tableName, e );
 
-    var names = new G.List<string>( t.Cols.Name );
-    var types = new G.List<DataType>( t.Cols.Type );
+    var names = new G.List<string>( t.CI.Name );
+    var types = new G.List<DataType>( t.CI.Type );
     var map = new G.List<int>();
     for ( int i = 0; i < names.Count; i += 1 ) map.Add( i );
 

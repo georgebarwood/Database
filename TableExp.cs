@@ -24,11 +24,11 @@ Rhs of IN expression : SELECT Address FROM dbo.Cust WHERE Id IN ( SELECT id FROM
 abstract class TableExpression
 {
   public int ColumnCount; // Number of columns in table
-  public ColInfo Cols; // Names and types of the columns
+  public ColInfo CI; // Names and types of the columns
   public long TableId;
   public string Alias;
 
-  public virtual DataType Type( int i ){ return Cols.Type[ i ]; } // Data type of the ith column.
+  public virtual DataType Type( int i ){ return CI.Type[ i ]; } // Data type of the ith column.
 
   public virtual TableExpression Load( SqlExec e ) { return this; } // Loads table or view definition from database.
 
@@ -78,7 +78,7 @@ class Select : TableExpression
       names[ i ] = exps[ i ].Name;
       types[ i ] = exps[ i ].Type;
     }
-    Cols = new ColInfo( names, types );
+    CI = new ColInfo( names, types );
 
     if ( x.ParseOnly ) return;
 
@@ -129,9 +129,9 @@ class Select : TableExpression
         if ( e is ExpName )
         {
           string alias = ((ExpName)e).ColName;   
-          for ( int j = 0; j < Cols.Count; j += 1 )
+          for ( int j = 0; j < CI.Count; j += 1 )
           {
-            if ( Cols.Name[j] == alias )
+            if ( CI.Name[j] == alias )
             {
               e = Exps[ j ];
               found = true;
@@ -176,9 +176,9 @@ class Select : TableExpression
     }
   }
 
-  public override G.IEnumerable<bool> GetAll( Value[] final, int [] used, EvalEnv e )
+  public override G.IEnumerable<bool> GetAll( Value[] final, int [] cols, EvalEnv e )
   {
-    Value[] tr = new Value[ TE.Cols.Count ];
+    Value[] tr = new Value[ TE.CI.Count ];
     EvalEnv ee = new EvalEnv( e.Locals, tr, e.ResultSet );
 
     IdSet idSet = Where == null ? null : Where.GetIdSet( TE, ee );
@@ -243,14 +243,14 @@ class Select : TableExpression
     ResultSet srs = Order == null ? rs : new Sorter( rs, SortSpec );
     srs = GroupSpec == null ? srs : new Grouper( srs, GroupSpec, AggSpec );
 
-    Value[] tr = new Value[ TE.Cols.Count ];
+    Value[] tr = new Value[ TE.CI.Count ];
 
     EvalEnv ee = new EvalEnv( e.Locals, tr, e.ResultSet );
 
     IdSet idSet = Where == null ? null : Where.GetIdSet( TE, ee );
     if ( idSet != null ) idSet = new IdCopy( idSet, ee ); // Need to take a copy of the id values if an index is used.
 
-    rs.NewTable( Cols );
+    rs.NewTable( CI );
 
     Value [] outrow = new Value[ Exps.Count ]; 
 
@@ -358,7 +358,7 @@ class DummyFrom : TableExpression // Used where there is a SELECT with no FROM c
 {
   public DummyFrom()
   {
-    Cols = new ColInfo( new string[0], new DataType[0] );
+    CI = new ColInfo( new string[0], new DataType[0] );
   }
   public override G.IEnumerable<bool> GetAll( Value[] row, int [] used, EvalEnv ee )
   {
