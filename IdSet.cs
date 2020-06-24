@@ -55,17 +55,9 @@ class TableExpressionIdSet : IdSet
 
   public override G.IEnumerable<long>All( EvalEnv ee )
   { 
-    var s = new SingleResultSet(); 
-    TE.FetchTo( s, ee );
-
-    StoredTable t = s.Table;
-    G.List<Value[]> rows = t.Rows;
-
-    for ( int i = 0; i < rows.Count; i += 1 ) 
-    {
-      Value[] row = rows[ i ];
+    Value [] row = new Value[1];
+    foreach ( bool b in TE.GetAll( row, new int[]{ 0 }, ee ) )
       yield return row[0].L;
-    }
   }
 } // end class TableExpressionIdSet
   
