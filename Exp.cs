@@ -723,11 +723,9 @@ class ScalarSelect : Exp
 
   public override G.IEnumerable<Value> Values( EvalEnv ee )
   {
-    var rs = new SingleResultSet();
-    TE.FetchTo( rs, ee  );
-    var rows = rs.Table.Rows;
-    for ( int i = 0; i < rows.Count; i += 1 )
-      yield return rows[ i ][ 0 ];
+    Value [] row = new Value[1];
+    foreach ( bool b in TE.GetAll( row, null, ee ) )
+      yield return row[ 0 ];
   }
 
   public override bool IsConstant() 
