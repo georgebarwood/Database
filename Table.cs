@@ -119,14 +119,13 @@ class Table : TableExpression // Represents a Database Table.
       for ( int i = 1; i < types.Length; i += 1 )
       {
         DataType t = types[ i ];
-        ulong x = (ulong) row[ i ].L;
+        long x = row[ i ].L;
         if ( t <= DataType.String && x == 0 )
         {
-          object o = row[ i ]._O;
-          x = ( t == DataType.Binary ? (ulong)Database.EncodeBinary( (byte[]) o ) : (ulong)Database.EncodeString( (string) o ) );
-          row[ i ].L = (long) x;
+          x = Database.Encode( row[ i ]._O, t );
+          row[ i ].L = x;
         }
-        else if ( t == DataType.Float ) x = Conv.PackFloat( x );
+        else if ( t == DataType.Float ) x = (long)Conv.PackFloat( x );
         int size = Sizes[ i ];
         Util.Set( RowBuffer, ix, x, size );     
         ix += size;
@@ -403,9 +402,9 @@ class Table : TableExpression // Represents a Database Table.
     {
       DataType t = types[ i ];
       int size = DTI.Size( t );
-      ulong x = Util.Get( RowBuffer, ix, size, t );
+      long x = Util.Get( RowBuffer, ix, size, t );
       ix += size;
-      row[ i ] = (long)x;
+      row[ i ] = x;
     }
     return true;
   }
@@ -417,7 +416,7 @@ class Table : TableExpression // Represents a Database Table.
     for ( int i = 1; i < types.Length; i += 1 )
     {
       DataType t = types[ i ];
-      ulong x = (ulong) row[ i ];
+      long x = row[ i ];
       if ( t == DataType.Float ) x = Conv.PackFloat( x );
       int size = DTI.Size( t );
       Util.Set( RowBuffer, ix, x, size );

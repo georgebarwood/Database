@@ -266,8 +266,9 @@ class Util
     return result;
   }
 
-  public static void Set( byte[] data, int off, ulong x, int size ) // Saves x at data[off] using size bytes.
+  public static void Set( byte[] data, int off, long v, int size ) // Saves x at data[off] using size bytes.
   {
+    ulong x = (ulong) v;
     for ( int i = 0; i < size; i += 1 )
     {
       data[off + i] = (byte)x;
@@ -275,7 +276,7 @@ class Util
     }
   }
 
-  public static ulong Get( byte[] data, int off, int size, DataType t ) // Extract unsigned value of size bytes from data[off].
+  public static long Get( byte[] data, int off, int size, DataType t ) // Extract unsigned value of size bytes from data[off].
   {
     ulong x = 0;
     for ( int i = size-1; i >= 0; i -= 1 )
@@ -283,7 +284,7 @@ class Util
 
     if ( size < 8 )
     {
-      if  ( t == DataType.Float ) x = Conv.UnpackFloat( (uint)x );
+      if  ( t == DataType.Float ) x = (ulong)Conv.UnpackFloat( (uint)x );
       else if ( t != DataType.Bool ) 
       {
         ulong signBit = 1UL << ( size * 8 - 1 );
@@ -293,7 +294,7 @@ class Util
         }
       }
     }
-    return x;
+    return (long)x;
   }
 
   public static int [] ToList( bool [] a )
@@ -397,20 +398,20 @@ public struct Conv
   [IOS.FieldOffset(0)] public uint U;
   [IOS.FieldOffset(0)] public float F;
   [IOS.FieldOffset(0)] public double D;
-  [IOS.FieldOffset(0)] public ulong UL;
+  [IOS.FieldOffset(0)] public long L;
 
-  public static ulong UnpackFloat( uint u )
+  public static long UnpackFloat( uint u )
   {
     Conv c = new Conv();
     c.U = u;
     c.D = c.F;
-    return c.UL;
+    return c.L;
   }
 
-  public static uint PackFloat( ulong x )
+  public static uint PackFloat( long x )
   {
     Conv c = new Conv();
-    c.UL = x;
+    c.L = x;
     c.F = (float)c.D;
     return c.U;
   }

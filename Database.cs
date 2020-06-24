@@ -511,8 +511,18 @@ class DatabaseImp : Database
   }
 
   // String and Binary handling. These are represented as a long, which is an offset into a file.
+
+  public long Encode( object o, DataType t )
+  {
+    return t == DataType.Binary ? EncodeBinary( (byte[])o ) : EncodeString( (string)o );
+  }
+
+  public object Decode( long sid, DataType t )
+  {
+    return t == DataType.Binary ? (object)DecodeBinary( sid ): (object)DecodeString( sid );
+  }
  
-  public long EncodeString( string s ) 
+  private long EncodeString( string s ) 
   { 
     if ( s == "" ) return 0;
     // See if it is in SysStringIndex
@@ -545,19 +555,14 @@ class DatabaseImp : Database
     return sid + 1; // + 1 because zero indicates the encoding has not yet been done.
   }
 
-  public object Decode( long sid, DataType t )
-  {
-    return t == DataType.Binary ? (object)DecodeBinary( sid ): (object)DecodeString( sid );
-  }
-
-  public string DecodeString( long sid ) 
+  private string DecodeString( long sid ) 
   { 
     if ( sid <= 0 ) return "";
     SysString.Position = sid-1;
     return SysStringReader.ReadString();
   }
 
-  public long EncodeBinary( byte [] data ) 
+  private long EncodeBinary( byte [] data ) 
   { 
     if ( data.Length == 0 ) return 0;
     // See if it is in SysBinaryIndex
@@ -581,7 +586,7 @@ class DatabaseImp : Database
     return sid + 1; // + 1 because zero means the encoding has not yet been done.
   }
 
-  public byte[] DecodeBinary( long sid ) 
+  private byte[] DecodeBinary( long sid ) 
   { 
     if ( sid <= 0 ) return DTI.ZeroByte;
     SysBinary.Position = sid - 1;

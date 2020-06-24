@@ -254,18 +254,14 @@ class IndexPage
     int off = NodeOverhead + NodeBase + x * NodeSize;
     for ( int i =0 ; i < ColStore; i += 1 )
     {
-      long v = r.Col[ i ].L;
       DataType t = Inf.Types[ i ];
-      if ( t == DataType.String && v == 0 )
-        r.Col[ i ].L = Database.EncodeString( (string)r.Col[ i ]._O );
-      else if ( t == DataType.Binary && v == 0 )
-        r.Col[ i ].L = Database.EncodeBinary( (byte[])r.Col[ i ]._O );
+      if ( t <= DataType.String && r.Col[ i ].L == 0 ) r.Col[ i ].L = Database.Encode( r.Col[ i ]._O, t );
       int size = DTI.Size( t );
 
-      ulong p = (ulong)r.Col[ i ].L;
+      long p = r.Col[ i ].L;
       if ( t == DataType.Float ) p = Conv.PackFloat( p );
 
-      Set( off, p, size );
+      Set( off, (ulong)p, size );
       off += size;
     }
   }
@@ -278,16 +274,10 @@ class IndexPage
     {
       DataType t = Inf.Types[ i ];
       int size = DTI.Size( t );
-      ulong u = Get( off, size );
+      long v = (long)Util.Get( Data, off, size, t );
       off += size;
-
-      if ( t == DataType.Float ) u = Conv.UnpackFloat( (uint) u );
-      else if ( t == DataType.Int ) u = (ulong)(long)(int)(uint) u;
-      else if ( t == DataType.Smallint ) u = (ulong)(long)(short)(ushort) u;
-      else if ( t == DataType.Tinyint ) u = (ulong)(long)(sbyte)(byte) u;
-
-      r.Col[ i ].L = (long) u;
-      if ( t <= DataType.String ) r.Col[ i ]._O = Database.Decode( (long) u, t );
+      r.Col[ i ].L = v;
+      if ( t <= DataType.String ) r.Col[ i ]._O = Database.Decode( v, t );
     }
   }
 
