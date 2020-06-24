@@ -4,7 +4,7 @@ using IO = System.IO;
 using G = System.Collections.Generic;
 using SQLNS;
 
-class Table : TableExpression // Represents a Database Table.
+class Table : TableExpression // Represents a stored database Table.
 {
   public long RowCount; // Includes deleted rows.
   public int [] AllCols; // Use as 3rd parameter of Get if exact column list is not important.
@@ -13,8 +13,8 @@ class Table : TableExpression // Represents a Database Table.
   readonly string Schema, Name;
   readonly FullyBufferedStream DataFile; // The file in which data for the table is stored.
 
-  readonly byte [] Size;   // Stored size of a column
-  readonly int [] Offset;  // Offset of column within stored record.
+  readonly byte [] Size;   // Stored size of each column
+  readonly int [] Offset;  // Offset of each column within stored row.
   readonly G.Dictionary<long,IndexFile> IxDict = new G.Dictionary<long,IndexFile>();
 
   int RowSize; // The size in bytes of a stored row.
