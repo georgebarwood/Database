@@ -157,11 +157,11 @@ class ExpName : Exp
     var ci = e.CI;
     if ( ci == null ) e.Error( "Undeclared variable " + ColName );
     for ( int i=0; i < ci.Count; i += 1 ) 
-      if ( ci.Names[ i ] == ColName ) 
+      if ( ci.Name[ i ] == ColName ) 
       { 
         e.Used[ i ] = true;
         ColIx = i; 
-        Type = DTI.Base( ci.Types[ i ] );
+        Type = DTI.Base( ci.Type[ i ] );
         return this;
       }
 
@@ -557,12 +557,12 @@ class ExpFuncCall : Exp
 
     if ( B.Params.Count != Plist.Length ) e.Error( "Param count error calling function " + FuncName );
     for ( int i = 0; i < Plist.Length; i += 1 )
-      if ( Plist[ i ].Type != B.Params.Types[ i ] )
+      if ( Plist[ i ].Type != B.Params.Type[ i ] )
       {
-        Exp conv = Plist[ i ].Convert( B.Params.Types[ i ] );
+        Exp conv = Plist[ i ].Convert( B.Params.Type[ i ] );
         if ( conv != null ) Plist[ i ] = conv;
         else e.Error( "Parameter Type Error calling function " + FuncName 
-           + " required type=" + DTI.Name( B.Params.Types[ i ] ) 
+           + " required type=" + DTI.Name( B.Params.Type[ i ] ) 
            + " supplied type=" + DTI.Name( Plist[ i ].Type ) + " exp=" + Plist[ i ] );
       }
 

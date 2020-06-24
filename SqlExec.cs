@@ -777,7 +777,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         int ci = t.ColumnIx( names[ i ], this );
         if ( ci == 0 ) idCol = i;
         colIx[ i ] = ci;
-        types[ i ] = t.Cols.Types[ ci ];
+        types[ i ] = t.Cols.Type[ ci ];
       }
       src.Convert( types, this );
       var b = B;
@@ -923,7 +923,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         // Check parameter types.
         if ( b.Params.Count != parms.Count ) Error( "Param count error calling " + name + "." + name );
         for ( int i = 0;  i < parms.Count; i += 1 )
-          if ( parms[ i ].Type != b.Params.Types[ i ] ) 
+          if ( parms[ i ].Type != b.Params.Type[ i ] ) 
             Error( "Parameter Type Error calling procedure " + name );
 
 

@@ -286,8 +286,8 @@ class DatabaseImp : Database
   {
     Table t = (Table) GetTable( schemaName, tableName, e );
 
-    var names = new G.List<string>( t.Cols.Names );
-    var types = new G.List<DataType>( t.Cols.Types );
+    var names = new G.List<string>( t.Cols.Name );
+    var types = new G.List<DataType>( t.Cols.Type );
     var map = new G.List<int>();
     for ( int i = 0; i < names.Count; i += 1 ) map.Add( i );
 
@@ -660,8 +660,8 @@ class DatabaseImp : Database
     r.V[1].L = tableId;
     for ( int i = 0; i < cols.Count; i += 1 )
     {
-      r.V[2].O = cols.Names[ i ];
-      r.V[3].L = (long)cols.Types[ i ];
+      r.V[2].O = cols.Name[ i ];
+      r.V[3].L = (long)cols.Type[ i ];
       r.Insert();
     }
   }
@@ -669,7 +669,7 @@ class DatabaseImp : Database
   int GetIx( ColInfo info, string name )
   {
     for ( int i = 0; i < info.Count; i += 1 )
-      if ( info.Names[ i ] == name ) return i;
+      if ( info.Name[ i ] == name ) return i;
     return -1;
   }
 

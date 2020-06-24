@@ -173,7 +173,7 @@ class WebResultSet : DBNS.ResultSet
       PutUtf8("<tr>");
       for ( int i = 0; i < CI.Count; i += 1 )
       {
-        var type = CI.Types[ i ];
+        var type = CI.Type[ i ];
         PutUtf8( type == DBNS.DataType.String ? "<td>" : "<td align=right>" );
         PutUtf8( DBNS.Util.ToHtml( row[ i ], type ) );
       }
@@ -188,7 +188,7 @@ class WebResultSet : DBNS.ResultSet
     {
       PutUtf8( "<table><tr>" );
       for ( int i = 0; i < ci.Count; i += 1 )
-        PutUtf8( "<th>" + ci.Names[ i ] );
+        PutUtf8( "<th>" + ci.Name[ i ] );
     }
   }
 

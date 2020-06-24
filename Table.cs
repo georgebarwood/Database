@@ -18,8 +18,8 @@ class Table : TableExpression // Represents a Database Table.
   IndexInfo[] IxInfo;
   bool Dirty;
   public int [] AllCols;
-  readonly byte [] Sizes;
-  readonly int [] Offsets;
+  readonly byte [] Size;   // Stored size of a column
+  readonly int [] Offset;  // Offset of column within stored record.
 
   public Table ( DatabaseImp database, Schema schema, string name, ColInfo cols, long tableId )
   {
@@ -35,14 +35,14 @@ class Table : TableExpression // Represents a Database Table.
 
     int count = Cols.Count;
     AllCols = Util.OneToN( count -  1 );
-    Sizes = new byte[ count ];
-    Offsets = new int[ count ];
+    Size = new byte[ count ];
+    Offset = new int[ count ];
     int offset = -8; // -8 to allow for the Id value not being stored.
     for ( int i = 0; i < count; i += 1 ) 
     {
-      Sizes[ i ] = (byte)DTI.Size( Cols.Types[ i ] );  
-      Offsets[ i ] = offset;
-      offset += Sizes[ i ];
+      Size[ i ] = (byte)DTI.Size( Cols.Type[ i ] );  
+      Offset[ i ] = offset;
+      offset += Size[ i ];
     }
 
     RowSize = CalcRowSize( Cols );
@@ -93,10 +93,8 @@ class Table : TableExpression // Represents a Database Table.
     for ( int c = 0; c < cols.Length; c += 1 )
     {
       int col = cols[ c ];
-      DataType t = Cols.Types[ col ];
-      int size = Sizes[ col ];
-      int off = Offsets [ col ];
-      long x = (long)Util.Get( RowBuffer, ix + off , size, t ); 
+      DataType t = Cols.Type[ col ];
+      long x = Util.Get( RowBuffer, ix + Offset[ col ], Size[ col ], t ); 
       row[ col ].L = x;
       if ( t <= DataType.String ) row[ col ]._O = Database.Decode( x, t );      
     }  
@@ -113,12 +111,11 @@ class Table : TableExpression // Represents a Database Table.
     }
     else
     {
-      DataType [] types = Cols.Types;
       RowBuffer[ 0 ] = 1;
       int ix = 1;
-      for ( int i = 1; i < types.Length; i += 1 )
+      for ( int i = 1; i < Cols.Count; i += 1 )
       {
-        DataType t = types[ i ];
+        DataType t = Cols.Type[ i ];
         long x = row[ i ].L;
         if ( t <= DataType.String && x == 0 )
         {
@@ -126,7 +123,7 @@ class Table : TableExpression // Represents a Database Table.
           row[ i ].L = x;
         }
         else if ( t == DataType.Float ) x = (long)Conv.PackFloat( x );
-        int size = Sizes[ i ];
+        int size = Size[ i ];
         Util.Set( RowBuffer, ix, x, size );     
         ix += size;
       }
@@ -256,7 +253,7 @@ class Table : TableExpression // Represents a Database Table.
   public int ColumnIx( string name, Exec e )
   {
     int n = Cols.Count;
-    for ( int i = 0; i < n; i += 1 ) if ( Cols.Names[ i ] == name ) return i;
+    for ( int i = 0; i < n; i += 1 ) if ( Cols.Name[ i ] == name ) return i;
     e.Error( "Column " + name + " not found" );
     return 0;
   }
@@ -319,7 +316,7 @@ class Table : TableExpression // Represents a Database Table.
       {
         curIndex = info[ i ].IndexId;
         int colIx = info[ i ].ColIx;
-        dt.Add( Cols.Types[ colIx ] );
+        dt.Add( Cols.Type[ colIx ] );
         cm.Add( colIx );
       }
     }
@@ -361,7 +358,7 @@ class Table : TableExpression // Represents a Database Table.
     long [] newRow = new long[ newcols.Count ];
     // Initialise newRow to default values.
     for ( int i = 0; i < newRow.Length; i += 1 )
-      newRow[ i ] = DTI.Default( newcols.Types[ i ] ).L;
+      newRow[ i ] = DTI.Default( newcols.Type[ i ] ).L;
 
     int newRowSize = CalcRowSize( newcols );
     byte [] blank = new byte[ newRowSize ];
@@ -374,7 +371,7 @@ class Table : TableExpression // Represents a Database Table.
     while ( n > 0 )
     {
       DF.Position = id * RowSize;
-      bool ok = AlterRead( Cols.Types, oldRow );
+      bool ok = AlterRead( Cols.Type, oldRow );
 
       for ( int i = 0; i < newRow.Length; i += 1 )
       {
@@ -383,7 +380,7 @@ class Table : TableExpression // Represents a Database Table.
       }
 
       DF.Position = id * newRowSize;
-      if ( ok ) AlterWrite( newcols.Types, newRow, newRowSize );
+      if ( ok ) AlterWrite( newcols.Type, newRow, newRowSize );
       else DF.Write( blank, 0, blank.Length );
       n -= 1;
       id = desc ? id - 1 : id + 1;
@@ -431,7 +428,7 @@ class Table : TableExpression // Represents a Database Table.
   {
     int result = 1; // Flag byte that indicates whether row is deleted.
     for ( int i = 1; i < c.Count; i += 1 )
-      result += DTI.Size( c.Types[ i ] ); 
+      result += DTI.Size( c.Type[ i ] ); 
     return result;
   }
 
@@ -480,7 +477,7 @@ class Inserter : ResultSet
   public Inserter( Table t, int[] colIx, int idCol, TableExpression te )
   {
     T = t; ColIx = colIx; IdCol = idCol; TE = te;
-    DataType [] types = t.Cols.Types; 
+    DataType [] types = t.Cols.Type; 
     Row = new Value[ types.Length ];
     // Initialise row to default values.
     for ( int i = 0; i < types.Length; i += 1 ) Row[ i ] = DTI.Default( types[ i ] );

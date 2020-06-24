@@ -274,7 +274,7 @@ class IndexPage
     {
       DataType t = Inf.Types[ i ];
       int size = DTI.Size( t );
-      long v = (long)Util.Get( Data, off, size, t );
+      long v = Util.Get( Data, off, size, t );
       off += size;
       r.Col[ i ].L = v;
       if ( t <= DataType.String ) r.Col[ i ]._O = Database.Decode( v, t );

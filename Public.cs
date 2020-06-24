@@ -45,14 +45,14 @@ public enum DataType : ushort { None=0, Binary=1, String=2, Bigint=3, Double=4, 
 public class ColInfo
 {
   public readonly int Count;
-  public readonly string [] Names;
-  public readonly DataType [] Types;
+  public readonly string [] Name;
+  public readonly DataType [] Type;
 
-  public ColInfo( string [] names, DataType[] types )
+  public ColInfo( string [] name, DataType[] type )
   {
-    Names = names; 
-    Types = types; 
-    Count = Types.Length;
+    Name = name; 
+    Type = type; 
+    Count = type.Length;
   }
 
   public static ColInfo New( G.List<string> names, G.List<DataType> types )

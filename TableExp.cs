@@ -28,7 +28,7 @@ abstract class TableExpression
   public long TableId;
   public string Alias;
 
-  public virtual DataType Type( int i ){ return Cols.Types[ i ]; } // Data type of the ith column.
+  public virtual DataType Type( int i ){ return Cols.Type[ i ]; } // Data type of the ith column.
 
   public virtual TableExpression Load( SqlExec e ) { return this; } // Loads table or view definition from database.
 
@@ -131,7 +131,7 @@ class Select : TableExpression
           string alias = ((ExpName)e).ColName;   
           for ( int j = 0; j < Cols.Count; j += 1 )
           {
-            if ( Cols.Names[j] == alias )
+            if ( Cols.Name[j] == alias )
             {
               e = Exps[ j ];
               found = true;
