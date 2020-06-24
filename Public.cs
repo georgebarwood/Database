@@ -9,7 +9,7 @@ using IOS = System.Runtime.InteropServices;
 public abstract class Database
 {
   public static Database GetDatabase( string dirName ) { return new DatabaseImp( dirName );  }
-  public abstract void Sql( string sql, ResultSet rs );
+  public abstract void Sql( string sql, ResultSet rs ); // The main entry point : execute the SQL string.
   public bool IsNew; // Database has just been created.
 }
 
@@ -24,7 +24,7 @@ public abstract class ResultSet
   public abstract bool NewRow( Value [] row ); // Called for each selected row. If result is false, sending is aborted ( no more rows are sent ).
   public virtual  void EndTable(){} // Called when all rows have been sent ( or sending is aborted ).
 
-  // As well as accepting SELECT results, ResultSet is also used to pass http parameters in, via the pre-defined functions ARG,FILEATTR,FILECONTENT.
+  // As well as accepting SELECT results, ResultSet is also used to access http parameters in, via the pre-defined functions ARG,FILEATTR,FILECONTENT.
   // kind values : AbsPath = 0, QueryString = 1, FormString = 2, Cookie = 3; */
   public virtual string Arg( int kind, string name ){ return null; }
   public virtual string ArgName( int kind, int ix ){ return null; } // Can be used to obtain names of unknown fields.
@@ -33,6 +33,7 @@ public abstract class ResultSet
   public virtual string FileAttr( int ix, int kind /*0=Name,1=ContentType,2=Filename*/ ){ return null; }
   public virtual byte [] FileContent ( int ix ){ return null; }
 
+  // SetMode controls how SELECT results are processed. 0 = normal, 1 = HTML table display. See WebResultSet.NewRow.
   public virtual void SetMode( long mode ){}
 
   public System.Exception Exception;

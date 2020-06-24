@@ -170,7 +170,7 @@ class WebResultSet : DBNS.ResultSet
     }
     else if ( Mode == 1 ) // HTML table mode
     {
-      PutUtf8("<tr>");
+      PutUtf8( "<tr>" );
       for ( int i = 0; i < CI.Count; i += 1 )
       {
         var type = CI.Type[ i ];
