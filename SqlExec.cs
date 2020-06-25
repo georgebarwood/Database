@@ -1375,9 +1375,8 @@ class Exception : System.Exception
   ( 
     error 
     + ( routine != null ? " in " + routine : "" )
-    + ( t == Token.Eof ? "" : " at Line " + line + " Col " + col + " Token=" + token 
-    // + "(" + t + ")"
-    )
+    + " at Line " + line + " Col " + col 
+    + ( token != "" ? " Token=" + token : "" )
     + @" source=
 " + src // May help when debugging dynamic SQL    
   )
