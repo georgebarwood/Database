@@ -577,7 +577,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
   TableExpression Expressions( G.List<int> assigns )
   {
-    // locals has the indexes of local variables being assigned in a SET or FOR statement.
+    // assigns has the indexes of local variables being assigned in a SET or FOR statement.
     bool save = DynScope; DynScope = true; // Suppresses Binding of expressions until table is known.
     var exps = new G.List<Exp>();
     do
