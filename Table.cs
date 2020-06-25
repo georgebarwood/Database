@@ -219,13 +219,13 @@ class Table : TableExpression // Represents a stored database Table.
     foreach ( long id in ids.All( ee ) ) 
     if ( Get( id, tr, AllCols ) && where( ee ) )
     {
-      for ( int i=0; i<nr.Length; i +=1 ) nr[ i ] = tr[ i ]; // Initialise new row as copy of old row.
+      // Initialise new row as copy of old row.
+      for ( int i=0; i<nr.Length; i +=1 ) nr[ i ] = tr[ i ];
 
-      for ( int i=0; i < cols.Length; i += 1 ) // Update the new row.
-      {
-        nr[ cols [ i ] ] = dvs[ i ]( ee );
-      }
-      if ( idCol >= 0 && nr[ idCol ].L != id ) // The id is changing.
+      // Update the new row.
+      for ( int i=0; i < cols.Length; i += 1 ) nr[ cols [ i ] ] = dvs[ i ]( ee );
+
+      if ( idCol >= 0 && nr[ idCol ].L != id ) // Row Id is changing.
       {
         Delete( id, tr );
         Insert( nr, idCol );
@@ -240,7 +240,7 @@ class Table : TableExpression // Represents a stored database Table.
     ee.Row = tr;
 
     if ( ids == null ) ids = new UpTo( RowCount );
-    else ids = new IdCopy( ids ); // Need to take a copy of the id values if an index is used.
+    else ids = new IdCopy( ids );
 
     foreach ( long id in ids.All( ee ) ) 
       if ( Get( id, tr, AllCols ) && where( ee ) ) Delete( id, tr );

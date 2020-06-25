@@ -32,7 +32,7 @@ public class WebServer
       stopWatch.Start();
       lock( Database ) Database.Sql( "EXEC web.Main()", wrs );
       stopWatch.Stop();
-      System.Console.WriteLine( "Time (ticks)=" + stopWatch.ElapsedTicks + " ticks per ms="  + System.Diagnostics.Stopwatch.Frequency/1000 );
+      System.Console.WriteLine( "Time (ms)=" + stopWatch.ElapsedTicks / (System.Diagnostics.Stopwatch.Frequency/1E3 ) );
       outStream.Position = 0;
       outStream.CopyTo( ctx.Response.OutputStream );
     }
