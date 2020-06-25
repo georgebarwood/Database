@@ -18,18 +18,19 @@ abstract class Exp
   public string Name = "";
   public DataType Type;
 
-  public virtual void Bind( SqlExec e ){ } // Checks type of any arguments and sets Type.
-  public virtual IdSet GetIdSet(  TableExpression te ) { return null; }
+  public virtual void Bind( SqlExec e ){ } // Resolves names, checks argument types, sets Type.
   public virtual bool IsConstant() { return false; } // Evaluation doesn't depend on table row.
 
-  // Methods related to implementation of "IN".
+  // Implementation of "IN".
   public virtual bool TestIn( Value x, EvalEnv e ){ return false; }
   public virtual DataType GetElementType() { return DataType.None; }
 
-  public virtual IdSet ListIdSet(){ return null; } // Index optimisation.
+  // Index optimisation.
+  public virtual IdSet GetIdSet(  TableExpression te ) { return null; } 
+  public virtual IdSet ListIdSet(){ return null; }
   public virtual G.IEnumerable<Value> Values( EvalEnv ee ){ yield break; } // ScalarSelect implementation.
 
-  // Methods related to implementation of aggregates.
+  // Implementation of aggregates.
   public virtual AggOp GetAggOp(){ return AggOp.None; }
   public virtual void BindAgg( SqlExec e ){ }
 
