@@ -143,13 +143,13 @@ class Table : TableExpression // Represents a stored database Table.
   public long Insert( Value [] row, int idCol )
   {
     long id;
-    if ( idCol < 0 )
+    if ( idCol < 0 ) // Id is not in INSERT list, allocate a new id.
     {
       id = ++RowCount;
     }
     else 
     {
-      id = row[idCol].L;
+      id = row[ idCol ].L;
       if ( RowCount < id  ) RowCount = id;
     }
     Save( id, row, idCol >= 0 );
@@ -187,8 +187,8 @@ class Table : TableExpression // Represents a stored database Table.
 
   public void Delete( long id, Value[] dr )
   {
-
     Save( id, null, false );
+
     // Update indexes.
     foreach ( G.KeyValuePair<long,IndexFile> p in IxDict )
     {
