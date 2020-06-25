@@ -30,13 +30,6 @@ class Block : EvalEnv // Represents a batch of statements or a routine (stored f
   G.Dictionary<string,int> LabelMap; // Lookup dictionary for local labels.
   int LabelUndefined = 0; // Number of labels awaiting definition.
 
-  void ExecuteStatements( ResultSet rs ) // Statement execution loop.
-  {
-    ResultSet = rs;
-    NextStatement = 0;
-    while ( NextStatement < Statements.Length ) Statements[ NextStatement++ ]();
-  }
-
   // Statement preparation ( compile phase ).
 
   public void Init()
@@ -74,16 +67,30 @@ class Block : EvalEnv // Represents a batch of statements or a routine (stored f
   }  
 
   public int Lookup( string varname ) // Gets the number of a local variable, -1 if not declared.
-  { int result; return VarMap.TryGetValue( varname, out result ) ? result : -1; }
+  { 
+    int result; return VarMap.TryGetValue( varname, out result ) ? result : -1; 
+  }
 
   public int LookupJumpId( string label ) // Gets jumpid for a label.
-  { int result; return LabelMap.TryGetValue( label, out result ) ? result : -1; }
+  { 
+    int result; return LabelMap.TryGetValue( label, out result ) ? result : -1; 
+  }
 
-  public int GetJumpId() { int jumpid = JumpList.Count; JumpList.Add( -1 ); return jumpid; }
+  public int GetJumpId() 
+  { 
+    int jumpid = JumpList.Count; JumpList.Add( -1 ); 
+    return jumpid; 
+  }
 
-  public int GetStatementId() { return StatementList.Count; }
+  public int GetStatementId() 
+  { 
+    return StatementList.Count; 
+  }
 
-  public void SetJump( int jumpid ) { JumpList[ jumpid ] = GetStatementId(); }
+  public void SetJump( int jumpid ) 
+  { 
+    JumpList[ jumpid ] = GetStatementId(); 
+  }
 
   public bool SetLabel( string name ) // returns true if label already defined ( an error ).
   {
@@ -141,6 +148,13 @@ class Block : EvalEnv // Represents a batch of statements or a routine (stored f
     var result = new Value[ n ];
     for ( int i = 0; i < n; i += 1 ) result[ i ] = DTI.Default( LocalTypes[ i ] );
     return result;
+  }
+
+  void ExecuteStatements( ResultSet rs ) // Statement execution loop.
+  {
+    ResultSet = rs;
+    NextStatement = 0;
+    while ( NextStatement < Statements.Length ) Statements[ NextStatement++ ]();
   }
 
   public void ExecuteBatch( ResultSet rs )
@@ -228,12 +242,12 @@ class Block : EvalEnv // Represents a batch of statements or a routine (stored f
 
   public void InitFor( int forid, TableExpression te, int[] assigns )
   {
-    Locals[ forid ]._O = new For( te, assigns, this );
+    Locals[ forid ]._O = new ForState( te, assigns, this );
   }
 
   public void For( int forid, int breakid )
   {
-    For f = (For) Locals[ forid ]._O;
+    ForState f = (ForState) Locals[ forid ]._O;
     if ( f == null || !f.Fetch() ) NextStatement = Jumps[ breakid ];
   }
 
@@ -247,9 +261,6 @@ class Block : EvalEnv // Represents a batch of statements or a routine (stored f
   {
     ResultSet.SetMode( e( this ) );
   }
-
-} // end class Block
-
 
 class SetResultSet : ResultSet // Implements SET assignment of local variables.
 {
@@ -269,29 +280,31 @@ class SetResultSet : ResultSet // Implements SET assignment of local variables.
   }  
 } // end class SetResultSet
 
-class For // Implements FOR statement.
-{
-  G.IEnumerator<bool> Cursor;
-  Value[] Row;
-  int [] Assigns;
-  Value[] Locals; 
-
-  public For( TableExpression te, int[] assigns, Block b )
+  class ForState // Implements FOR statement.
   {
-    Assigns = assigns;
-    Locals = b.Locals;
-    Row = new Value[ te.ColumnCount ];
-    Cursor = te.GetAll( Row, null, b ).GetEnumerator();
-  }
+    G.IEnumerator<bool> Cursor;
+    Value[] Row;
+    int [] Assigns;
+    Value[] Locals; 
 
-  public bool Fetch()
-  {
-    if ( !Cursor.MoveNext() ) return false;
-    for ( int i = 0; i < Assigns.Length; i += 1 )
-      Locals[ Assigns[ i ] ] = Row[ i ];
-    return true;
-  }
+    public ForState( TableExpression te, int[] assigns, Block b )
+    {
+      Assigns = assigns;
+      Locals = b.Locals;
+      Row = new Value[ te.ColumnCount ];
+      Cursor = te.GetAll( Row, null, b ).GetEnumerator();
+    }
 
-} // end class For
+    public bool Fetch()
+    {
+      if ( !Cursor.MoveNext() ) return false;
+      for ( int i = 0; i < Assigns.Length; i += 1 )
+        Locals[ Assigns[ i ] ] = Row[ i ];
+      return true;
+    }
+
+  } // end class ForState
+
+} // end class Block
 
 } // end namespace SQLNS
