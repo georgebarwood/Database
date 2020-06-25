@@ -18,7 +18,7 @@ abstract class Exp
   public string Name = "";
   public DataType Type;
 
-  public virtual Exp Bind( SqlExec e ){ return this; }
+  public virtual void Bind( SqlExec e ){ } // Checks type of any arguments and sets Type.
   public virtual IdSet GetIdSet(  TableExpression te ) { return null; }
   public virtual bool IsConstant() { return false; } // Evaluation doesn't depend on table row.
 
@@ -144,7 +144,7 @@ class ExpName : Exp
   public int ColIx;
   public ExpName( string name ){ ColName = name; Name = name; }
 
-  public override Exp Bind( SqlExec e )
+  public override void Bind( SqlExec e )
   {
     var ci = e.CI;
     if ( ci == null ) e.Error( "Undeclared variable " + ColName );
@@ -154,11 +154,10 @@ class ExpName : Exp
         e.Used[ i ] = true;
         ColIx = i; 
         Type = DTI.Base( ci.Type[ i ] );
-        return this;
+        return;
       }
 
     e.Error( "Column " + ColName + " not found" );
-    return this;
   }
 
   public override DV GetDV() { return ( EvalEnv ee ) => ee.Row[ColIx]; }
@@ -178,6 +177,8 @@ class ExpBinary : Exp
 
   public override DV GetDV()
   {
+    if ( Operator == Token.VBar ) return base.GetDV();
+
     DataType t = Left.Type; if ( t >= DataType.Decimal ) t = DataType.Decimal;
     switch ( t )
     {
@@ -341,17 +342,35 @@ class ExpBinary : Exp
     return null;
   }
 
-  public override Exp Bind( SqlExec e )
+  public override DS GetDS()
   {
+    // Operator == Token.VBar )
+    var list = new G.List<Exp>();
+    Left.GetConcat( list );
+    Right.GetConcat( list );
+    var dlist = new DS[ list.Count ];
+    for ( int i = 0; i < dlist.Length; i += 1 ) dlist[ i ] = list[ i ].GetDS();
+    return ( e ) => DoConcat( dlist, e );
+  }
+
+  static string DoConcat( DS[] dlist, EvalEnv e )
+  {
+    string [] slist = new string[ dlist.Length ];
+    for ( int i = 0; i < dlist.Length; i += 1 )
+      slist[ i ] = dlist[ i ]( e );
+    return string.Join( null, slist );
+  }
+
+  public override void Bind( SqlExec e )
+  {
+    Left.Bind( e );
+    Right.Bind( e );
+
     if ( Operator == Token.VBar )
     {
-      var clist = new G.List<Exp>();
-      Left.GetConcat( clist );
-      Right.GetConcat( clist );
-      return new ConcatExp( clist ).Bind( e );
-    } 
-    Left = Left.Bind( e );
-    Right = Right.Bind( e );
+      Left = Left.Convert( DataType.String );
+      Right = Right.Convert( DataType.String );
+    }
 
     DataType tL = Left.Type;
     DataType tR = Right.Type;
@@ -402,8 +421,6 @@ class ExpBinary : Exp
       }
     }
     else e.Error( "Binary operator datatype error");
-
-    return this;
   }
 
   public override void GetConcat( G.List<Exp> list )
@@ -445,55 +462,16 @@ class ExpBinary : Exp
 
 } // end class ExpBinary
 
-class ConcatExp : Exp
-{
-  G.List<Exp> Exps;
-
-  public ConcatExp( G.List<Exp> exps )
-  {
-    Type = DataType.String;
-    Exps = exps;
-  }
-
-  public override DS GetDS()
-  {
-    var list = new DS[ Exps.Count ];
-    for ( int i = 0; i < list.Length; i += 1 ) list[ i ] = Exps[ i ].GetDS();
-    return ( e ) => DoConcat( list, e );
-  }
-
-  public string DoConcat( DS[] list, EvalEnv e )
-  {
-    string [] result = new string[ list.Length ];
-    for ( int i = 0; i < list.Length; i += 1 )
-      result[ i ] = list[ i ]( e );
-    return string.Join( null, result );
-  }
-
-  public override Exp Bind( SqlExec ee )
-  {
-    for ( int i = 0; i < Exps.Count; i += 1 ) 
-    {
-      Exp x = Exps[ i ];
-      x = x.Bind( ee );
-      if ( x.Type != DataType.String ) x = x.Convert( DataType.String );
-      Exps[ i ] = x;
-    }
-    return this;
-  }
-}
-
 class ExpMinus : UnaryExp
 {
   public ExpMinus( Exp e ) { E = e; }
 
-  public override Exp Bind( SqlExec e )
+  public override void Bind( SqlExec e )
   {
-    E = E.Bind( e );
+    E.Bind( e );
     Type = E.Type;
     if ( Type != DataType.Bigint && Type != DataType.Double && Type < DataType.Decimal )
       e.Error( "Unary minus needs numeric argument" );
-    return this;
   }
 
   public override bool IsConstant() { return E.IsConstant(); }
@@ -507,11 +485,10 @@ class ExpNot : UnaryExp
 {
   public ExpNot( Exp e ) { E = e; Type = DataType.Bool;  }
 
-  public override Exp Bind( SqlExec e )
+  public override void Bind( SqlExec e )
   {
-    E = E.Bind( e );
+    E.Bind( e );
     if ( E.Type != DataType.Bool ) e.Error( "NOT needs bool argument" );
-    return this;
   }
 
   public override DB GetDB() { DB x = E.GetDB(); return ( ee ) => !x( ee ); }
@@ -539,13 +516,12 @@ class ExpFuncCall : Exp
     Plist = plist.ToArray();
   }
 
-  public override Exp Bind( SqlExec e  )
+  public override void Bind( SqlExec e  )
   {
     B = e.Db.GetRoutine( Schema, FuncName, true, e );
     Type = B.ReturnType;
 
-    for ( int i = 0; i < Plist.Length; i += 1 )
-      Plist[ i ] = Plist[ i ].Bind( e );
+    for ( int i = 0; i < Plist.Length; i += 1 ) Plist[ i ].Bind( e );
 
     if ( B.Params.Count != Plist.Length ) e.Error( "Param count error calling function " + FuncName );
     for ( int i = 0; i < Plist.Length; i += 1 )
@@ -557,8 +533,6 @@ class ExpFuncCall : Exp
            + " required type=" + DTI.Name( B.Params.Type[ i ] ) 
            + " supplied type=" + DTI.Name( Plist[ i ].Type ) + " exp=" + Plist[ i ] );
       }
-
-    return this;
   }
 
   public override DV GetDV()
@@ -581,21 +555,20 @@ class CASE : Exp
 
   public CASE( Part[] list ) { List = list; }
 
-  public override Exp Bind( SqlExec e )
+  public override void Bind( SqlExec e )
   {
     for ( int i = 0; i < List.Length; i += 1 ) 
     {
       if ( List[ i ].Test != null )
       {
-        List[ i ].Test = List[ i ].Test.Bind( e );
+        List[ i ].Test.Bind( e );
         if ( List[ i ].Test.Type != DataType.Bool ) e.Error( "Case test must be Bool" );
       }
-      List[ i ].E = List[ i ].E.Bind( e );
+      List[ i ].E.Bind( e );
       DataType dt = List[ i ].E.Type;
       if ( i == 0 ) Type = dt;
       else if ( dt != Type ) e.Error( "Case expressions must all have same type" );
     } 
-    return this;
   }
 
   public override DV GetDV()
@@ -650,17 +623,16 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
     Type = DataType.None;
   }
 
-  public override Exp Bind( SqlExec e  )
+  public override void Bind( SqlExec e  )
   {
     for ( int i = 0; i < List.Length; i += 1 ) 
     {
-      List[ i ] = List[ i ].Bind( e );
+      List[ i ].Bind( e );
       DataType dt = List[ i ].Type;
       if ( i == 0 ) ElementType = dt;
       else if ( dt != ElementType ) e.Error( "Tuple type error" ); // Maybe should apply Exp.Convert if possible.
     } 
     Dvs = Util.GetDVList( List );
-    return this;
   }
 
   public override bool TestIn( Value x, EvalEnv e )
@@ -759,12 +731,11 @@ class ExpIn : Exp
     Type = DataType.Bool;
   }
 
-  public override Exp Bind( SqlExec e )
+  public override void Bind( SqlExec e )
   {
-    Lhs = Lhs.Bind( e );
-    Rhs = Rhs.Bind( e );
+    Lhs.Bind( e );
+    Rhs.Bind( e );
     if ( Lhs.Type != Rhs.GetElementType() ) e.Error( "IN type mismatch" );
-    return this;
   }
 
   public override DB GetDB()
@@ -824,14 +795,13 @@ class ExpAgg : Exp
 
   public override void BindAgg( SqlExec e )
   { 
-    E = E.Bind( e );
+    E.Bind( e );
     Type = E.Type;
   }
 
-  public override Exp Bind( SqlExec e )
+  public override void Bind( SqlExec e )
   { 
     e.Error( "Aggregate can only be a top level SELECT" );
-    return this;
   }
 
   public override AggOp GetAggOp(){ return Op; }

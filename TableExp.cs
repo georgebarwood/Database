@@ -141,7 +141,7 @@ class Select : TableExpression
           }
         }
         int cix = Exps.Count;
-        if ( !found ) e = e.Bind( x );   
+        if ( !found ) e.Bind( x );   
         Exps.Add( e );     
         sortSpec[ i ].Type = e.Type;
         sortSpec[ i ].ColIx = cix;       

@@ -470,7 +470,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   Exp ExpOrAgg()
   {
     Exp result = Exp( Primary( true ), 0 );
-    if ( !ParseOnly && !DynScope ) result = result.Bind( this );
+    if ( !ParseOnly && !DynScope ) result.Bind( this );
     return result;
   }
 
@@ -482,7 +482,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   Exp Exp( int prec )
   {
     Exp result = Exp( Primary( false ), prec );
-    if ( !ParseOnly && !DynScope ) result = result.Bind( this );
+    if ( !ParseOnly && !DynScope ) result.Bind( this );
     return result;
   }
   
@@ -642,13 +642,13 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         else 
         { 
           if ( group != null ) Error( "All exps in aggregate select must be aggregate functions" );
-          exps[ i ] = exps[ i ].Bind( this );
+          exps[ i ].Bind( this );
         }
       }
 
       if ( where != null )
       {
-        where = where.Bind( this );
+        where.Bind( this );
         if ( where.Type != DataType.Bool ) Error( "WHERE expression must be boolean" );
       }
       
@@ -656,7 +656,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       {
         for ( int i = 0; i < group.Length; i += 1 ) 
         {
-          group[ i ] = group[ i ].Bind( this );
+          group[ i ].Bind( this );
           exps.Add( group[ i ] );
         }
       }
@@ -822,7 +822,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       for ( int i=0; i < a.Length; i += 1 ) 
       {        
         a[ i ].Lhs.Bind( this );
-        a[ i ].Rhs = a[ i ].Rhs.Bind( this );
+        a[ i ].Rhs.Bind( this );
 
         if ( a[ i ].Lhs.Type != a[ i ].Rhs.Type )
         {
@@ -834,7 +834,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       }
       if ( where != null )
       {
-        where = where.Bind( this );
+        where.Bind( this );
         if ( where.Type != DataType.Bool ) Error( "WHERE expression must be boolean" );
       }
       var w = where.GetDB();
@@ -871,7 +871,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
       if ( where != null )
       {
-        where = where.Bind( this );
+        where.Bind( this );
         if ( where.Type != DataType.Bool ) Error( "WHERE expression must be boolean" );
       }
       var w = where.GetDB();
@@ -890,7 +890,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     Read( Token.RBra );
     if ( !ParseOnly )
     {
-      exp = exp.Bind( this );
+      exp.Bind( this );
       if ( exp.Type != DataType.String ) Error( "Argument of EXECUTE must be a string" );
       var ds = exp.GetDS();
       var b = B;
@@ -940,7 +940,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       if ( parms.Count != 1 ) Error ( "SETMODE takes one param" );
       if ( !ParseOnly )
       {
-        parms[ 0 ] = parms[ 0 ].Bind( this );
+        parms[ 0 ].Bind( this );
         if ( parms[ 0 ].Type != DataType.Bigint ) Error( "SETMODE param error" );
       }
       var dl = parms[0].GetDL();
@@ -1244,7 +1244,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     int breakid = B.GetJumpId();
     if (!ParseOnly)
     {
-      exp = exp.Bind( this );
+      exp.Bind( this );
       if ( exp.Type != DataType.Bool ) Error( "WHILE expression must be boolean" );
       var db = exp.GetDB();
       Add( () => b.If( db, breakid ) );
@@ -1266,7 +1266,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     int falseid = b.GetJumpId();
     if (!ParseOnly)
     {
-      exp = exp.Bind( this );
+      exp.Bind( this );
       if ( exp.Type != DataType.Bool ) Error( "IF expression must be boolean" );
       var db = exp.GetDB();
       Add( () => b.If( db, falseid ) );
@@ -1312,7 +1312,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     Exp e = b.IsFunc ? Exp() : null;
     if ( !ParseOnly )
     {
-      if ( e != null ) e = e.Bind( this );
+      if ( e != null ) e.Bind( this );
       if ( e != null && B.ReturnType != e.Type ) 
       {
         var ce = e;

@@ -19,17 +19,16 @@ abstract class StdExp : Exp
     if ( Arg.Length != Types.Length ) e.Error( this + " takes " + Types.Length + " argument(s)" );
   }
 
-  public override Exp Bind( SqlExec e )
+  public override void Bind( SqlExec e )
   {
     for ( int i = 0; i < Types.Length; i += 1 )
     {
-      Arg[ i ] = Arg[ i ].Bind( e );
+      Arg[ i ].Bind( e );
       DataType t = Arg[ i ].Type;
       if ( t != Types[ i ] ) 
         e.Error( this + " parameter type error, arg " + i + " expected " 
          + DTI.Name( Types[ i ] ) + " actual " + DTI.Name( t ) );
     }
-    return this;
   }
 }   
 class EXCEPTION : Exp
@@ -103,12 +102,11 @@ class LEN : UnaryExp
     Type = DataType.Bigint;
   }
 
-  public override Exp Bind( SqlExec e )
+  public override void Bind( SqlExec e )
   {
-    E = E.Bind( e );
+    E.Bind( e );
     SType = E.Type;
     if ( SType != DataType.String && SType != DataType.Binary ) e.Error( "LEN argument must be string or binary" );
-    return this;
   }   
 
   public override DL GetDL()
