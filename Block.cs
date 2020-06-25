@@ -262,23 +262,23 @@ class Block : EvalEnv // Represents a batch of statements or a routine (stored f
     ResultSet.SetMode( e( this ) );
   }
 
-class SetResultSet : ResultSet // Implements SET assignment of local variables.
-{
-  int [] Assigns;
-  Block B;
-
-  public SetResultSet( int [] assigns, Block b )
+  class SetResultSet : ResultSet // Implements SET assignment of local variables.
   {
-    Assigns = assigns;
-    B = b;
-  }
+    int [] Assigns;
+    Block B;
 
-  public override bool NewRow( Value [] r )
-  {
-    for ( int i=0; i < Assigns.Length; i += 1 ) B.Locals[ Assigns[ i ] ] = r[ i ];
-    return false; // Only one row is assigned.
-  }  
-} // end class SetResultSet
+    public SetResultSet( int [] assigns, Block b )
+    {
+      Assigns = assigns;
+      B = b;
+    }
+
+    public override bool NewRow( Value [] r )
+    {
+      for ( int i=0; i < Assigns.Length; i += 1 ) B.Locals[ Assigns[ i ] ] = r[ i ];
+      return false; // Only one row is assigned.
+    }  
+  } // end class SetResultSet
 
   class ForState // Implements FOR statement.
   {
