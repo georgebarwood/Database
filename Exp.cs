@@ -489,6 +489,7 @@ class ExpNot : UnaryExp
   }
 
   public override DB GetDB() { DB x = E.GetDB(); return ( ee ) => !x( ee ); }
+
 } // end class ExpNot
 
 class OrderByExp
@@ -502,9 +503,8 @@ class ExpFuncCall : Exp
 {
   string Schema;
   string FuncName;
-  Block B;
   Exp [] Plist;
-
+  Block B;
 
   public ExpFuncCall( string schema, string fname, G.List<Exp> plist )
   {
@@ -537,6 +537,7 @@ class ExpFuncCall : Exp
     var dvs = Util.GetDVList( Plist );
     return ( ee ) => B.ExecuteRoutine( ee, dvs );
   }
+
 } // end class ExpFuncCall
 
 class CASE : Exp
