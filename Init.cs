@@ -119,7 +119,7 @@ INSERT INTO [dbo].[Cust](Id,[FirstName],[LastName],[Age],[Postcode]) VALUES
 (8,'George','Barwood',62,'GL2 4LZ')
 GO
 INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES 
-(51,5,75.27)
+(51,1,75.27)
 (52,2,10.02)
 (53,3,20.04)
 (54,4,30.06)
@@ -130,7 +130,7 @@ INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES
 (59,2,45.09)
 (60,3,55.11)
 (61,4,695.13)
-(62,5,20.04)
+(62,1,22.04)
 (63,6,30.06)
 (64,7,40.08)
 (65,1,15.03)
@@ -183,6 +183,7 @@ INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES
 (112,4,19.99)
 (113,4,123.45)
 (114,1,123456.00)
+(115,1,77.99)
 GO
 CREATE INDEX ByRefersTo on [browse].[Column]([RefersTo])
 GO
@@ -1212,25 +1213,22 @@ BEGIN
 
   IF sql != '' 
   BEGIN
-    SELECT '<p>Results:'
     EXEC SETMODE( 1 ) -- Causes result tables to be displayed as HTML tables
     EXECUTE( sql ) 
     EXEC SETMODE( 0 )
     DECLARE ex string SET ex = EXCEPTION()
-    IF ex != '' SELECT '<p>Error : ' | htm.Encode(ex)
+    IF ex != '' SELECT '<p>Error : <pre>' | htm.Encode(ex) | '</pre>'
   END
 
   SELECT '<p>Example SQL:'
-     | '<br>select dbo.CustName(Id) as Name, Age from dbo.Cust'
-     | '<br>select Cust, Total from dbo.Order'
+     | '<br>SELECT dbo.CustName(Id) AS Name, Age FROM dbo.Cust'
+     | '<br>SELECT Cust, Total FROM dbo.Order'
      | '<br>CREATE TABLE dbo.Cust( LastName string, Age int )'
      | '<br>CREATE INDEX ByLastName on dbo.Cust(LastName)'
      | '<br>CREATE VIEW dbo.OrderSummary AS SELECT Cust, SUM(Total) as Total, COUNT() as Count FROM dbo.Order GROUP BY Cust'
      | '<br>CREATE PROCEDURE handler.[/MyPage]() AS BEGIN END'
 
-
    EXEC web.Trailer()
-
 END
 GO
 CREATE PROCEDURE [handler].[/FileUpload]() AS
