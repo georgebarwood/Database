@@ -62,5 +62,5 @@ The other type of file is an index file. Index files are B-Trees where each page
 
 Manual
 ======
-When the webserver runs, a link to a manual included with the program is displayed. Alternatively see https://github.com/georgebarwood/georgebarwood.github.io for a copy of the manual.
+When the webserver runs, a link to a manual included with the program is displayed. Alternatively see https://georgebarwood.github.io/ for a copy of the manual.
 
