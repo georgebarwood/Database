@@ -37,6 +37,7 @@ abstract class Exp
   // Optimisation of string concat
   public virtual void GetConcat( G.List<Exp> list ){ list.Add(this); }
 
+  // Convert is used to insert implicit conversions. If there is no implicit conversion, it returns null ( an error condition ).
   public Exp Convert( DataType t )
   {
     if ( t < DataType.Decimal ) t = DTI.Base( t );
@@ -72,6 +73,8 @@ abstract class Exp
     return null;
   }
 
+  // Delegates : a Exp delegate evaluates an expression given an EvalEnv.
+  // The type-specific delegates DB..DX are for convenience and optimisation.
   public delegate Value  DV( EvalEnv e );
   public delegate bool   DB( EvalEnv e );
   public delegate long   DL( EvalEnv e );
@@ -166,8 +169,8 @@ class ExpName : Exp
   public override DL GetDL() { return ( EvalEnv ee ) => ee.Row[ColIx].L; }
   public override DS GetDS() { return ( EvalEnv ee ) => (string)ee.Row[ColIx]._O; }
   public override DX GetDX() { return ( EvalEnv ee ) => (byte[])ee.Row[ColIx]._O; }
-} // end class ExpName
 
+} // end class ExpName
 
 class ExpBinary : Exp
 {
@@ -455,7 +458,10 @@ class ExpBinary : Exp
     return null;
   }
 
-  public override bool IsConstant() { return Left.IsConstant() && Right.IsConstant(); }
+  public override bool IsConstant() 
+  { 
+    return Left.IsConstant() && Right.IsConstant(); 
+  }
 
 } // end class ExpBinary
 
@@ -702,6 +708,7 @@ class ScalarSelect : Exp
   {
     return true; // May need revisiting once "outer references" are implemented.
   }
+
 } // end class ScalarSelect
 
 class TestInResultSet : ResultSet
@@ -760,6 +767,7 @@ class ExpIn : Exp
     }
     return null;
   }
+
 } // end class ExpIn
 
 // Aggregates
