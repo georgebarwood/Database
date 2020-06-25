@@ -462,9 +462,10 @@ class DatabaseImp : Database
   {
     Schema schema = GetSchema( schemaName, true, e );
     string cname = name + ( func ? "F" : "P" );
+    var dict = func ? schema.FuncDict:schema.ProcDict;
 
     // See if routine is cached.
-    Block result; if( schema.BlockDict.TryGetValue( cname, out result ) ) return result;
+    Block result; if( dict.TryGetValue( cname, out result ) ) return result;
 
     string sql = (string) ScalarSql( "SELECT Definition from sys." + (func?"Function":"Procedure") 
       + " where Name=" + Util.Quote(name) + " AND Schema=" + schema.Id )._O;
@@ -475,7 +476,7 @@ class DatabaseImp : Database
 
     // System.Console.WriteLine( "Loaded " + schemaName + "." + name );
 
-    schema.BlockDict[ cname ] = result;
+    dict[ cname ] = result;
     return result;
   }
 
@@ -640,7 +641,8 @@ class DatabaseImp : Database
     foreach( G.KeyValuePair<string,Schema> p in SchemaDict )
     {
       Schema s = p.Value;
-      s.BlockDict.Clear();
+      s.FuncDict.Clear();
+      s.ProcDict.Clear();
 
       var vlist = new G.List<string>();
       foreach( G.KeyValuePair<string,TableExpression> q in s.TableDict )
@@ -755,7 +757,8 @@ class Schema
   public Schema( string name, int id ) { Name = name; Id = id; }
   
   public G.Dictionary<string,TableExpression> TableDict = new G.Dictionary<string,TableExpression>();
-  public G.Dictionary<string,Block> BlockDict = new G.Dictionary<string,Block>();
+  public G.Dictionary<string,Block> FuncDict = new G.Dictionary<string,Block>();
+  public G.Dictionary<string,Block> ProcDict = new G.Dictionary<string,Block>();
 
   public TableExpression GetCachedTable( string name )
   {
