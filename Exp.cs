@@ -4,15 +4,17 @@ namespace SQLNS
 using G = System.Collections.Generic;
 using DBNS;
 
+// EvalEnv is the environment in which expressions are evaluated.
 class EvalEnv
 {
-  public Value [] Locals;
-  public Value [] Row;
-  public ResultSet ResultSet;
+  public Value [] Locals; // Local variables of the batch or routine.
+  public Value [] Row; // The current row of a SELECT, SET or FOR statement.
+  public ResultSet ResultSet; // Allows access to client values.
   public EvalEnv( Value [] locals, Value [] row, ResultSet rs ){ Locals = locals; Row = row; ResultSet = rs; }
   public EvalEnv(){ }
 }
 
+// Exp represents any SQL scalar expression ( or for ExpList a list of scalar expressions ).
 abstract class Exp
 {
   public string Name = "";
@@ -73,7 +75,7 @@ abstract class Exp
     return null;
   }
 
-  // Delegates : a Exp delegate evaluates an expression given an EvalEnv.
+  // Delegates : an Exp delegate evaluates an expression given an EvalEnv.
   // The type-specific delegates DB..DX are for convenience and optimisation.
   public delegate Value  DV( EvalEnv e );
   public delegate bool   DB( EvalEnv e );
@@ -101,7 +103,7 @@ abstract class Exp
   public virtual DS GetDS(){ var dv = GetDV(); return ( ee ) => (string)dv( ee )._O; }
   public virtual DX GetDX(){ var dv = GetDV(); return ( ee ) => (byte[])dv( ee )._O; }
 
-}
+} // end class Exp
 
 abstract class UnaryExp : Exp
 {
@@ -110,20 +112,6 @@ abstract class UnaryExp : Exp
   {
     return E.IsConstant();
   }
-}
-
-class ExpLocalVar : Exp
-{
-  int I;
-  public ExpLocalVar( int i, DataType t ) { I = i; Type = t; }
-
-  public override DV GetDV() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ]; }
-  public override DB GetDB() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ].B; }
-  public override DL GetDL() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ].L; }
-  public override DS GetDS() { int i = I; return ( EvalEnv ee ) => (string)ee.Locals[ i ]._O; }
-  public override DX GetDX() { int i = I; return ( EvalEnv ee ) => (byte[])ee.Locals[ i ]._O; }
-
-  public override bool IsConstant() { return true; }
 }
 
 class ExpConstant : Exp
@@ -140,6 +128,20 @@ class ExpConstant : Exp
   public override DL GetDL() { return ( EvalEnv ee ) => Value.L; }
   public override DS GetDS() { return ( EvalEnv ee ) => (string)Value._O; }
   public override DX GetDX() { return ( EvalEnv ee ) => (byte[])Value._O; }
+}
+
+class ExpLocalVar : Exp
+{
+  int I;
+  public ExpLocalVar( int i, DataType t ) { I = i; Type = t; }
+
+  public override DV GetDV() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ]; }
+  public override DB GetDB() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ].B; }
+  public override DL GetDL() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ].L; }
+  public override DS GetDS() { int i = I; return ( EvalEnv ee ) => (string)ee.Locals[ i ]._O; }
+  public override DX GetDX() { int i = I; return ( EvalEnv ee ) => (byte[])ee.Locals[ i ]._O; }
+
+  public override bool IsConstant() { return true; }
 }
 
 class ExpName : Exp
