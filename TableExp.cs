@@ -163,7 +163,7 @@ class Select : TableExpression
     for ( int i = 0; i < Exps.Count; i += 1 )
     {
       string name = Exps[ i ].Name;
-      if ( name == "" ) e.Error( "Unnamed expression: " + Exps[ i ] );
+      if ( name == "" ) e.Error( "Unnamed expression" );
       else if ( set.Contains(name) ) e.Error( "Duplicate name: " + name );
       set.Add( name );
     }

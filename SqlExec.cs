@@ -36,7 +36,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
   public override void Error( string error )
   {
-    throw new Exception( RoutineName, SourceLine, SourceColumn, error,
+    throw new Exception( ObjectName, SourceLine, SourceColumn, error,
       Source.Substring( TokenStart, TokenStop - TokenStart ), Source, T );
   }
 
@@ -48,7 +48,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   // Rest is private
 
   string Source; // The source SQL
-  string RoutineName; // The name of the routine being parsed ( null if batch statements are being parsed ).
+  string ObjectName; // The name of the view or routine being parsed ( null if batch statements are being parsed ).
 
   int SourceIx = -1; // Index of current character in Source
   int SourceLine = 1; // Current line number
@@ -67,11 +67,11 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     
   int BreakId = -1; // Break label id for current WHILE or FOR statement.
 
-  SqlExec( string sql, DatabaseImp db, string routineName )
+  SqlExec( string sql, DatabaseImp db, string objectName )
   {
     Source = sql;
     Db = db;
-    RoutineName = routineName;
+    ObjectName = objectName;
     ReadChar();
     ReadToken(); 
   }
@@ -337,9 +337,9 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     return true;
   }
 
-  void Read( string t )
+  void Read( string ts )
   {
-    if ( T != Token.Name || TS != t ) Error( "Expected " + t );
+    if ( T != Token.Name || TS != ts ) Error( "Expected " + ts );
     ReadToken();
   }
 
@@ -598,7 +598,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
     TableExpression te = Test( "FROM" ) ? PrimaryTableExp() : new DummyFrom();
 
-    te.CheckNames( this );
+    if ( ObjectName == null ) te.CheckNames( this );
 
     Exp where = Test( "WHERE" ) ? Exp() : null;
 
@@ -1315,11 +1315,10 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       if ( e != null ) e.Bind( this );
       if ( e != null && B.ReturnType != e.Type ) 
       {
-        var ce = e;
         e = e.Convert( B.ReturnType );
         if ( e == null ) 
         {
-          Error( "Return type error" + ce );   
+          Error( "Return type error" );   
         }     
       }
       var dv = e == null ? null : e.GetDV();
