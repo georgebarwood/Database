@@ -62,6 +62,7 @@ class TableExpressionIdSet : IdSet
 } // end class TableExpressionIdSet
   
 
+// IdCopy takes a copy of a set of id values, also removes any duplicates.
 class IdCopy : IdSet
 {
   IdSet X;

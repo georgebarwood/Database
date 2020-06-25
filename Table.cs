@@ -207,9 +207,9 @@ class Table : TableExpression // Represents a stored database Table.
     return ins.LastIdInserted;
   }
 
-  public void Update( int [] ixs, Exp.DV [] dvs, Exp where, Exp.DB w, int idCol, IdSet ids, EvalEnv ee  )
+  public void Update( int [] cols, Exp.DV [] dvs, Exp.DB where, int idCol, IdSet ids, EvalEnv ee  )
   {
-    Value [] tr = new Value[ CI.Count ];
+    Value [] tr = new Value[ CI.Count ]; // The old row.
     Value [] nr = new Value[ CI.Count ]; // The new row.
     ee.Row = tr;
 
@@ -217,28 +217,24 @@ class Table : TableExpression // Represents a stored database Table.
     else ids = new IdCopy( ids ); // Need to take a copy of the id values if an index is used.
 
     foreach ( long id in ids.All( ee ) ) 
-    if ( Get( id, tr, AllCols ) )
+    if ( Get( id, tr, AllCols ) && where( ee ) )
     {
-      for ( int i=0; i<nr.Length; i +=1 ) nr[ i ] = tr[ i ];
+      for ( int i=0; i<nr.Length; i +=1 ) nr[ i ] = tr[ i ]; // Initialise new row as copy of old row.
 
-      if ( w( ee ) )
+      for ( int i=0; i < cols.Length; i += 1 ) // Update the new row.
       {
-        for ( int i=0; i < ixs.Length; i += 1 ) 
-        {
-          int ix = ixs[ i ];
-          nr[ ix ] = dvs[ i ]( ee );   
-        }
-        if ( idCol >= 0 && nr[ idCol ].L != id )
-        {
-          Delete( id, tr );
-          Insert( nr, idCol );
-        }
-        else Update( id, tr, nr );
+        nr[ cols [ i ] ] = dvs[ i ]( ee );
       }
+      if ( idCol >= 0 && nr[ idCol ].L != id ) // The id is changing.
+      {
+        Delete( id, tr );
+        Insert( nr, idCol );
+      }
+      else Update( id, tr, nr );
     }
   }
 
-  public void Delete( Exp where, Exp.DB w, IdSet ids, EvalEnv ee )
+  public void Delete( Exp.DB where, IdSet ids, EvalEnv ee )
   {
     Value [] tr = new Value[ CI.Count ];
     ee.Row = tr;
@@ -247,7 +243,7 @@ class Table : TableExpression // Represents a stored database Table.
     else ids = new IdCopy( ids ); // Need to take a copy of the id values if an index is used.
 
     foreach ( long id in ids.All( ee ) ) 
-      if ( Get( id, tr, AllCols ) && w( ee ) ) Delete( id, tr );
+      if ( Get( id, tr, AllCols ) && where( ee ) ) Delete( id, tr );
   }
 
   public int ColumnIx( string name, Exec e )
