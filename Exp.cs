@@ -345,7 +345,7 @@ class ExpBinary : Exp
 
   public override DS GetDS()
   {
-    // Operator == Token.VBar )
+    // Operator == Token.VBar, only string-valued operator.
     var list = new G.List<Exp>();
     Left.GetConcat( list );
     Right.GetConcat( list );
@@ -360,6 +360,13 @@ class ExpBinary : Exp
     for ( int i = 0; i < dlist.Length; i += 1 )
       slist[ i ] = dlist[ i ]( e );
     return string.Join( null, slist );
+  }
+
+  public override void GetConcat( G.List<Exp> list )
+  { 
+    // Operator == Token.VBar, only string-valued operator.
+    Left.GetConcat( list );
+    Right.GetConcat( list );
   }
 
   public override void Bind( SqlExec e )
@@ -422,17 +429,6 @@ class ExpBinary : Exp
       }
     }
     else e.Error( "Binary operator datatype error");
-  }
-
-  public override void GetConcat( G.List<Exp> list )
-  { 
-    if ( Operator == Token.VBar )
-    {
-      Left.GetConcat( list );
-      Right.GetConcat( list );
-    }
-    else
-      list.Add(this); 
   }
 
   public override IdSet GetIdSet( TableExpression te )
