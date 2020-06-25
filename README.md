@@ -56,7 +56,7 @@ Again, see webserver.cs to change the http setup. If localhost is used, no permi
 Implementation details
 ======================
 
-Database tables are kept in files with a fixed record size. This is possible because variable lenbgth values ( string and binary ) are encoded an kept seperately. The encoding is currently simply the offset in a the system string or binary file.
+Database tables are kept in files with a fixed record size. This is possible because variable length values ( string and binary ) are encoded an kept seperately. The encoding is currently simply the offset in a the system string or binary file.
 
 The other file is an index file. Index files are B-Trees. Each page has a fixed maximum size ( 4 kb at the time of writing ), when a page overflows it is split, and the new page is recorded in a parent page. See indexpage.cs for the details.
 
