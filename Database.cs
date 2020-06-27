@@ -498,15 +498,15 @@ class DatabaseImp : Database
       Util.Quote(sch) + "," + Util.Quote(name) + "," + Util.Quote(newsch) + "," + Util.Quote(newname) + ")" )._O;
 
     if ( error != "" ) e.Error( error );
-    else if ( t != null )
-    {
-      Schema s = GetSchema( sch, true, e );
-      Schema ns = GetSchema( newsch, true, e );
-      s.TableDict.Remove( name );
-      ns.TableDict[ newname ] = t;
-    }
     else 
     {
+      if ( t != null )
+      {
+        Schema s = GetSchema( sch, true, e );
+        Schema ns = GetSchema( newsch, true, e );
+        s.TableDict.Remove( name );
+        ns.TableDict[ newname ] = t;
+      }
       ResetCache();
     }
   }

@@ -406,7 +406,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         else 
           Error( "Undeclared local : " + name ); 
       }
-      else result = new ExpLocalVar( i, B.LocalTypeList[ i ] );
+      else result = new ExpLocalVar( i, B.LocalTypeList[ i ], name );
     }
     return result;
   }
@@ -1159,7 +1159,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
   void Rename()
   {
-    string objtype = NS;
+    string objtype = TS;
     if ( Test("SCHEMA") )
     {
       var name = Name();

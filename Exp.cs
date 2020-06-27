@@ -133,7 +133,7 @@ class ExpConstant : Exp
 class ExpLocalVar : Exp
 {
   int I;
-  public ExpLocalVar( int i, DataType t ) { I = i; Type = t; }
+  public ExpLocalVar( int i, DataType t, string name ) { I = i; Type = t; Name = name; }
 
   public override DV GetDV() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ]; }
   public override DB GetDB() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ].B; }
