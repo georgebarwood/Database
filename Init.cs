@@ -15,6 +15,7 @@ INSERT INTO [sys].[Schema](Id,[Name]) VALUES
 (5,'browse')
 (6,'dbo')
 (7,'ft')
+(8,'date')
 GO
 INSERT INTO [sys].[Table](Id,[Schema],[Name],[IsView],[Definition]) VALUES 
 (8,3,'File',0,'')
@@ -316,6 +317,7 @@ BEGIN
   CASE WHEN schema <= 5 THEN 3 -- ""System"" schemas sys, handler, web, htm, browse
        WHEN schema = 6 THEN 3 -- dbo
        WHEN schema = 7 THEN 2 -- ft
+       WHEN schema = 8 THEN 3 -- date
        ELSE 1
   END
 END
@@ -861,6 +863,200 @@ BEGIN
   RETURN result
 END
 GO
+CREATE FUNCTION [date].[DaysToString]( date int ) RETURNS string AS
+BEGIN
+  RETURN date.WeekDayToString( 1 + (date+5) % 7 ) | ' ' | date.YearMonthDayToString( date.DaysToYearMonthDay( date ) )
+END
+GO
+CREATE FUNCTION [date].[DaysToYearDay]( days int ) returns int as
+begin
+  -- Given a date represented by the number of days since 1 Jan 0000
+  -- calculate a date in Year/Day representation stored as
+  -- y * 512 + d where d is 1..366
+  
+  DECLARE y int, d int, cycle int
+
+  -- 146097 is the number of the days in a 400 year cycle ( 400 * 365 + 97 leap years )
+  SET cycle = days / 146097
+  SET days = days % 146097
+
+  SET y = days / 365
+  SET d = days % 365
+
+  -- Need to adjust d to allow for leap years.
+  -- Leap years are 0, 4, 8, 12 ... 96, not 100, 104 ... not 200... not 300, 400, 404 ... not 500.
+  -- Adjustment as function of y is 0 => 0, 1 => 1, 2 =>1, 3 => 1, 4 => 1, 5 => 2 ..
+
+  SET d = d - ( y + 3 ) / 4 - ( y + 99 ) / 100 + ( y + 399 ) / 400
+  
+  IF d < 0
+  BEGIN
+    SET y = y - 1
+    SET d = d + CASE WHEN date.IsLeapYear( y ) THEN 366 ELSE 365 END
+  END
+
+  RETURN date.YearDay( cycle * 400 + y, d + 1 )
+END
+GO
+CREATE FUNCTION [date].[DaysToYearMonthDay]( days int ) returns int as
+begin
+  RETURN date.YearDayToYearMonthDay( date.DaysToYearDay( days ) )
+END
+GO
+CREATE FUNCTION [date].[IsLeapYear]( y int ) RETURNS bool AS
+BEGIN
+  RETURN y % 4 = 0 AND ( y % 100 != 0 OR y % 400 = 0 )
+END
+GO
+CREATE FUNCTION [date].[MonthToString]( m int ) RETURNS string AS
+BEGIN
+  RETURN CASE
+    WHEN m = 1 THEN 'Jan'
+    WHEN m = 2 THEN 'Feb'
+    WHEN m = 3 THEN 'Mar'
+    WHEN m = 4 THEN 'Apr'
+    WHEN m = 5 THEN 'May'
+    WHEN m = 6 THEN 'Jun'
+    WHEN m = 7 THEN 'Jul'
+    WHEN m = 8 THEN 'Aug'
+    WHEN m = 9 THEN 'Sep'
+    WHEN m = 10 THEN 'Oct'
+    WHEN m = 11 THEN 'Nov'
+    WHEN m = 12 THEN 'Dec'
+    ELSE '???'
+  END
+END
+GO
+CREATE FUNCTION [date].[WeekDayToString]( wd int ) RETURNS string AS
+BEGIN
+  RETURN CASE
+    WHEN wd = 1 THEN 'Mon'
+    WHEN wd = 2 THEN 'Tue'
+    WHEN wd = 3 THEN 'Wed'
+    WHEN wd = 4 THEN 'Thu'
+    WHEN wd = 5 THEN 'Fri'
+    WHEN wd = 6 THEN 'Sat'
+    WHEN wd = 7 THEN 'Sun'
+    ELSE '?weekday?'
+    END
+END
+GO
+CREATE FUNCTION [date].[YearDay]( year int, day int ) RETURNS int AS
+BEGIN
+  RETURN year * 512 + day
+END
+GO
+CREATE FUNCTION [date].[YearDayToDays]( yd int ) RETURNS int AS
+BEGIN
+  -- Given a date in Year/Day representation stored as y * 512 + d where 1 <= d <= 366 ( so d is day in year )
+  -- returns the number of days since ""day zero"" (1 Jan 0000)
+  -- using the Gregorian calendar where days divisible by 4 are leap years, except if divisible by 100, except if divisible by 400.
+
+  DECLARE y int, d int, cycle int
+
+  -- Extract y and d from yd.
+  SET y = yd / 512, d = yd % 512 - 1
+
+  SET cycle = y / 400, y = y % 400 -- The Gregorian calendar repeats every 400 years.
+ 
+  -- Result days come from cycles, from years having at least 365 days, from leap years and finally d.
+  -- 146097 is the number of the days in a 400 year cycle ( 400 * 365 + 97 leap years ).
+  RETURN cycle * 146097 
+    + y * 365 
+    + ( y + 3 ) / 4 - ( y + 99 ) / 100 + ( y + 399 ) / 400
+    + d
+END
+GO
+CREATE FUNCTION [date].[YearDayToString]( yd int ) RETURNS string as
+BEGIN
+   RETURN date.DisplayYMD( date.YDtoYMD( yd ) )  
+END
+GO
+CREATE FUNCTION [date].[YearDayToYearMonthDay]( yd int ) returns int AS
+BEGIN
+  DECLARE y int, d int, leap bool, fdm int, m int, dim int
+
+  SET y = yd / 512
+  SET d = yd % 512 - 1
+
+  SET leap = date.IsLeapYear( y )
+
+  -- Jan = 0..30, Feb = 0..27 or 0..28  
+  IF NOT leap AND d >= 59 SET d = d + 1
+
+  SET fdm = CASE 
+    WHEN d < 31 THEN 0 -- Jan
+    WHEN d < 60 THEN 31 -- Feb
+    WHEN d < 91 THEN 60 -- Mar
+    WHEN d < 121 THEN 91 -- Apr
+    WHEN d < 152 THEN 121 -- May
+    WHEN d < 182 THEN 152 -- Jun
+    WHEN d < 213 THEN 182 -- Jul
+    WHEN d < 244 THEN 213 -- Aug
+    WHEN d < 274 THEN 244 -- Sep
+    WHEN d < 305 THEN 274 -- Oct
+    WHEN d < 335 THEN 305 -- Nov
+    ELSE 335 -- Dec
+    END
+
+  SET dim = d - fdm
+
+  SET m = ( d - dim + 28 ) / 31
+
+  RETURN date.YearMonthDay( y, m+1, dim+1 )
+END
+GO
+CREATE FUNCTION [date].[YearMonthDay]( year int, month int, day int ) RETURNS int AS
+BEGIN
+  RETURN year * 512 + month * 32 + day
+END
+GO
+CREATE FUNCTION [date].[YearMonthDayToDays]( ymd int ) RETURNS int AS
+BEGIN
+  RETURN date.YearDayToDays( date.YearMonthDayToYearDay( ymd ) )
+END
+GO
+CREATE FUNCTION [date].[YearMonthDayToString]( ymd int ) RETURNS string as
+BEGIN
+  DECLARE y int, m int, d int
+  SET d = ymd % 32
+  SET m = ymd / 32
+  SET y = m / 16
+  SET m = m % 16
+
+  RETURN date.MonthToString(m) | ' ' | d | ' ' |  y
+END
+GO
+CREATE FUNCTION [date].[YearMonthDayToYearDay]( ymd int ) RETURNS int AS
+BEGIN
+  DECLARE y int, m int, d int
+
+  -- Extract y, m, d from ymd
+  SET d = ymd % 32, m = ymd / 32  
+  SET y = m / 16, m = m % 16
+
+  -- Incorporate m into d ( assuming Feb has 29 days ).
+  SET d = d + CASE
+    WHEN m = 1 THEN 0 -- Jan
+    WHEN m = 2 THEN 31 -- Feb
+    WHEN m = 3 THEN 60 -- Mar
+    WHEN m = 4 THEN 91 -- Apr
+    WHEN m = 5 THEN 121 -- May
+    WHEN m = 6 THEN 152 -- Jun
+    WHEN m = 7 THEN 182 -- Jul
+    WHEN m = 8 THEN 213 -- Aug
+    WHEN m = 9 THEN 244 -- Sep
+    WHEN m = 10 THEN 274 -- Oct
+    WHEN m = 11 THEN 305 -- Nov
+    ELSE 335 -- Dec
+    END
+
+  -- Allow for Feb being only 28 days in a non-leap-year.
+  IF m >= 3 AND NOT date.IsLeapYear( y ) SET d = d - 1
+
+  RETURN date.YearDay( y, d )
+END
+GO
 CREATE PROCEDURE [sys].[DroppedColumn]( t int, colId int ) AS 
 BEGIN 
   /* Called internally during ALTER TABLE */
@@ -1223,6 +1419,7 @@ BEGIN
   SELECT '<p>Example SQL:'
      | '<br>SELECT dbo.CustName(Id) AS Name, Age FROM dbo.Cust'
      | '<br>SELECT Cust, Total FROM dbo.Order'
+     | '<br>EXEC date.Test( 2020, 1, 1, 60 )'
      | '<br>CREATE TABLE dbo.Cust( LastName string, Age int )'
      | '<br>CREATE INDEX ByLastName on dbo.Cust(LastName)'
      | '<br>CREATE VIEW dbo.OrderSummary AS SELECT Cust, SUM(Total) as Total, COUNT() as Count FROM dbo.Order GROUP BY Cust'
@@ -1387,8 +1584,8 @@ SELECT '<h1>Manual</h1>
 <h3>Conversions</h3>
 <p>Any type will implicitly convert to string where required. Integers will convert to float and decimal numbers, and float and decimal will convert to each other as required. ToDo: what about conversions to integer? Truncation vs Rounding etc.
 
-<h2>Views</h2><
-h3>CREATE VIEW</h3>
+<h2>Views</h2>
+<h3>CREATE VIEW</h3>
 <p>CREATE VIEW schema.viewname AS SELECT expressions FROM table [WHERE bool-exp ] [GROUP BY expressions]<p>Creates a new view. Every expression must have a unique name.
 
 <h2>Indexes
@@ -1440,6 +1637,7 @@ Aggregate functions cannot be arguments.
 <h3>htm</h3>
 <p>Has functions related to encoding html.
 <h3>browse</h3><p>Has tables and functions for displaying, editing arbitrary tables in the database.
+<h3>date</h3><p>Has functions for manipulating dates - conversions between Days ( from year 0 ), Year-Day, Year-Month-Day and string.
 ' 
 
 EXEC web.Trailer()
@@ -1648,6 +1846,24 @@ BEGIN
     INSERT INTO dbo.[Order](Cust,Total) Values(1+@I%7, ( 501.00 * (@I%11+@I%7) ) / 100 ) 
     SET @I=@I+1 
   END
+END
+GO
+CREATE PROCEDURE [date].[Test]( y int, m int, d int, n int ) AS 
+BEGIN
+
+DECLARE ymd int, days int
+
+  SET ymd = date.YearMonthDay( y, m, d )
+  SET days = date.YearMonthDayToDays( ymd )
+
+  DECLARE i int
+  SET i = 0
+  WHILE i < n
+  BEGIN
+    SELECT date.DaysToString( days + i )
+    SET i = i + 1
+  END
+
 END
 GO
 ", null );
