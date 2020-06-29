@@ -10,11 +10,11 @@ class Table : TableExpression // Represents a stored database Table.
   public int [] AllCols; // Use as 3rd parameter of Get if exact column list is not important.
 
   readonly DatabaseImp Database;
-  readonly string Schema, Name;
+  // readonly string Schema, Name;
   readonly FullyBufferedStream DataFile; // The file in which data for the table is stored.
 
-  readonly byte [] Size;   // Stored size of each column
-  readonly int [] Offset;  // Offset of each column within stored row.
+  byte [] Size;   // Stored size of each column
+  int [] Offset;  // Offset of each column within stored row.
   readonly G.Dictionary<long,IndexFile> IxDict = new G.Dictionary<long,IndexFile>();
 
   int RowSize; // The size in bytes of a stored row.
@@ -25,16 +25,21 @@ class Table : TableExpression // Represents a stored database Table.
   public Table ( DatabaseImp database, Schema schema, string name, ColInfo ci, long tableId )
   {
     Database = database;
-    Schema = schema.Name;
-    Name = name;
-    CI = ci;
     TableId = tableId;
-
     schema.TableDict[ name ] = this;
+
     IxInfo = new IndexInfo[0];
     DataFile = Database.OpenFile( FileType.Table, tableId );
 
-    int count = CI.Count;
+    InitColumnInfo( ci );
+
+    // System.Console.WriteLine( "Opened " + Schema + "." + name + " RowSize=" + RowSize + " RowCount=" + RowCount );
+  }
+
+  void InitColumnInfo( ColInfo ci )
+  {
+    CI = ci;
+    int count = ci.Count;
     AllCols = Util.OneToN( count -  1 );
     Size = new byte[ count ];
     Offset = new int[ count ];
@@ -49,8 +54,6 @@ class Table : TableExpression // Represents a stored database Table.
     RowSize = 1 + offset; // +1 is for byte that indicates whether row exists.
     RowCount = DataFile.Length / RowSize;
     RowBuffer = new byte[ RowSize ];
-
-    // System.Console.WriteLine( "Opened " + Schema + "." + name + " RowSize=" + RowSize + " RowCount=" + RowCount );
   }
 
   public override void Commit( CommitStage c )
@@ -133,7 +136,7 @@ class Table : TableExpression // Represents a stored database Table.
     }
     if ( !DataFile.Write( RowBuffer, 0, RowSize, checkNew ) ) 
     {
-      throw new System.Exception( "Duplicate id, id=" + id + " Table=" + Schema + "." + Name );
+      throw new System.Exception( "Duplicate id" );
     }
     Dirty = true;
   }
@@ -383,8 +386,9 @@ class Table : TableExpression // Represents a stored database Table.
     }
     if (!desc) DataFile.SetLength( RowCount * newRowSize );
     Dirty = true;
-    RowSize = newRowSize;
-    CI = newcols;
+    InitColumnInfo( newcols );
+    // RowSize = newRowSize;
+    // CI = newcols;
   }
 
   bool AlterRead( DataType [] types, long [] row ) 
