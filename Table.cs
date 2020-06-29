@@ -10,7 +10,6 @@ class Table : TableExpression // Represents a stored database Table.
   public int [] AllCols; // Use as 3rd parameter of Get if exact column list is not important.
 
   readonly DatabaseImp Database;
-  // readonly string Schema, Name;
   readonly FullyBufferedStream DataFile; // The file in which data for the table is stored.
 
   byte [] Size;   // Stored size of each column
