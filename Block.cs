@@ -209,6 +209,11 @@ class Block : EvalEnv // Represents a batch of statements or a routine (stored f
     }
   }
 
+  public void Throw( Exp.DS e )
+  {
+    throw new UserException( e ( this ) );
+  }
+
   public void Goto( int jumpId )
   {
     NextStatement = Jumps[ jumpId ];

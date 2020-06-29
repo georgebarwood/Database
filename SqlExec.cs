@@ -1223,6 +1223,19 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     Add( () => Db.AlterTable( schema, tableName, list, this ) );
   }
 
+  void Throw()
+  {
+    var msg = Exp();
+    if ( !ParseOnly )
+    {
+      msg.Bind( this );
+      if ( msg.Type != DataType.String ) Error( "THROW type error" );
+      Exp.DS m = msg.GetDS();
+      var b = B;
+      Add( () => b.Throw( m ) );
+    }
+  }    
+
   // Other statements.
 
   void Declare()
@@ -1355,6 +1368,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       else if ( Test( "ALTER" ) ) Alter();
       else if ( Test( "DROP" ) ) Drop();
       else if ( Test( "RENAME" ) ) Rename();
+      else if ( Test( "THROW" ) ) Throw();
       else LabelStatement();
     }
     else 
@@ -1363,6 +1377,11 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     }
   }
 } // end class SqlExec
+
+class UserException : System.Exception
+{
+  public UserException( string s ) : base( s ) {}
+}
 
 class Exception : System.Exception
 {

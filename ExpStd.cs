@@ -47,7 +47,10 @@ class EXCEPTION : Exp
   string GetException( EvalEnv ee )
   {
     var ex = ee.ResultSet.Exception;
-    string result = ex == null ? "" : ex.Message; // .Message or .ToString() for full debug info.
+    string result = 
+      ex == null ? ""
+      : ( ex is UserException || ex is Exception ) ? ex.Message
+      : ex.ToString(); // for full debug info.
     ee.ResultSet.Exception = null;
     return result;
   }
@@ -83,11 +86,11 @@ class SUBSTRING : StdExp
 
   public string DoSub( string s, int start, int len )
   {
-    if ( start < 0 ) start = 0;
+    if ( start < 1 ) start = 1;
     if ( start > s.Length ) start = s.Length;
     if ( len < 0 ) len = 0;
-    if ( len > s.Length - start ) len = s.Length - start;
-    return s.Substring( start, len );
+    if ( len > s.Length - (start-1) ) len = s.Length - (start-1);
+    return s.Substring( start-1, len );
   }
 
 } // end class SUBSTRING

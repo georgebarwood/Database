@@ -70,6 +70,9 @@ INSERT INTO [sys].[Column](Id,[Table],[Name],[Type]) VALUES
 (59,14,'DeathMonth',8)
 (60,14,'DeathDay',8)
 (61,14,'Notes',2)
+(63,12,'Date',5)
+(65,10,'DisplayFunction',2)
+(66,10,'ParseFunction',2)
 GO
 INSERT INTO [web].[File](Id,[Path],[ContentType],[ContentLength],[Content]) VALUES 
 (1,'/favicon.ico','image/x-icon',1086,0x00000100010010100000010020002804000016000000280000001000000020000000010020000000000000000000000000000000000000000000000000000000ffbf0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000000000000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff00000000000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff000000000000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000000000000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff00000000000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff000000000000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000000000000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff00000000000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff000000000000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffbf)
@@ -83,31 +86,33 @@ INSERT INTO [browse].[Table](Id,[NameFunction],[SelectFunction],[DefaultOrder],[
 (12,'','','','','',0)
 (14,'ft.PersonName','','BirthYear DESC, BirthMonth DESC, BirthDay DESC','','',0)
 GO
-INSERT INTO [browse].[Column](Id,[Position],[Label],[Description],[RefersTo],[Default],[InputCols],[InputFunction],[InputRows],[Style]) VALUES 
-(2,0,'','',1,'',0,'',0,0)
-(6,0,'','',2,'',0,'',0,0)
-(9,0,'','',2,'',0,'',0,0)
-(12,0,'','',2,'',0,'',0,0)
-(13,0,'','',4,'',0,'',0,0)
-(15,0,'','',1,'',0,'',0,0)
-(17,0,'','',0,'',150,'',40,0)
-(18,0,'','',1,'',0,'',0,0)
-(20,0,'','',0,'',150,'',40,0)
-(25,0,'','',0,'',0,'',0,0)
-(38,0,'','',2,'',0,'',0,0)
-(48,0,'','',11,'',0,'',0,0)
-(50,-8,'','',0,'',0,'',0,0)
-(51,16,'','',14,'',0,'ft.MotherSelect',0,0)
-(52,15,'','',14,'',0,'ft.FatherSelect',0,0)
-(53,1,'','',0,'',0,'',0,0)
-(54,0,'','',0,'',0,'',0,0)
-(55,2,'Birth Y','',0,'',0,'',0,0)
-(56,3,'M','',0,'',0,'',0,0)
-(57,4,'D','',0,'',0,'',0,0)
-(58,7,'Death Y','',0,'',0,'',0,0)
-(59,8,'M','',0,'',0,'',0,0)
-(60,9,'D','',0,'',0,'',0,0)
-(61,100,'','',0,'',100,'',10,0)
+INSERT INTO [browse].[Column](Id,[Position],[Label],[Description],[RefersTo],[Default],[InputCols],[InputFunction],[InputRows],[Style],[DisplayFunction],[ParseFunction]) VALUES 
+(2,0,'','',1,'',0,'',0,0,'','')
+(6,0,'','',2,'',0,'',0,0,'','')
+(9,0,'','',2,'',0,'',0,0,'','')
+(12,0,'','',2,'',0,'',0,0,'','')
+(13,0,'','',4,'',0,'',0,0,'','')
+(15,0,'','',1,'',0,'',0,0,'','')
+(17,0,'','',0,'',150,'',40,0,'','')
+(18,0,'','',1,'',0,'',0,0,'','')
+(20,0,'','',0,'',150,'',40,0,'','')
+(25,0,'','',0,'',0,'',0,0,'','')
+(38,0,'','',2,'',0,'',0,0,'','')
+(48,0,'','',11,'',0,'',0,0,'','')
+(49,20,'','',0,'',0,'',0,0,'','')
+(50,-8,'','',0,'',0,'',0,0,'','')
+(51,16,'','',14,'',0,'ft.MotherSelect',0,0,'','')
+(52,15,'','',14,'',0,'ft.FatherSelect',0,0,'','')
+(53,1,'','',0,'',0,'',0,0,'','')
+(54,0,'','',0,'',0,'',0,0,'','')
+(55,2,'Birth Y','',0,'',0,'',0,0,'','')
+(56,3,'M','',0,'',0,'',0,0,'','')
+(57,4,'D','',0,'',0,'',0,0,'','')
+(58,7,'Death Y','',0,'',0,'',0,0,'','')
+(59,8,'M','',0,'',0,'',0,0,'','')
+(60,9,'D','',0,'',0,'',0,0,'','')
+(61,100,'','',0,'',100,'',10,0,'','')
+(63,0,'','',0,'date.DaysToYearMonthDay( date.Today() )',0,'browse.InputYearMonthDay',0,0,'date.YearMonthDayToString','date.StringToYearMonthDay')
 GO
 INSERT INTO [dbo].[Cust](Id,[FirstName],[LastName],[Age],[Postcode]) VALUES 
 (1,'Mary','Poppins',65,'EC4 2NX')
@@ -119,72 +124,74 @@ INSERT INTO [dbo].[Cust](Id,[FirstName],[LastName],[Age],[Postcode]) VALUES
 (7,'Adam','Baker',0,'')
 (8,'George','Barwood',62,'GL2 4LZ')
 GO
-INSERT INTO [dbo].[Order](Id,[Cust],[Total]) VALUES 
-(51,1,75.27)
-(52,2,10.02)
-(53,3,20.04)
-(54,4,30.06)
-(55,1,40.08)
-(56,6,50.10)
-(57,7,60.12)
-(58,1,35.77)
-(59,2,45.09)
-(60,3,55.11)
-(61,4,695.13)
-(62,1,22.04)
-(63,6,30.06)
-(64,7,40.08)
-(65,1,15.03)
-(66,2,25.05)
-(67,3,35.07)
-(68,4,445.09)
-(69,5,5577.11)
-(70,6,65.13)
-(71,7,75.15)
-(72,1,50.10)
-(73,2,5.01)
-(74,3,15.03)
-(75,4,25.05)
-(76,5,35.07)
-(77,6,45.09)
-(78,7,55.11)
-(79,1,30.06)
-(80,2,40.08)
-(81,3,50.10)
-(82,4,60.12)
-(83,2,70.14)
-(84,6,25.05)
-(85,7,35.07)
-(86,1,10.02)
-(87,2,20.04)
-(88,3,30.06)
-(89,4,40.08)
-(90,5,50.10)
-(91,6,60.12)
-(92,7,70.14)
-(93,1,55.09)
-(94,2,55.11)
-(95,3,10.02)
-(96,4,20.04)
-(97,5,30.06)
-(98,6,40.08)
-(99,7,50.10)
-(100,1,25.05)
-(101,1,99.85)
-(102,5,988999.00)
-(103,4,111.11)
-(104,1,500.00)
-(105,1,99.53)
-(106,1,56600.78)
-(107,1,566.77)
-(108,5,99.00)
-(109,5,123467.89)
-(110,5,2900.00)
-(111,1,11293899.22)
-(112,4,19.99)
-(113,4,123.45)
-(114,1,123456.00)
-(115,1,77.99)
+INSERT INTO [dbo].[Order](Id,[Cust],[Total],[Date]) VALUES 
+(51,1,75.27,1034482)
+(52,2,10.02,1034273)
+(53,3,20.04,1034273)
+(54,4,30.06,1034273)
+(55,1,40.08,1034273)
+(56,1,50.10,1034451)
+(57,1,60.12,1034338)
+(58,1,35.77,1034273)
+(59,2,45.09,1034273)
+(60,3,55.11,1034273)
+(61,4,695.13,1034273)
+(62,1,22.04,1034437)
+(63,1,30.06,1033842)
+(64,7,40.08,1034273)
+(65,1,15.03,1034273)
+(66,2,25.05,1034273)
+(67,3,35.07,1034273)
+(68,4,445.09,1034273)
+(69,5,5577.11,1034273)
+(70,6,65.13,1034273)
+(71,7,75.15,1034273)
+(72,1,50.10,1034273)
+(73,2,5.01,1034273)
+(74,3,15.03,1034273)
+(75,4,25.05,1034273)
+(76,5,35.07,1034273)
+(77,6,45.09,1034273)
+(78,7,55.11,1034273)
+(79,1,30.06,1034273)
+(80,2,40.08,1034273)
+(81,3,50.10,1034273)
+(82,1,60.12,1034465)
+(83,2,70.14,1034273)
+(84,6,25.05,1034273)
+(85,7,35.07,1034273)
+(86,1,10.02,1034273)
+(87,2,20.04,1034273)
+(88,3,30.06,1034273)
+(89,4,40.08,1034273)
+(90,5,50.10,1034273)
+(91,6,60.12,1034273)
+(92,7,70.14,1034273)
+(93,1,55.09,1034273)
+(94,2,55.11,1034273)
+(95,3,10.02,1034273)
+(96,4,20.04,1034273)
+(97,5,30.06,1034273)
+(98,6,40.08,1034273)
+(99,7,50.10,1034273)
+(100,1,25.05,1034273)
+(101,1,99.85,1034273)
+(102,5,988999.00,1034273)
+(103,4,111.11,1034273)
+(104,1,500.00,1034273)
+(105,1,99.53,1034273)
+(106,1,56600.78,1034273)
+(107,1,566.77,1034273)
+(108,5,99.00,1034273)
+(109,5,123467.89,1034273)
+(110,5,2900.00,1034273)
+(111,1,11293899.22,1034273)
+(112,4,19.99,1034273)
+(113,4,123.45,1034273)
+(114,1,123456.00,1034273)
+(115,1,77.99,1034273)
+(116,1,999.00,1034461)
+(117,1,99.00,1034465)
 GO
 CREATE INDEX ByRefersTo on [browse].[Column]([RefersTo])
 GO
@@ -428,14 +435,16 @@ BEGIN
   FROM sys.Column where Table = table AND Id != colId
   ORDER BY browse.ColPos(Id), Id
   BEGIN
-    DECLARE ref int, nf string, ob string, label string
-    SET ref = 0, nf = ''
-    SET ref = RefersTo, label = Label FROM browse.Column WHERE Id = colid
+    DECLARE ref int, nf string, ob string, label string, df string
+    SET ref = 0, nf = '', df = ''
+    SET ref = RefersTo, label = Label, df = DisplayFunction FROM browse.Column WHERE Id = colid
     IF ref > 0 SET nf = NameFunction FROM browse.Table WHERE Id = ref
     SET ob = DefaultOrder FROM browse.Table WHERE Id = ref
 
     SET result = result | '|''<TD' | CASE WHEN type != 2 THEN ' align=right' ELSE '' END | '>''|'
-      | CASE WHEN nf != '' 
+      | CASE 
+        WHEN df != '' THEN df | '(' | col | ')'
+        WHEN nf != '' 
         THEN '''<a href=""/ShowRow?t=' | ref | '&k=''|' | col | '|''"">''|' | nf | '(' | col | ')' | '|''</a>''' 
         ELSE col
         END,
@@ -470,7 +479,13 @@ GO
 CREATE FUNCTION [browse].[ColParser]( colId int, type int, f string ) RETURNS string AS
 BEGIN
   -- ColId not currently used, but in future user-specified parser could be fetched from Parse.Column
+
+  declare pf string
+  SET pf = ParseFunction FROM browse.Column WHERE Id = colId
+
+
   RETURN CASE 
+    WHEN pf != '' THEN pf | '(' | f | ')'
     WHEN type = 3 OR type = 5 OR type = 7 OR type = 8  THEN 'PARSEINT(' | f |')'
     WHEN type = 4 OR type = 6  THEN 'PARSEDOUBLE(' | f | ')'
     WHEN type = 9 THEN 'browse.ParseBool(' | f | ')'
@@ -496,12 +511,16 @@ BEGIN
   FROM sys.Column where Table = table 
   ORDER BY browse.ColPos(Id), Id
   BEGIN
-    DECLARE ref int, nf string
-    SET ref = 0, nf = '' SET ref = RefersTo FROM browse.Column WHERE Id = colid
+    DECLARE ref int, nf string, df string
+    SET ref = 0, nf = '', df = ''
+    SET ref = RefersTo, df = DisplayFunction FROM browse.Column WHERE Id = colid
+
     IF ref > 0 SET nf = NameFunction FROM browse.Table WHERE Id = ref
 
     SET result = CASE WHEN result = '' THEN '' ELSE result | '|'',''|' END | 
-      CASE WHEN nf != '' 
+      CASE 
+      WHEN df != '' THEN df | '(' | col | ')'
+      WHEN nf != '' 
       THEN '''<a href=""/ShowRow?t=' | ref | '&k=''|' | col | '|''"">''|' | nf | '(' | col | ')' | '|''</a>''' 
       ELSE col
       END
@@ -642,6 +661,20 @@ BEGIN
     RETURN '<input id=""' | cn | '"" name=""' | cn | '"" size=""' | cols | '""' | ' value=' | htm.Attr(value) | '>'
 END
 GO
+CREATE FUNCTION [browse].[InputYearMonthDay]( colId int, value int) RETURNS string AS 
+BEGIN 
+  DECLARE cn string 
+  SET cn = Name FROM sys.Column WHERE Id = colId
+
+  DECLARE size int
+
+  SET size = InputCols FROM browse.Column where Id = colId
+
+  IF size = 0 SET size = 10
+
+  RETURN '<input id=""' | cn | '"" name=""' | cn | '"" size=' | size | ' value=' | htm.Attr(date.YearMonthDayToString(value)) | '>'
+END
+GO
 CREATE FUNCTION [browse].[InsertNames]( table int ) RETURNS string AS
 BEGIN
   DECLARE result string, col string
@@ -700,15 +733,16 @@ BEGIN
   FROM sys.Column where Table = table 
   ORDER BY browse.ColPos(Id), Id
   BEGIN
-    DECLARE ref int, nf string
-    SET ref = 0, nf = ''
-    SET ref = RefersTo FROM browse.Column WHERE Id = colid
+    DECLARE ref int, nf string, df string
+    SET ref = 0, nf = '', df = ''
+    SET ref = RefersTo, df = DisplayFunction FROM browse.Column WHERE Id = colid
     IF ref > 0 SET nf = NameFunction FROM browse.Table WHERE Id = ref ELSE SET nf = ''
 
     SET cols = 
       CASE WHEN cols = '' THEN '' ELSE cols | ' | ' END
       | '''<p>' | colname | ': '' | '
       | CASE 
+        WHEN df != '' THEN df | '(' | col | ')'
         WHEN nf != '' THEN '''<a href=""/ShowRow?t=' | ref | '&k=''|' | col | '|''"">''|' | nf | '(' | col | ')' | '|''</a>''' 
         ELSE col
         END
@@ -943,9 +977,75 @@ BEGIN
   RETURN date.DaysToString(  day ) | ' ' | hour | ':' | min | ':' | sec
 END
 GO
+CREATE FUNCTION [date].[StringToDays]( s string ) RETURNS int AS
+BEGIN
+  -- Typical input is 'Feb 2 2020'
+
+  declare ms string, month int
+
+  SET ms = SUBSTRING( s, 1, 3 )
+
+  SET month = CASE 
+    WHEN ms = 'Jan' THEN 1
+    WHEN ms = 'Feb' THEN 2
+    WHEN ms = 'Mar' THEN 3
+    WHEN ms = 'Apr' THEN 4
+    WHEN ms = 'May' THEN 5
+    WHEN ms = 'Jun' THEN 6
+    WHEN ms = 'Jul' THEN 7
+    WHEN ms = 'Aug' THEN 8
+    WHEN ms = 'Sep' THEN 9
+    WHEN ms = 'Oct' THEN 10
+    WHEN ms = 'Nov' THEN 11
+    WHEN ms = 'Dec' THEN 12
+    ELSE 0
+  END  
+  IF month = 0 throw 'Unknown month parsing date ' | htm.Attr(ms)
+
+  DECLARE six int -- Index of first space
+  SET six = 4
+
+  WHILE true
+  BEGIN
+    IF six > LEN(s) BREAK
+    IF SUBSTRING( s, six, 1 ) = ' ' BREAK
+    SET six = six + 1
+  END
+  DECLARE ssix int
+  SET ssix = six+1
+  WHILE true
+  BEGIN
+    IF ssix > LEN(s) BREAK
+    IF SUBSTRING( s, ssix, 1 ) = ' ' BREAK
+    SET ssix = ssix + 1
+  END
+
+ 
+  DECLARE day int, year int
+  SET day = PARSEINT( SUBSTRING( s, six+1, ssix - six ) )
+  IF day < 1 OR day > 31 throw 'Day must be 1..31 parsing date ' | htm.Attr(day)
+
+  SET year = PARSEINT( SUBSTRING( s, ssix + 1, LEN(s) ) )
+
+  RETURN date.YearMonthDayToDays( date.YearMonthDay( year, month, day ) )
+END
+GO
+CREATE FUNCTION [date].[StringToYearMonthDay]( s string ) RETURNS int AS
+BEGIN
+  RETURN date.DaysToYearMonthDay( date.StringToDays( s ) )
+END
+GO
 CREATE FUNCTION [date].[Ticks]() RETURNS int AS
 BEGIN
   RETURN GLOBAL(0)
+END
+GO
+CREATE FUNCTION [date].[Today]() returns int AS
+BEGIN
+  DECLARE sec int, day int
+  SET sec = date.Ticks() / 10000000
+  SET day = sec / 86400 + 366
+  RETURN day
 END
 GO
 CREATE FUNCTION [date].[WeekDayToString]( wd int ) RETURNS string AS
