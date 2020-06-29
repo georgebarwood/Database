@@ -927,6 +927,27 @@ BEGIN
   END
 END
 GO
+CREATE FUNCTION [date].[NowString]() RETURNS string as
+BEGIN
+
+  DECLARE day int, sec int, min int, hour int
+
+  SET sec = date.Ticks() / 10000000
+  SET day = sec / 86400 + 366 -- 86400 = 24 * 60 * 60, seconds in a day.
+  SET sec = sec % 86400
+  SET min = sec / 60
+  SET sec = sec % 60
+  SET hour = min / 60
+  SET min = min % 60
+
+  RETURN date.DaysToString(  day ) | ' ' | hour | ':' | min | ':' | sec
+END
+GO
+CREATE FUNCTION [date].[Ticks]() RETURNS int AS
+BEGIN
+  RETURN GLOBAL(0)
+END
+GO
 CREATE FUNCTION [date].[WeekDayToString]( wd int ) RETURNS string AS
 BEGIN
   RETURN CASE
@@ -1771,8 +1792,7 @@ BEGIN
 <a href=/Menu>Menu</a> 
 | <a target=_blank href=/Menu>New Window</a>
 | <a href=Manual>Manual</a>
-| <a target=_blank href=""EditProc?s=handler&n=' | web.Path() | '"">Code</a>
-</div>'
+| <a target=_blank href=""EditProc?s=handler&n=' | web.Path() | '"">Code</a> ' | date.NowString() | ' UTC</div>'
 END
 GO
 CREATE PROCEDURE [web].[Main]() AS 

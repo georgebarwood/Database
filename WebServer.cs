@@ -117,6 +117,8 @@ class WebResultSet : DBNS.ResultSet
 
   int Mode;
   DBNS.ColInfo CI;
+  System.DateTime Now;
+  bool GotNow;
 
   public WebResultSet( System.Net.HttpListenerContext ctx, System.IO.MemoryStream outStream )
   {
@@ -228,6 +230,20 @@ class WebResultSet : DBNS.ResultSet
   public override void SetMode( long mode )
   {
     Mode = (int)mode;
+  }
+
+  /////////////////// Functions to access global information
+  public const int GTicks = 0;
+
+  public override long Global( int kind )
+  {
+    switch( kind )
+    {
+      case GTicks:
+       if ( !GotNow) { Now = System.DateTime.UtcNow; GotNow = true; }
+       return Now.Ticks; // 10 million ticks in a second.
+    }
+    return 0;
   }
 
   /////////////////// Functions to make http request information available to SQL code

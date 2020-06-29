@@ -210,6 +210,18 @@ class LASTID : Exp
   }
 } // end class LASTID
 
+class GLOBAL : StdExp
+{
+  public GLOBAL( G.List<Exp>args, Exec e ) : base( args, DataType.Bigint, 
+    new DataType[]{ DataType.Bigint }, e ){}
+
+  public override DL GetDL()
+  {
+    var k = Arg[0].GetDL();
+    return ( ee ) => ee.ResultSet.Global( (int)k( ee ) );
+  }
+} // end class GLOBAL
+
 class ARG : StdExp
 {
   public ARG( G.List<Exp>args, Exec e ) : base( args, DataType.String, 

@@ -388,6 +388,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       else if ( name == "SUBSTRING" ) result = new SUBSTRING( parms, this );
       else if ( name == "EXCEPTION" ) result = new EXCEPTION( parms, this );
       else if ( name == "LASTID" ) result = new LASTID( parms, this );
+      else if ( name == "GLOBAL" ) result = new GLOBAL( parms, this );   
       else if ( name == "ARG" ) result = new ARG( parms, this );   
       else if ( name == "ARGNAME" ) result = new ARGNAME( parms, this );    
       else if ( name == "FILEATTR" ) result = new FILEATTR( parms, this );

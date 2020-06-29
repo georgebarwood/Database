@@ -36,6 +36,9 @@ public abstract class ResultSet
   // SetMode controls how SELECT results are processed. 0 = normal, 1 = HTML table display. See WebResultSet.NewRow.
   public virtual void SetMode( long mode ){}
 
+  // Access to globals such as current date/time in ticks.
+  public virtual long Global( int kind ){ return 0; }
+
   public System.Exception Exception;
   public long LastIdInserted;
 }
