@@ -33,8 +33,11 @@ public class WebServer
       lock( Database ) Database.Sql( "EXEC web.Main()", wrs );
       stopWatch.Stop();
       System.Console.WriteLine( "Time (ms)=" + stopWatch.ElapsedTicks / (System.Diagnostics.Stopwatch.Frequency/1E3 ) );
-      outStream.Position = 0;
-      outStream.CopyTo( ctx.Response.OutputStream );
+      try
+      {
+        outStream.Position = 0;
+        outStream.CopyTo( ctx.Response.OutputStream );
+      } catch ( System.Exception ) {} // Exceptions due to client closing connection etc. are normal.
     }
     catch ( System.Exception e ) { System.Console.WriteLine( "Exception: " + e ); }
     finally { ctx.Response.OutputStream.Close(); }
