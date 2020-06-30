@@ -98,29 +98,33 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
   // ****************** Token parsing
 
-  void ReadChar()
+  char ReadChar()
   {
+    char cc;
     SourceIx += 1;
     if ( SourceIx >= Source.Length )
     {
       SourceIx = Source.Length;
-      CC = '\0';
+      cc = '\0';
     }
     else
     {
-      CC = Source[ SourceIx ];
-      if ( CC == '\n' ) { SourceColumn = 0; SourceLine += 1; } else SourceColumn += 1;
+      cc = Source[ SourceIx ];
+      if ( cc == '\n' ) { SourceColumn = 0; SourceLine += 1; } else SourceColumn += 1;
     }
+    CC = cc;
+    return cc;
   }
 
   void ReadToken()
   {
+    char cc = CC;
     SkipSpace:
-    while ( CC == ' ' || CC == '\n' || CC == '\r' ) ReadChar();
+    while ( cc == ' ' || cc == '\n' || cc == '\r' ) cc = ReadChar();
     TokenStart = SourceIx;
     {
-      char sc = CC; 
-      ReadChar();
+      char sc = cc; 
+      cc = ReadChar();
       switch( sc )
       {
         case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G': case 'H': case 'I': case 'J': case 'K': case 'L': case 'M':
@@ -130,7 +134,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         case '@':
         {
           T = Token.Name;
-          while ( CC >= 'A' && CC <= 'Z' || CC >= 'a' && CC <= 'z' || CC == '@' ) ReadChar();
+          while ( cc >= 'A' && cc <= 'Z' || cc >= 'a' && cc <= 'z' || cc == '@' ) cc = ReadChar();
           NS = Source.Substring( TokenStart, SourceIx - TokenStart );
           TS = NS.ToUpper();
           break;
@@ -140,22 +144,22 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         {
           T = Token.Number;
           char fc = Source[ TokenStart ];
-          if ( fc == '0' && CC == 'x' )
+          if ( fc == '0' && cc == 'x' )
           {
-            ReadChar();
+            cc = ReadChar();
             T = Token.Hex;
-            while ( CC >= '0' && CC <= '9' || CC >= 'A' && CC <= 'F' || CC >= 'a' && CC <= 'f') ReadChar();
+            while ( cc >= '0' && cc <= '9' || cc >= 'A' && cc <= 'F' || cc >= 'a' && cc <= 'f') cc = ReadChar();
           }
           else
           {
-            while ( CC >= '0' && CC <= '9' ) ReadChar();  
+            while ( cc >= '0' && cc <= '9' ) cc = ReadChar();  
             int part1 = SourceIx;
             DecimalInt = long.Parse( Source.Substring( TokenStart, part1 - TokenStart ) );
-            if ( CC == '.' && T == Token.Number )
+            if ( cc == '.' && T == Token.Number )
             {
               T = Token.Decimal;
-              ReadChar();
-              while ( CC >= '0' && CC <= '9' ) ReadChar();   
+              cc = ReadChar();
+              while ( cc >= '0' && cc <= '9' ) cc = ReadChar();   
               DecimalScale = SourceIx - ( part1 + 1 );
               DecimalFrac = long.Parse( Source.Substring( part1 + 1, DecimalScale ) );
             }
@@ -172,16 +176,16 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         { 
           T = Token.Name;
           int start = SourceIx; NS = "";
-          while ( CC != '\0' )
+          while ( cc != '\0' )
           {
-            if ( CC == ']' )
+            if ( cc == ']' )
             {
-              ReadChar();
-              if ( CC != ']' ) break;
+              cc = ReadChar();
+              if ( cc != ']' ) break;
               NS = NS + Source.Substring( start, SourceIx-start-1 );
               start = SourceIx;
             }
-            ReadChar();
+            cc = ReadChar();
           }
           NS = NS + Source.Substring( start, SourceIx-start-1 );
           TS = NS.ToUpper();
@@ -191,16 +195,16 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         {
           T = Token.String;
           int start = SourceIx; NS = "";
-          while ( CC != '\0' )
+          while ( cc != '\0' )
           {
-            if ( CC == '\'' )
+            if ( cc == '\'' )
             {
-              ReadChar();
-              if ( CC != '\'' ) break;
+              cc = ReadChar();
+              if ( cc != '\'' ) break;
               NS = NS + Source.Substring( start, SourceIx-start-1 );
               start = SourceIx;
             }
-            ReadChar();
+            cc = ReadChar();
           }
           NS = NS + Source.Substring( start, SourceIx-start-1 );
           break;
@@ -215,36 +219,36 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         case ':' : T = Token.Colon; break;
         case '>' : 
           T = Token.Greater; 
-          if ( CC == '=' ) { T = Token.GreaterEqual; ReadChar(); } 
+          if ( cc == '=' ) { T = Token.GreaterEqual; cc = ReadChar(); } 
           break;
         case '<' : 
           T = Token.Less; 
-          if ( CC == '=' ) { T = Token.LessEqual; ReadChar(); } 
-          else if ( CC == '>' ) { T = Token.NotEqual; ReadChar(); } 
+          if ( cc == '=' ) { T = Token.LessEqual; cc = ReadChar(); } 
+          else if ( cc == '>' ) { T = Token.NotEqual; cc = ReadChar(); } 
           break;
         case '-' : T = Token.Minus; 
-          if ( CC == '-' )
+          if ( cc == '-' )
           {
-            while ( CC != '\n' && CC != '\0' ) ReadChar();
+            while ( cc != '\n' && cc != '\0' ) cc = ReadChar();
             goto SkipSpace;
           }
           break;
         case '!' : 
           T = Token.Exclamation; 
-          if ( CC == '=' ) { T = Token.NotEqual; ReadChar(); }
+          if ( cc == '=' ) { T = Token.NotEqual; cc = ReadChar(); }
           break;
         case '*' : T = Token.Times; break;
         case '/' : T = Token.Divide;
-          if ( CC == '*' )  // Skip comment
+          if ( cc == '*' )  // Skip comment
           {           
-            ReadChar();
+            cc = ReadChar();
             char prevchar = 'X';
-            while ( ( CC != '/' || prevchar != '*' ) && CC != '\0' )
+            while ( ( cc != '/' || prevchar != '*' ) && cc != '\0' )
             {
-              prevchar = CC;
-              ReadChar();
+              prevchar = cc;
+              cc = ReadChar();
             }
-            ReadChar();
+            cc = ReadChar();
             goto SkipSpace;
           }
           break;
