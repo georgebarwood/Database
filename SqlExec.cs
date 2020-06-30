@@ -118,93 +118,93 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     SkipSpace:
     while ( CC == ' ' || CC == '\n' || CC == '\r' ) ReadChar();
     TokenStart = SourceIx;
-    if ( CC >= 'A' && CC <= 'Z' || CC >= 'a' && CC <= 'z' || CC == '@' )
-    {
-      T = Token.Name;
-      ReadChar();
-      while ( CC >= 'A' && CC <= 'Z' || CC >= 'a' && CC <= 'z' || CC == '@' ) ReadChar();
-      TokenStop = SourceIx;
-      NS = Source.Substring( TokenStart, TokenStop - TokenStart );
-      TS = NS.ToUpper();
-    }
-    else if ( CC >= '0' && CC <= '9' )
-    {
-      char fc = CC;
-      T = Token.Number;
-      ReadChar();
-      if ( fc == '0' && CC == 'x' )
-      {
-        ReadChar();
-        T = Token.Hex;
-        while ( CC >= '0' && CC <= '9' || CC >= 'A' && CC <= 'F' || CC >= 'a' && CC <= 'f') ReadChar();
-      }
-      else
-      {
-        while ( CC >= '0' && CC <= '9' ) ReadChar();  
-        int part1 = SourceIx;
-        DecimalInt = long.Parse( Source.Substring( TokenStart, part1 - TokenStart ) );
-        if ( CC == '.' && T == Token.Number )
-        {
-          T = Token.Decimal;
-          ReadChar();
-          while ( CC >= '0' && CC <= '9' ) ReadChar();   
-          DecimalScale = SourceIx - ( part1 + 1 );
-          DecimalFrac = long.Parse( Source.Substring( part1 + 1, DecimalScale ) );
-        }
-        else 
-        {
-          DecimalScale = 0;
-          DecimalFrac = 0;
-        }
-      }
-      TokenStop = SourceIx;
-      NS = Source.Substring( TokenStart, TokenStop - TokenStart );
-    }
-    else if ( CC == '[' )
-    {
-      T = Token.Name;
-      ReadChar();
-      int start = SourceIx; NS = "";
-      while ( CC != '\0' )
-      {
-        if ( CC == ']' )
-        {
-          ReadChar();
-          if ( CC != ']' ) break;
-          NS = NS + Source.Substring( start, SourceIx-start-1 );
-          start = SourceIx;
-        }
-        ReadChar();
-      }
-      TokenStop = SourceIx;
-      NS = NS + Source.Substring( start, SourceIx-start-1 );
-      TS = NS.ToUpper();
-    }   
-    else if ( CC == '\'' )
-    {
-      T = Token.String;
-      ReadChar();
-      int start = SourceIx; NS = "";
-      while ( CC != '\0' )
-      {
-        if ( CC == '\'' )
-        {
-          ReadChar();
-          if ( CC != '\'' ) break;
-          NS = NS + Source.Substring( start, SourceIx-start-1 );
-          start = SourceIx;
-        }
-        ReadChar();
-      }
-      TokenStop = SourceIx;
-      NS = NS + Source.Substring( start, SourceIx-start-1 );
-    }
-    else
     {
       char sc = CC; 
       ReadChar();
       switch( sc )
       {
+        case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G': case 'H': case 'I': case 'J': case 'K': case 'L': case 'M':
+        case 'N': case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T': case 'U': case 'V': case 'W': case 'X': case 'Y': case 'Z':
+        case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g': case 'h': case 'i': case 'j': case 'k': case 'l': case 'm':
+        case 'n': case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u': case 'v': case 'w': case 'x': case 'y': case 'z':
+        case '@':
+        {
+          T = Token.Name;
+          while ( CC >= 'A' && CC <= 'Z' || CC >= 'a' && CC <= 'z' || CC == '@' ) ReadChar();
+          NS = Source.Substring( TokenStart, SourceIx - TokenStart );
+          TS = NS.ToUpper();
+          break;
+        }
+        case '0': case '1': case '2': case '3': case '4':
+        case '5': case '6': case '7': case '8': case '9':
+        {
+          T = Token.Number;
+          char fc = CC;
+          if ( fc == '0' && CC == 'x' )
+          {
+            ReadChar();
+            T = Token.Hex;
+            while ( CC >= '0' && CC <= '9' || CC >= 'A' && CC <= 'F' || CC >= 'a' && CC <= 'f') ReadChar();
+          }
+          else
+          {
+            while ( CC >= '0' && CC <= '9' ) ReadChar();  
+            int part1 = SourceIx;
+            DecimalInt = long.Parse( Source.Substring( TokenStart, part1 - TokenStart ) );
+            if ( CC == '.' && T == Token.Number )
+            {
+              T = Token.Decimal;
+              ReadChar();
+              while ( CC >= '0' && CC <= '9' ) ReadChar();   
+              DecimalScale = SourceIx - ( part1 + 1 );
+              DecimalFrac = long.Parse( Source.Substring( part1 + 1, DecimalScale ) );
+            }
+            else 
+            {
+              DecimalScale = 0;
+              DecimalFrac = 0;
+            }
+          }
+          NS = Source.Substring( TokenStart, SourceIx - TokenStart );
+          break;
+        }
+        case '[':   
+        { 
+          T = Token.Name;
+          int start = SourceIx; NS = "";
+          while ( CC != '\0' )
+          {
+            if ( CC == ']' )
+            {
+              ReadChar();
+              if ( CC != ']' ) break;
+              NS = NS + Source.Substring( start, SourceIx-start-1 );
+              start = SourceIx;
+            }
+            ReadChar();
+          }
+          NS = NS + Source.Substring( start, SourceIx-start-1 );
+          TS = NS.ToUpper();
+          break;
+        }
+        case '\'' :
+        {
+          T = Token.String;
+          int start = SourceIx; NS = "";
+          while ( CC != '\0' )
+          {
+            if ( CC == '\'' )
+            {
+              ReadChar();
+              if ( CC != '\'' ) break;
+              NS = NS + Source.Substring( start, SourceIx-start-1 );
+              start = SourceIx;
+            }
+            ReadChar();
+          }
+          NS = NS + Source.Substring( start, SourceIx-start-1 );
+          break;
+        }
         case '(' : T = Token.LBra; break;
         case ')' : T = Token.RBra; break;
         case '|' : T = Token.VBar; break;

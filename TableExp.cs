@@ -235,6 +235,7 @@ class Select : TableExpression
           srs.NewRow( outrow ); 
         }
       }
+
       foreach( bool b in srs.GetStoredRows( final ) ) yield return true;
     }
   }

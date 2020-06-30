@@ -43,6 +43,7 @@ class Sorter : StoredResultSet, G.IComparer<Value[]>
 
   public override G.IEnumerable<bool> GetStoredRows( Value[] outrow )
   {
+    Rows.Sort( this );
     foreach ( Value[] r in Rows )
     {
       for ( int i = 0; i < outrow.Length; i += 1 ) outrow[ i ] = r[ i ];
