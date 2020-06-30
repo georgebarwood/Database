@@ -166,7 +166,7 @@ class BoolToStringExp : UnaryExp
   public override DS GetDS()
   {
     DB x = E.GetDB();
-    return ( ee ) => x( ee ).ToString();
+    return ( ee ) => x( ee ) ? "true" : "false";
   } 
 }
 

@@ -61,7 +61,7 @@ class Sorter : StoredResultSet, G.IComparer<Value[]>
         return cf;
       }
     }
-    return 0;
+    return 1; // Not zero, that will lead to loss of rows!
   }
 } // end class Sorter
 

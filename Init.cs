@@ -7,6 +7,12 @@ class Init
 
   public static void Go( Database d )
   {
+/*
+d.Sql( @"
+", null );
+  }
+}
+*/
     d.Sql( @"
 INSERT INTO [sys].[Schema](Id,[Name]) VALUES 
 (2,'handler')
@@ -83,7 +89,7 @@ INSERT INTO [browse].[Table](Id,[NameFunction],[SelectFunction],[DefaultOrder],[
 (9,'sys.TableName','','','BrowseTable','',0)
 (10,'browse.BrowseColumnName','','','BrowseColumn','',0)
 (11,'dbo.CustName','dbo.CustSelect','','Customer','',0)
-(12,'','','','','',0)
+(12,'','','Date','','',0)
 (14,'ft.PersonName','','BirthYear DESC, BirthMonth DESC, BirthDay DESC','','',0)
 GO
 INSERT INTO [browse].[Column](Id,[Position],[Label],[Description],[RefersTo],[Default],[InputCols],[InputFunction],[InputRows],[Style],[DisplayFunction],[ParseFunction]) VALUES 
@@ -151,7 +157,7 @@ INSERT INTO [dbo].[Order](Id,[Cust],[Total],[Date]) VALUES
 (74,3,15.03,1034273)
 (75,4,25.05,1034273)
 (76,5,35.07,1034273)
-(77,6,45.09,1034273)
+(77,1,45.09,1034785)
 (78,7,55.11,1034273)
 (79,1,30.06,1034273)
 (80,2,40.08,1034273)
@@ -164,9 +170,9 @@ INSERT INTO [dbo].[Order](Id,[Cust],[Total],[Date]) VALUES
 (87,2,20.04,1034273)
 (88,3,30.06,1034273)
 (89,4,40.08,1034273)
-(90,5,50.10,1034273)
+(90,1,50.10,1034273)
 (91,6,60.12,1034273)
-(92,7,70.14,1034273)
+(92,1,70.14,1037195)
 (93,1,55.09,1034273)
 (94,2,55.11,1034273)
 (95,3,10.02,1034273)
@@ -1662,7 +1668,13 @@ SELECT '<h1>Manual</h1>
 <p>A stored procedure is created, which can later be called by an EXEC statement.
 <h3>EXEC</h3><p>EXEC schema.name( exp1, exp2 ... )
 <p>The stored procedure is called with the supplied parameters.
+
 <h3>Exceptions</h3><p>An exception will terminate the execution of a procedure or EXECUTE batch. EXCEPTION() can be used to obtain a string describing the most recent exception (and clears the exception string). If any exception occurs, the database is left unchanged.
+
+<h3>THROW</h3>
+<p>THROW string-expression 
+<p>An exception is raised, with the error message being set to the string.
+
 <h3>CREATE FUNCTION</h3><p>CREATE FUNCTION schema.name ( param1 type1, param2 type2... ) RETURNS type AS BEGIN statements END
 <p>A stored function is created which can later be used in expressions.
 <h3>RETURN</h3>
@@ -1987,6 +1999,5 @@ DECLARE ymd int, days int
 END
 GO
 ", null );
-
   }
 }
