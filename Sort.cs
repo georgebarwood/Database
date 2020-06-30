@@ -18,13 +18,13 @@ class Sorter : StoredResultSet, G.IComparer<Value[]>
 {
   ResultSet Output;
   SortSpec [] Spec;
-  G.SortedSet<Value[]> Rows;
+  G.List<Value[]> Rows;
 
   public Sorter( ResultSet output, SortSpec[] s )
   {
     Output = output;
     Spec = s;
-    Rows  = new G.SortedSet<Value[]>( this );
+    Rows  = new G.List<Value[]>();
   }
 
   public override bool NewRow( Value [] r )
@@ -36,6 +36,7 @@ class Sorter : StoredResultSet, G.IComparer<Value[]>
   public override void EndTable()
   {    
     // Output the sorted rows.
+    Rows.Sort( this );
     foreach ( Value[] r in Rows ) if ( !Output.NewRow( r ) ) break;
     Output.EndTable();
   }
@@ -61,7 +62,7 @@ class Sorter : StoredResultSet, G.IComparer<Value[]>
         return cf;
       }
     }
-    return 1; // Not zero, that will lead to loss of rows!
+    return 0;
   }
 } // end class Sorter
 
