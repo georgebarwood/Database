@@ -26,7 +26,7 @@ public class WebServer
   {
     try
     {
-      var outStream = new System.IO.MemoryStream();
+      var outStream = new System.IO.MemoryStream( 0x1000 );
       var wrs = new WebResultSet( ctx, outStream );
       var stopWatch = new System.Diagnostics.Stopwatch(); 
       stopWatch.Start();
@@ -36,7 +36,7 @@ public class WebServer
       outStream.Position = 0;
       outStream.CopyTo( ctx.Response.OutputStream );
     }
-    catch ( System.Exception ) { }
+    catch ( System.Exception e ) { System.Console.WriteLine( "Exception: " + e ); }
     finally { ctx.Response.OutputStream.Close(); }
   }
   

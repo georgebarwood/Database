@@ -101,8 +101,16 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   void ReadChar()
   {
     SourceIx += 1;
-    CC = ( SourceIx >= Source.Length ) ? '\0' : Source[ SourceIx ];
-    if ( CC == '\n' ) { SourceColumn = 0; SourceLine += 1; } else SourceColumn += 1;
+    if ( SourceIx >= Source.Length )
+    {
+      SourceIx = Source.Length;
+      CC = '\0';
+    }
+    else
+    {
+      CC = Source[ SourceIx ];
+      if ( CC == '\n' ) { SourceColumn = 0; SourceLine += 1; } else SourceColumn += 1;
+    }
   }
 
   void ReadToken()
@@ -193,55 +201,56 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     }
     else
     {
-      if ( CC == '(' ) T = Token.LBra;
-      else if ( CC == ')' ) T = Token.RBra;
-      else if ( CC == ',' ) T = Token.Comma;
-      else if ( CC == '.' ) T = Token.Dot;
-      else if ( CC == ':' ) T = Token.Colon;
-      else if ( CC == '>' ) T = Token.Greater;
-      else if ( CC == '<' ) T = Token.Less;
-      else if ( CC == '+' ) T = Token.Plus;
-      else if ( CC == '|' ) T = Token.VBar;
-      else if ( CC == '-' ) T = Token.Minus;
-      else if ( CC == '*' ) T = Token.Times;
-      else if ( CC == '/' ) T = Token.Divide;
-      else if ( CC == '%' ) T = Token.Percent;
-      else if ( CC == '=' ) T = Token.Equal;
-      else if ( CC == '!' ) T = Token.Exclamation;
-      else if ( CC == '\0' ) { T = Token.Eof; TokenStop = SourceIx; return; }
-      else { ReadChar(); TokenStop = SourceIx; T = Token.Unknown; Error( "Unrecognised character" ); }
-
+      char sc = CC; 
       ReadChar();
-      // The processing below could be more efficient if moved into sections above.
-      if ( CC == '=' && ( T == Token.Greater || T == Token.Less || T == Token.Exclamation ) )
+      switch( sc )
       {
-        T = T == Token.Greater ? Token.GreaterEqual 
-          : T == Token.Exclamation ? Token.NotEqual
-          : Token.LessEqual;
-        ReadChar();
-      }
-      else if ( CC == '>' && T == Token.Less )
-      {
-        T = Token.NotEqual;
-        ReadChar();
-      } 
-      else if ( T == Token.Divide && CC == '*' )
-      {
-        // Skip comment
-        ReadChar();
-        char prevchar = 'X';
-        while ( ( CC != '/' || prevchar != '*' ) && CC != '\0' )
-        {
-          prevchar = CC;
-          ReadChar();
-        }
-        ReadChar();
-        goto SkipSpace;
-      }
-      else if ( T == Token.Minus && CC == '-' )
-      {
-        while ( CC != '\n' && CC != '\0' ) ReadChar();
-        goto SkipSpace;
+        case '(' : T = Token.LBra; break;
+        case ')' : T = Token.RBra; break;
+        case '|' : T = Token.VBar; break;
+        case ',' : T = Token.Comma; break;
+        case '.' : T = Token.Dot; break;
+        case '=' : T = Token.Equal; break;
+        case '+' : T = Token.Plus; break;
+        case ':' : T = Token.Colon; break;
+        case '>' : 
+          T = Token.Greater; 
+          if ( CC == '=' ) { T = Token.GreaterEqual; ReadChar(); } 
+          break;
+        case '<' : 
+          T = Token.Less; 
+          if ( CC == '=' ) { T = Token.LessEqual; ReadChar(); } 
+          else if ( CC == '>' ) { T = Token.NotEqual; ReadChar(); } 
+          break;
+        case '-' : T = Token.Minus; 
+          if ( CC == '-' )
+          {
+            while ( CC != '\n' && CC != '\0' ) ReadChar();
+            goto SkipSpace;
+          }
+          break;
+        case '!' : 
+          T = Token.Exclamation; 
+          if ( CC == '=' ) { T = Token.NotEqual; ReadChar(); }
+          break;
+        case '*' : T = Token.Times; break;
+        case '/' : T = Token.Divide;
+          if ( CC == '*' )  // Skip comment
+          {           
+            ReadChar();
+            char prevchar = 'X';
+            while ( ( CC != '/' || prevchar != '*' ) && CC != '\0' )
+            {
+              prevchar = CC;
+              ReadChar();
+            }
+            ReadChar();
+            goto SkipSpace;
+          }
+          break;
+        case '%' : T = Token.Percent; break;
+        case '\0' : { T = Token.Eof; TokenStop = SourceIx; return; }
+        default: TokenStop = SourceIx; T = Token.Unknown; Error( "Unrecognised character" ); break;
       }
       TokenStop = SourceIx;
     }
