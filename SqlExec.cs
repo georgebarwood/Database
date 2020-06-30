@@ -20,6 +20,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
   public static Block LoadRoutine( bool func, string sql, DatabaseImp d, string name )
   {
+    // System.Console.WriteLine("LoadRoutine: " + name + " = " + sql );
     SqlExec e = new SqlExec( sql, d, name );
     e.B = new Block( d, func );
     e.B.Params = e.RoutineDef( func, out e.B.ReturnType );
@@ -1349,26 +1350,26 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   {
     if ( T == Token.Name ) 
     {
-      if ( Test( "SELECT" ) ) Select( true );
-      else if ( Test( "INSERT" ) ) Insert();
-      else if ( Test( "UPDATE" ) ) Update();
-      else if ( Test( "DELETE" ) ) Delete();
-      else if ( Test( "EXEC" ) ) Exec();
-      else if ( Test( "EXECUTE" ) ) Execute();
-      else if ( Test( "FOR" ) ) For();
-      else if ( Test( "DECLARE" ) ) Declare();
+      if ( Test( "EXEC" ) ) Exec();
+      else if ( Test( "SELECT" ) ) Select( true );
       else if ( Test( "SET" ) ) Set();
+      else if ( Test( "DECLARE" ) ) Declare();
+      else if ( Test( "FOR" ) ) For();
       else if ( Test( "WHILE" ) ) While();
       else if ( Test( "IF" ) ) If();
       else if ( Test( "BEGIN" ) ) Block();
-      else if ( Test( "GOTO" ) ) Goto();
-      else if ( Test( "BREAK" ) ) Break();
       else if ( Test( "RETURN" ) ) Return();
+      else if ( Test( "EXECUTE" ) ) Execute();
+      else if ( Test( "THROW" ) ) Throw();
+      else if ( Test( "INSERT" ) ) Insert();
+      else if ( Test( "UPDATE" ) ) Update();
+      else if ( Test( "DELETE" ) ) Delete();
+      else if ( Test( "BREAK" ) ) Break();
+      else if ( Test( "GOTO" ) ) Goto();
       else if ( Test( "CREATE" ) ) Create();
       else if ( Test( "ALTER" ) ) Alter();
       else if ( Test( "DROP" ) ) Drop();
       else if ( Test( "RENAME" ) ) Rename();
-      else if ( Test( "THROW" ) ) Throw();
       else LabelStatement();
     }
     else 
