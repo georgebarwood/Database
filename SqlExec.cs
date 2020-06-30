@@ -139,7 +139,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         case '5': case '6': case '7': case '8': case '9':
         {
           T = Token.Number;
-          char fc = CC;
+          char fc = Source[ TokenStart ];
           if ( fc == '0' && CC == 'x' )
           {
             ReadChar();
