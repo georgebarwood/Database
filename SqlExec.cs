@@ -38,7 +38,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   public override void Error( string error )
   {
     throw new Exception( ObjectName, SourceLine, SourceColumn, error,
-      Source.Substring( TokenStart, TokenStop - TokenStart ), Source, T );
+      Source.Substring( TokenStart, SourceIx - TokenStart ), Source, T );
   }
 
   public DatabaseImp Db;
@@ -57,7 +57,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
   char CC;      // Current character in Source as it is being parsed.
   Token T;      // Current token.
-  int TokenStart, TokenStop; // Position in source of start and end of current token.
+  int TokenStart; // Position in source of start of current token.
 
   string NS,TS; // Current name token : TS is uppercase copy of NS.
   long DecimalInt, DecimalFrac; // Details of decimal token
@@ -262,9 +262,8 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
           break;
         case '%' : T = Token.Percent; break;
         case '\0' : T = Token.Eof; break;
-        default: TokenStop = SourceIx; T = Token.Unknown; Error( "Unrecognised character" ); break;
+        default: T = Token.Unknown; Error( "Unrecognised character" ); break;
       }
-      TokenStop = SourceIx;
     }
   }
 
