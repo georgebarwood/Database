@@ -253,7 +253,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
           }
           break;
         case '%' : T = Token.Percent; break;
-        case '\0' : { T = Token.Eof; TokenStop = SourceIx; return; }
+        case '\0' : T = Token.Eof; break;
         default: TokenStop = SourceIx; T = Token.Unknown; Error( "Unrecognised character" ); break;
       }
       TokenStop = SourceIx;
