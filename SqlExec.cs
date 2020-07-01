@@ -96,6 +96,14 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     if ( !ParseOnly ) B.AddStatement( a ); 
   }
 
+  public void Bind( Exp[] e )
+  {
+    if ( e != null ) for ( int i = 0; i < e.Length; i += 1 ) 
+    {
+      e[ i ].Bind( this );
+    }
+  }
+
   // ****************** Token parsing
 
   char ReadChar()
@@ -625,7 +633,6 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       do
       {
         Exp exp = Exp();
-        // if ( Test( "AS" ) ) exp.Name = Name();
         list.Add( exp );
       } while ( Test( Token.Comma ) );
       group = list.ToArray();
@@ -664,14 +671,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         if ( where.Type != DataType.Bool ) Error( "WHERE expression must be boolean" );
       }
       
-      if ( group != null ) 
-      {
-        for ( int i = 0; i < group.Length; i += 1 ) 
-        {
-          group[ i ].Bind( this );
-          // exps.Add( group[ i ] );
-        }
-      }
+      Bind( group );
 
       result = new Select( exps, te, where, group, order, Used, this );
       

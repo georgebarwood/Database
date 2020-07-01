@@ -526,7 +526,7 @@ class ExpFuncCall : Exp
     B = e.Db.GetRoutine( Schema, FuncName, true, e );
     Type = B.ReturnType;
 
-    for ( int i = 0; i < Plist.Length; i += 1 ) Plist[ i ].Bind( e );
+    e.Bind( Plist );
 
     if ( B.Params.Count != Plist.Length ) e.Error( "Param count error calling function " + FuncName );
     for ( int i = 0; i < Plist.Length; i += 1 )
