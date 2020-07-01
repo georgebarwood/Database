@@ -76,6 +76,8 @@ public struct Value
   [IOS.FieldOffset(8)] public object _O;  // Binary, String ( L holds an encoding, computed when the value is saved to disk )
 
   public object O { set { _O = value; L = 0; } } // Encoding needs to be be set to zero when _O is assigned.
+  public string S { get { return (string)_O; } }
+  public byte[] X { get { return (byte[])_O; } }
 
   public static Value New( bool b ){ return new Value{ B = b }; }
   public static Value New( long l ){ return new Value{ L = l }; }

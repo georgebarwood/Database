@@ -148,8 +148,8 @@ class Util
   {
     switch( t )
     {
-      case DataType.String: return ((string)a._O).GetHashCode();
-      case DataType.Binary: return GetHashCode((byte[])a._O);
+      case DataType.String: return a.S.GetHashCode();
+      case DataType.Binary: return GetHashCode( a.X );
       default: return (int)a.L;
     }
   }
@@ -158,8 +158,8 @@ class Util
   {
     switch ( t ) 
     { 
-      case DataType.Binary: return Util.Compare( (byte[])a._O, (byte[])b._O ); 
-      case DataType.String: return string.Compare( (string)a._O, (string)b._O ); 
+      case DataType.Binary: return Util.Compare( a.X, b.X ); 
+      case DataType.String: return string.Compare( a.S, b.S ); 
       case DataType.Float:
       case DataType.Double: return (a.D).CompareTo( b.D );
       case DataType.Bool: return a.B == b.B ? 0 : a.B ? +1 : -1;
@@ -171,10 +171,10 @@ class Util
   {
     return 
       t == DataType.Bigint ? x.L == y.L
-    : t == DataType.String ? (string)x._O == (string)y._O
+    : t == DataType.String ? x.S == y.S
     : t == DataType.Double ? x.D == y.D
     : t == DataType.Bool   ? x.B == y.B
-    : t == DataType.Binary ? Util.Compare( (byte[])x._O, (byte[])y._O ) == 0
+    : t == DataType.Binary ? Util.Compare( x.X, y.X ) == 0
     : x.L == y.L; // Decimal
   }
 
@@ -183,10 +183,10 @@ class Util
     t = DTI.Base( t );
     return 
       t == DataType.Bigint ? x.L.ToString()
-    : t == DataType.String ? "'"+(string)x._O + "'"
+    : t == DataType.String ? "'"+ x.S + "'"
     : t == DataType.Double ? x.D.ToString()
     : t == DataType.Bool ? x.B.ToString()
-    : t == DataType.Binary ? Util.ToString( (byte[])x._O )
+    : t == DataType.Binary ? Util.ToString( x.X )
     : DecimalString( x.L, t );
   }
 
@@ -202,10 +202,10 @@ class Util
     t = DTI.Base( t );
     return 
       t == DataType.Bigint ? x.L.ToString()
-    : t == DataType.String ? HtmlEncode( (string)x._O )
+    : t == DataType.String ? HtmlEncode( x.S )
     : t == DataType.Double ? x.D.ToString()
     : t == DataType.Bool ? x.B.ToString()
-    : t == DataType.Binary ? Util.ToString( (byte[])x._O )
+    : t == DataType.Binary ? Util.ToString( x.X )
     : DecimalString( x.L, t );
   }
 
@@ -353,7 +353,7 @@ class StringStart
   public StringStart( string k ) { K = k; }
   public int Compare( ref IndexFileRecord r )
   {
-    int cf = string.Compare( K, (string)r.Col[0]._O );
+    int cf = string.Compare( K, r.Col[0].S );
     return cf == 0 ? -1 : cf;
   }
 }
@@ -364,7 +364,7 @@ class BinaryStart
   public BinaryStart( byte [] k ) { K = k; }
   public int Compare( ref IndexFileRecord r )
   {
-    int cf = Util.Compare( K, (byte[])r.Col[0]._O );
+    int cf = Util.Compare( K, r.Col[0].X );
     return cf == 0 ? -1 : cf;
   }
 }

@@ -181,8 +181,8 @@ class WebResultSet : DBNS.ResultSet
         else if ( code == 15 ) Ctx.Response.Redirect( (string) v );
         else if ( code == 16 )
         {
-          System.Net.Cookie ck = new System.Net.Cookie( (string)v, ( string )row[2]._O );
-          string expires = ( string )row[3]._O;
+          System.Net.Cookie ck = new System.Net.Cookie( (string)v, row[2].S );
+          string expires = row[3].S;
           if ( expires != "" ) ck.Expires = System.DateTime.Parse( expires );
           Ctx.Response.Cookies.Add( ck );
         }

@@ -270,7 +270,7 @@ class DatabaseImp : Database
         if ( ixr.Col[0].L == tid )
         {
           r.Get( ixr.Col[1].L );
-          names.Add( (string) r.V[2]._O );
+          names.Add( r.V[2].S );
           types.Add( (DataType)r.V[3].L );
         }
         else break;
@@ -425,8 +425,8 @@ class DatabaseImp : Database
     name = Util.Quote( name );
     string tname = func ? "Function" : "Procedure";
 
-    string exists = (string) ScalarSql( "SELECT Name from sys." + tname
-      + " where Name=" + name + " AND Schema=" + schemaId )._O;
+    string exists = ScalarSql( "SELECT Name from sys." + tname
+      + " where Name=" + name + " AND Schema=" + schemaId ).S;
 
     if ( exists != null && !alter ) e.Error( tname + " " + name + " already exists" );
     else if ( exists == null && alter ) e.Error( tname + " " + name + " does not exist" );
@@ -450,8 +450,8 @@ class DatabaseImp : Database
     var qname = Util.Quote( name );
     string tname = func ? "Function" : "Procedure";
 
-    string exists = (string) ScalarSql( "SELECT Name from sys." + tname
-      + " where Name=" + qname + " AND Schema=" + schemaId )._O;
+    string exists = ScalarSql( "SELECT Name from sys." + tname
+      + " where Name=" + qname + " AND Schema=" + schemaId ).S;
     if ( exists == null ) e.Error( name + " does not exist" );
 
     Sql( "DELETE FROM sys." + tname + " WHERE Name = " + qname + " AND Schema = " + schemaId );
@@ -532,7 +532,7 @@ class DatabaseImp : Database
       var start = new StringStart( s );
       foreach( IndexFileRecord ixr in SysStringIndex.From( start.Compare, false ) )
       {
-        if ( (string)(ixr.Col[0]._O) == s ) return ixr.Col[0].L;
+        if ( ixr.Col[0].S == s ) return ixr.Col[0].L;
         break;
       }
     }
@@ -570,7 +570,7 @@ class DatabaseImp : Database
     var start = new BinaryStart( data );
     foreach( IndexFileRecord ixr in SysBinaryIndex.From( start.Compare, false ) )
     {
-      if ( Util.Compare( (byte[])(ixr.Col[0]._O), data ) == 0 ) return ixr.Col[0].L;
+      if ( Util.Compare( ixr.Col[0].X, data ) == 0 ) return ixr.Col[0].L;
       break;
     }
 
@@ -705,7 +705,7 @@ class DatabaseImp : Database
     var start = new StringStart( schemaName );
     foreach( IndexFileRecord ixr in SysSchemaByName.From( start.Compare, false ) )
     {
-      if ( (string)(ixr.Col[0]._O) == schemaName ) return (int)ixr.Col[1].L;
+      if ( ixr.Col[0].S == schemaName ) return (int)ixr.Col[1].L;
       break;
     }
     return -1;
@@ -717,14 +717,14 @@ class DatabaseImp : Database
     var start = new StringStart( name );
     foreach( IndexFileRecord ixr in SysTableByName.From( start.Compare, false ) )
     {
-      if ( (string)(ixr.Col[0]._O) == name )
+      if ( ixr.Col[0].S == name )
       {
         long id = ixr.Col[1].L;
         r.Get( id );
         if ( r.V[1].L == schema.Id ) 
         {
           isView = r.V[3].L != 0;
-          definition = (string)r.V[4]._O;
+          definition = r.V[4].S;
           return id;
         }
       }

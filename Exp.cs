@@ -100,8 +100,8 @@ abstract class Exp
   public virtual DB GetDB(){ var dv = GetDV(); return ( ee ) => dv( ee ).B; }
   public virtual DL GetDL(){ var dv = GetDV(); return ( ee ) => dv( ee ).L; }
   public virtual DD GetDD(){ var dv = GetDV(); return ( ee ) => dv( ee ).D; }
-  public virtual DS GetDS(){ var dv = GetDV(); return ( ee ) => (string)dv( ee )._O; }
-  public virtual DX GetDX(){ var dv = GetDV(); return ( ee ) => (byte[])dv( ee )._O; }
+  public virtual DS GetDS(){ var dv = GetDV(); return ( ee ) => dv( ee ).S; }
+  public virtual DX GetDX(){ var dv = GetDV(); return ( ee ) => dv( ee ).X; }
 
 } // end class Exp
 
@@ -126,8 +126,8 @@ class ExpConstant : Exp
   public override DV GetDV() { return ( EvalEnv ee ) => Value; }
   public override DB GetDB() { return ( EvalEnv ee ) => Value.B; }
   public override DL GetDL() { return ( EvalEnv ee ) => Value.L; }
-  public override DS GetDS() { return ( EvalEnv ee ) => (string)Value._O; }
-  public override DX GetDX() { return ( EvalEnv ee ) => (byte[])Value._O; }
+  public override DS GetDS() { return ( EvalEnv ee ) => Value.S; }
+  public override DX GetDX() { return ( EvalEnv ee ) => Value.X; }
 }
 
 class ExpLocalVar : Exp
@@ -138,8 +138,8 @@ class ExpLocalVar : Exp
   public override DV GetDV() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ]; }
   public override DB GetDB() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ].B; }
   public override DL GetDL() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ].L; }
-  public override DS GetDS() { int i = I; return ( EvalEnv ee ) => (string)ee.Locals[ i ]._O; }
-  public override DX GetDX() { int i = I; return ( EvalEnv ee ) => (byte[])ee.Locals[ i ]._O; }
+  public override DS GetDS() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ].S; }
+  public override DX GetDX() { int i = I; return ( EvalEnv ee ) => ee.Locals[ i ].X; }
 
   public override bool IsConstant() { return true; }
 }
@@ -169,8 +169,8 @@ class ExpName : Exp
   public override DV GetDV() { return ( EvalEnv ee ) => ee.Row[ColIx]; }
   public override DB GetDB() { return ( EvalEnv ee ) => ee.Row[ColIx].B; }
   public override DL GetDL() { return ( EvalEnv ee ) => ee.Row[ColIx].L; }
-  public override DS GetDS() { return ( EvalEnv ee ) => (string)ee.Row[ColIx]._O; }
-  public override DX GetDX() { return ( EvalEnv ee ) => (byte[])ee.Row[ColIx]._O; }
+  public override DS GetDS() { return ( EvalEnv ee ) => ee.Row[ColIx].S; }
+  public override DX GetDX() { return ( EvalEnv ee ) => ee.Row[ColIx].X; }
 
 } // end class ExpName
 
