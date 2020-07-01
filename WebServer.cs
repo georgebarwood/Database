@@ -33,6 +33,7 @@ public class WebServer
       lock( Database ) Database.Sql( "EXEC web.Main()", wrs );
       stopWatch.Stop();
       System.Console.WriteLine( "Time (ms)=" + stopWatch.ElapsedTicks / (System.Diagnostics.Stopwatch.Frequency/1E3 ) );
+      wrs.SendEmails();
       try
       {
         outStream.Position = 0;
@@ -123,6 +124,20 @@ class WebResultSet : DBNS.ResultSet
   System.DateTime Now;
   bool GotNow;
 
+  G.List<Email> EmailList; // Emails to send.
+
+  struct Email
+  {
+    public string From;
+    public string To;
+    public string Subject;
+    public string Body;
+    public string Server;
+    public int Port;
+    public string Username;
+    public string Password;
+  }
+
   public WebResultSet( System.Net.HttpListenerContext ctx, System.IO.MemoryStream outStream )
   {
     Ctx = ctx;
@@ -171,6 +186,7 @@ class WebResultSet : DBNS.ResultSet
           if ( expires != "" ) ck.Expires = System.DateTime.Parse( expires );
           Ctx.Response.Cookies.Add( ck );
         }
+        else if ( code == 20 ) SaveEmail( row );
       }
     }
     else if ( Mode == 1 ) // HTML table mode
@@ -199,13 +215,57 @@ class WebResultSet : DBNS.ResultSet
 
   public override void EndTable()
   {
-    if ( Mode == 1 )
+    if ( Mode == 1 && CI != null )
     {
       PutUtf8( "</table>" );
+      CI = null;
     }
   }
 
   /////////////////////////////////////////////////////////////////////////////
+
+  void SaveEmail( DBNS.Value [] row )
+  {
+    Email em;
+    em.From = row[1].S;
+    em.To = row[2].S;
+    em.Subject = row[3].S;
+    em.Body = row[4].S;
+    em.Server = row[5].S;
+    em.Port = (int)row[6].L;
+    em.Username = row[7].S;
+    em.Password = row[8].S;
+    if ( EmailList == null ) EmailList = new G.List<Email>();
+    EmailList.Add( em );
+  }
+
+  public void SendEmails()
+  {
+    if ( EmailList == null ) return;
+    foreach ( Email em in EmailList )
+    {
+      var mail = new System.Net.Mail.MailMessage();
+      var server = new System.Net.Mail.SmtpClient( em.Server );
+
+      mail.From = new System.Net.Mail.MailAddress( em.From );
+      mail.To.Add( em.To );
+      mail.Subject = em.Subject;
+      mail.Body = em.Body;
+
+      server.Port = em.Port;
+      server.UseDefaultCredentials = false; 
+      server.Credentials = new System.Net.NetworkCredential(em.Username, em.Password);
+      server.EnableSsl = true;
+      server.DeliveryMethod = System.Net.Mail.SmtpDeliveryMethod.Network;
+      try
+      {
+        server.Send(mail);
+      } catch ( System.Exception e ) 
+      {
+        System.Console.WriteLine( "Exception sending email " + e.ToString() );
+      }
+    }
+  }
 
   void PutBytes( byte[] b )
   {
@@ -232,6 +292,7 @@ class WebResultSet : DBNS.ResultSet
 
   public override void SetMode( long mode )
   {
+    EndTable();
     Mode = (int)mode;
   }
 
