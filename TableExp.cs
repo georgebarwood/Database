@@ -108,7 +108,7 @@ class Select : TableExpression
       for ( int i=0; i < group.Length; i += 1 )
       {
         GroupSpec g = new GroupSpec();
-        g.ColIx = Exps.Count; // Note: we could look in Exps to see if it is already there rather than adding an extra Exp.
+        g.ColIx = Exps.Count;
         g.Type = group[ i ].Type;
         Exps.Add( group[ i ] );
         glist.Add( g );
@@ -126,7 +126,7 @@ class Select : TableExpression
         Exp e = Order[ i ].E;
         sortSpec[ i ].Desc = Order[ i ].Desc;
 
-        bool found = false;
+        int cix = -1;
         if ( e is ExpName )
         {
           string alias = ((ExpName)e).ColName;   
@@ -135,14 +135,17 @@ class Select : TableExpression
             if ( CI.Name[j] == alias )
             {
               e = Exps[ j ];
-              found = true;
+              cix = j;
               break;
             }
           }
         }
-        int cix = Exps.Count;
-        if ( !found ) e.Bind( x );   
-        Exps.Add( e );     
+        if ( cix < 0 )
+        {
+          cix = Exps.Count;
+          Exps.Add( e );
+          e.Bind( x );   
+        }     
         sortSpec[ i ].Type = e.Type;
         sortSpec[ i ].ColIx = cix;       
       }

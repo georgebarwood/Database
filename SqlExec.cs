@@ -648,15 +648,12 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         {
           if ( group == null ) 
           {
-            if ( i != 0 ) Error( "All exps in aggregate select must be aggregate functions" );
             group = new Exp[0];
-            System.Console.WriteLine("Auto-group");
           }
           exps[ i ].BindAgg( this );
         }
         else 
         { 
-          if ( group != null ) Error( "All exps in aggregate select must be aggregate functions" );
           exps[ i ].Bind( this );
         }
       }
