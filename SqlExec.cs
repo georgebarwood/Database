@@ -147,8 +147,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
           TS = NS.ToUpper();
           break;
         }
-        case '0': case '1': case '2': case '3': case '4':
-        case '5': case '6': case '7': case '8': case '9':
+        case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
         {
           T = Token.Number;
           char fc = Source[ TokenStart ];
@@ -217,37 +216,15 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
           NS = NS + Source.Substring( start, SourceIx-start-1 );
           break;
         }
-        case '(' : T = Token.LBra; break;
-        case ')' : T = Token.RBra; break;
-        case '|' : T = Token.VBar; break;
-        case ',' : T = Token.Comma; break;
-        case '.' : T = Token.Dot; break;
-        case '=' : T = Token.Equal; break;
-        case '+' : T = Token.Plus; break;
-        case ':' : T = Token.Colon; break;
-        case '>' : 
-          T = Token.Greater; 
-          if ( cc == '=' ) { T = Token.GreaterEqual; cc = ReadChar(); } 
-          break;
-        case '<' : 
-          T = Token.Less; 
-          if ( cc == '=' ) { T = Token.LessEqual; cc = ReadChar(); } 
-          else if ( cc == '>' ) { T = Token.NotEqual; cc = ReadChar(); } 
-          break;
         case '-' : T = Token.Minus; 
-          if ( cc == '-' )
+          if ( cc == '-' ) // Skip single line comment.
           {
             while ( cc != '\n' && cc != '\0' ) cc = ReadChar();
             goto SkipSpace;
           }
           break;
-        case '!' : 
-          T = Token.Exclamation; 
-          if ( cc == '=' ) { T = Token.NotEqual; cc = ReadChar(); }
-          break;
-        case '*' : T = Token.Times; break;
         case '/' : T = Token.Divide;
-          if ( cc == '*' )  // Skip comment
+          if ( cc == '*' )  // Skip comment.
           {           
             cc = ReadChar();
             char prevchar = 'X';
@@ -260,6 +237,28 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
             goto SkipSpace;
           }
           break;
+        case '>' : 
+          T = Token.Greater; 
+          if ( cc == '=' ) { T = Token.GreaterEqual; cc = ReadChar(); } 
+          break;
+        case '<' : 
+          T = Token.Less; 
+          if ( cc == '=' ) { T = Token.LessEqual; cc = ReadChar(); } 
+          else if ( cc == '>' ) { T = Token.NotEqual; cc = ReadChar(); } 
+          break;
+        case '!' : 
+          T = Token.Exclamation; 
+          if ( cc == '=' ) { T = Token.NotEqual; cc = ReadChar(); }
+          break;
+        case '(' : T = Token.LBra; break;
+        case ')' : T = Token.RBra; break;
+        case '|' : T = Token.VBar; break;
+        case ',' : T = Token.Comma; break;
+        case '.' : T = Token.Dot; break;
+        case '=' : T = Token.Equal; break;
+        case '+' : T = Token.Plus; break;
+        case ':' : T = Token.Colon; break;
+        case '*' : T = Token.Times; break;
         case '%' : T = Token.Percent; break;
         case '\0' : T = Token.Eof; break;
         default: T = Token.Unknown; Error( "Unrecognised character" ); break;
@@ -674,7 +673,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
       result = new Select( exps, te, where, group, order, Used, this );
       
-      if ( assigns != null ) // COnvert the Rhs of each assign to be compatible with the Lhs.
+      if ( assigns != null ) // Convert the Rhs of each assign to be compatible with the Lhs.
       {
         var types = new DataType[ assigns.Count ];
         for ( int i = 0; i < assigns.Count; i += 1 )
