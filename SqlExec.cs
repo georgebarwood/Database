@@ -625,7 +625,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       do
       {
         Exp exp = Exp();
-        if ( Test( "AS" ) ) exp.Name = Name();
+        // if ( Test( "AS" ) ) exp.Name = Name();
         list.Add( exp );
       } while ( Test( Token.Comma ) );
       group = list.ToArray();
@@ -669,7 +669,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         for ( int i = 0; i < group.Length; i += 1 ) 
         {
           group[ i ].Bind( this );
-          exps.Add( group[ i ] );
+          // exps.Add( group[ i ] );
         }
       }
 

@@ -780,7 +780,7 @@ class COUNT : Exp
   public override AggOp GetAggOp(){ return AggOp.Count; }
   public override DL GetDL()
   {
-    return ( ee ) => 0;
+    return ( ee ) => 1;
   }
 }
 
