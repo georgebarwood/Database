@@ -105,15 +105,6 @@ abstract class Exp
 
 } // end class Exp
 
-abstract class UnaryExp : Exp
-{
-  protected Exp E;
-  public override bool IsConstant()
-  {
-    return E.IsConstant();
-  }
-}
-
 class ExpConstant : Exp
 {
   public Value Value;
@@ -467,6 +458,15 @@ class ExpBinary : Exp
 
 } // end class ExpBinary
 
+abstract class UnaryExp : Exp
+{
+  protected Exp E;
+  public override bool IsConstant()
+  {
+    return E.IsConstant();
+  }
+} // end class UnaryExp
+
 class ExpMinus : UnaryExp
 {
   public ExpMinus( Exp e ) { E = e; }
@@ -478,8 +478,6 @@ class ExpMinus : UnaryExp
     if ( Type != DataType.Bigint && Type != DataType.Double && Type < DataType.Decimal )
       e.Error( "Unary minus needs numeric argument" );
   }
-
-  public override bool IsConstant() { return E.IsConstant(); }
 
   public override DL GetDL() { DL x = E.GetDL(); return ( ee ) => - x( ee ); }
   public override DD GetDD() { DD x = E.GetDD(); return ( ee ) => - x( ee ); }
