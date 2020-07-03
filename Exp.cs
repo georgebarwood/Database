@@ -25,7 +25,6 @@ abstract class Exp
 
   // Implementation of "IN".
   public virtual bool TestIn( Value x, EvalEnv e ){ return false; }
-  public virtual DataType GetElementType() { return DataType.None; }
 
   // Index optimisation.
   public virtual IdSet GetIdSet(  TableExpression te ) { return null; } 
@@ -620,11 +619,9 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
   Exp [] List;
   DV [] Dvs;
 
-  DataType ElementType;
   public ExpList( G.List<Exp> list )
   { 
     List = list.ToArray();
-    Type = DataType.None;
   }
 
   public override void Bind( SqlExec e  )
@@ -633,8 +630,8 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
     {
       List[ i ].Bind( e );
       DataType dt = List[ i ].Type;
-      if ( i == 0 ) ElementType = dt;
-      else if ( dt != ElementType ) e.Error( "Tuple type error" ); // Maybe should apply Exp.Convert if possible.
+      if ( i == 0 ) Type = dt;
+      else if ( dt != Type ) e.Error( "Tuple type error" ); // Maybe should apply Exp.Convert if possible.
     } 
     Dvs = Util.GetDVList( List );
   }
@@ -644,12 +641,10 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
     for ( int i=0; i < List.Length; i += 1 )
     {
       Value y = Dvs[ i ]( e );
-      if ( Util.Equal( x, y, ElementType ) ) return true;
+      if ( Util.Equal( x, y, Type ) ) return true;
     }
     return false;
   }
-
-  public override DataType GetElementType() { return ElementType; }
 
   public override bool IsConstant() 
   { 
@@ -682,8 +677,6 @@ class ScalarSelect : Exp
     TE = te;
     Type = te.Type( 0 );
   }
-
-  public override DataType GetElementType() { return Type; }
 
   public override bool TestIn( Value x, EvalEnv e )
   {
@@ -724,7 +717,7 @@ class TestInResultSet : ResultSet
   }
 }
 
-class ExpIn : Exp
+class ExpIn : Exp /// Implementation IN
 {
   Exp Lhs;
   Exp Rhs;
@@ -740,7 +733,7 @@ class ExpIn : Exp
   {
     Lhs.Bind( e );
     Rhs.Bind( e );
-    if ( Lhs.Type != Rhs.GetElementType() ) e.Error( "IN type mismatch" );
+    if ( Lhs.Type != Rhs.Type ) e.Error( "IN type mismatch" );
   }
 
   public override DB GetDB()
@@ -780,7 +773,7 @@ class COUNT : Exp
   {
     return ( ee ) => 1;
   }
-}
+} // end class COUNT
 
 class ExpAgg : Exp
 {
@@ -811,6 +804,6 @@ class ExpAgg : Exp
   }
 
   public override AggOp GetAggOp(){ return Op; }
-}
+} // end class ExpAgg
 
 } // end namespace SQLNS
