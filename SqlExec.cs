@@ -81,7 +81,6 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     B = new Block( Db, false );
     do
     {
-
       while ( T != Token.Eof && !Test("GO") ) Statement(); 
       B.CheckLabelsDefined( this );
       B.Complete();
@@ -1040,7 +1039,6 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     Block save1 = B; bool save2 = ParseOnly; 
     B = new Block( B.Db, isFunc ); ParseOnly = true;
     DataType retType; var parms = RoutineDef( isFunc, out retType );
-    B.CheckLabelsDefined( this );
     B = save1; ParseOnly = save2;
 
     string source = Source.Substring( sourceStart, TokenStart - sourceStart );
@@ -1073,6 +1071,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     Read( "AS" );
     Read( "BEGIN" );
     Begin();
+    B.CheckLabelsDefined( this );
     return ColInfo.New( names, types );
   }
 
