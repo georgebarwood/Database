@@ -37,7 +37,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
 
   public override void Error( string error )
   {
-    throw new Exception( ObjectName, SourceLine, SourceColumn, error,
+    throw new Exception( error, ObjectName, SourceLine, SourceColumn,
       Source.Substring( TokenStart, SourceIx - TokenStart ), Source, T );
   }
 
@@ -1073,7 +1073,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     } else retType = DataType.None;
     Read( "AS" );
     Read( "BEGIN" );
-    Block();
+    Begin();
     return ColInfo.New( names, types );
   }
 
@@ -1342,7 +1342,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     }
   }
 
-  void Block() 
+  void Begin() 
   { 
     while ( !Test( "END" ) ) Statement(); 
   }
@@ -1366,7 +1366,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         case "FOR": For(); break;
         case "WHILE": While(); break;
         case "IF": If(); break;
-        case "BEGIN": Block(); break;
+        case "BEGIN": Begin(); break;
         case "RETURN": Return(); break;
         case "EXECUTE": Execute(); break;
         case "THROW": Throw(); break;
@@ -1396,26 +1396,30 @@ class UserException : System.Exception
 
 class Exception : System.Exception
 {
-  public string Routine;
+/*
+  public string ObjectName;
   public int Line, Col;
   public string Error;
   public string Src;
-  public Exception( string routine, int line, int col, string error, string token, string src, Token t ) 
+*/
+  public Exception( string error, string name, int line, int col, string token, string src, Token t ) 
   : base 
   ( 
     error 
-    + ( routine != null ? " in " + routine : "" )
+    + ( name != null ? " in " + name : "" )
     + " at Line " + line + " Col " + col 
     + ( token != "" ? " Token=" + token : "" )
     + @" source=
-" + src // May help when debugging dynamic SQL    
+" + src  
   )
   {
-    Routine = routine;
+/*
+    ObjectName = name;
     Line = line;
     Col = col;
     Error = error;
     Src = src;
+*/
   }
 }
 
