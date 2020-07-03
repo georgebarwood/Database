@@ -1379,7 +1379,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
         case "ALTER": Alter(); break;
         case "DROP": Drop(); break;
         case "RENAME": Rename(); break;
-        default: Error( "Statememt keyword expected" ); break;
+        default: Error( "Statement keyword expected" ); break;
       }
     }
     else 
