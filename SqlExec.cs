@@ -1186,6 +1186,7 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       var name1 = Name();
       Add( () => Db.RenameObject( objtype, sch, name, sch1, name1, this ) );
     }
+    else Error( "RENAME : TABLE,VIEW.. expected" );
   }
 
 
