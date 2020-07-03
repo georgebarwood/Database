@@ -1358,26 +1358,26 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       }
       else switch ( ts )
       {  
-        case "EXEC": Exec(); break;
-        case "SELECT": Select( true ); break;
-        case "SET": Set(); break;
+        case "ALTER":   Alter(); break;
+        case "BEGIN":   Begin(); break;
+        case "BREAK":   Break(); break;
+        case "CREATE":  Create(); break;
+        case "DROP":    Drop(); break;
         case "DECLARE": Declare(); break;
-        case "FOR": For(); break;
-        case "WHILE": While(); break;
-        case "IF": If(); break;
-        case "BEGIN": Begin(); break;
-        case "RETURN": Return(); break;
+        case "DELETE":  Delete(); break;
+        case "EXEC":    Exec(); break;
         case "EXECUTE": Execute(); break;
-        case "THROW": Throw(); break;
-        case "INSERT": Insert(); break;
-        case "UPDATE": Update(); break;
-        case "DELETE": Delete(); break;
-        case "BREAK": Break(); break;
-        case "GOTO": Goto(); break;
-        case "CREATE": Create(); break;
-        case "ALTER": Alter(); break;
-        case "DROP": Drop(); break;
-        case "RENAME": Rename(); break;
+        case "FOR":     For(); break;
+        case "GOTO":    Goto(); break;
+        case "IF":      If(); break;
+        case "INSERT":  Insert(); break;
+        case "RENAME":  Rename(); break;
+        case "RETURN":  Return(); break;
+        case "SELECT":  Select( true ); break;
+        case "SET":     Set(); break;
+        case "THROW":   Throw(); break;
+        case "UPDATE":  Update(); break;
+        case "WHILE":   While(); break;
         default: Error( "Statement keyword expected" ); break;
       }
     }
@@ -1395,7 +1395,7 @@ class UserException : System.Exception
 
 class Exception : System.Exception
 {
-/*
+/* These might be useful in future, if there was interface to retrieve the fields from SQL.
   public string ObjectName;
   public int Line, Col;
   public string Error;
