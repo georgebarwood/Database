@@ -21,7 +21,7 @@ public abstract class Database
 public abstract class ResultSet
 {
   public virtual  void NewTable( ColInfo ci ){} // Called for each table selected, has information about the columns ( maybe should also provide table name? ).
-  public abstract bool NewRow( Value [] row ); // Called for each selected row. If result is false, sending is aborted ( no more rows are sent ).
+  public abstract bool NewRow( params Value [] row ); // Called for each selected row. If result is false, sending is aborted ( no more rows are sent ).
   public virtual  void EndTable(){} // Called when all rows have been sent ( or sending is aborted ).
 
   // As well as accepting SELECT results, ResultSet is also used to access http parameters in, via the pre-defined functions ARG,FILEATTR,FILECONTENT.

@@ -952,10 +952,10 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
       {
         parms[ 0 ].Bind( this );
         if ( parms[ 0 ].Type != DataType.Bigint ) Error( "SETMODE param error" );
+        var dl = parms[0].GetDL();
+        var b = B;
+        Add( () => b.SetMode( dl ) );
       }
-      var dl = parms[0].GetDL();
-      var b = B;
-      Add( () => b.SetMode( dl ) );
     }
     else Error( "Unrecognised procedure" );
   }

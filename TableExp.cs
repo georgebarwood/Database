@@ -163,7 +163,7 @@ class Select : TableExpression
   public override void CheckNames( Exec  e )
   {
     var set = new G.HashSet<string>();
-    for ( int i = 0; i < Exps.Count; i += 1 )
+    for ( int i = 0; i < ColumnCount; i += 1 )
     {
       string name = Exps[ i ].Name;
       if ( name == "" ) e.Error( "Unnamed expression" );

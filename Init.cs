@@ -33,7 +33,8 @@ INSERT INTO [sys].[Table](Id,[Schema],[Name],[IsView],[Definition]) VALUES
   SUM(Total) AS Total, 
   COUNT() AS Count,
   MIN(Total) AS Min,
-  MAX(Total) AS Max
+  MAX(Total) AS Max,
+  Cust
 FROM dbo.Order 
 GROUP BY Cust')
 (14,7,'Person',0,'')
@@ -110,7 +111,7 @@ INSERT INTO [browse].[Column](Id,[Position],[Label],[Description],[RefersTo],[De
 (51,16,'','',14,'',0,'ft.MotherSelect',0,0,'','')
 (52,15,'','',14,'',0,'ft.FatherSelect',0,0,'','')
 (53,1,'','',0,'',0,'',0,0,'','')
-(54,0,'','',0,'',0,'',0,0,'','')
+(54,-1,'','',0,'',0,'',0,0,'','')
 (55,2,'Birth Y','',0,'',0,'',0,0,'','')
 (56,3,'M','',0,'',0,'',0,0,'','')
 (57,4,'D','',0,'',0,'',0,0,'','')
@@ -125,8 +126,8 @@ INSERT INTO [dbo].[Cust](Id,[FirstName],[LastName],[Age],[Postcode]) VALUES
 (2,'Clare','Smith',29,'GL3')
 (3,'Ron','Jones',45,'')
 (4,'Peter','Perfect',36,'')
-(5,'George','Washington',250,'WC1')
-(6,'Ron','Williams',45,'')
+(5,'George','Washington',25,'WC1')
+(6,'Ron','Williams',49,'')
 (7,'Adam','Baker',0,'')
 (8,'George','Barwood',62,'GL2 4LZ')
 GO
@@ -141,17 +142,17 @@ INSERT INTO [dbo].[Order](Id,[Cust],[Total],[Date]) VALUES
 (58,1,35.77,1034273)
 (59,2,45.09,1034273)
 (60,3,55.11,1034273)
-(61,4,695.13,1034273)
+(61,4,65.13,1034273)
 (62,1,22.04,1034437)
 (63,1,30.06,1033842)
-(64,7,40.08,1034273)
+(64,7,40.08,1036563)
 (65,1,15.03,1034273)
 (66,2,25.05,1034273)
 (67,3,35.07,1034273)
-(68,4,445.09,1034273)
-(69,5,5577.11,1034273)
-(70,6,65.13,1034273)
-(71,7,75.15,1034273)
+(68,4,45.09,1034273)
+(69,5,7.11,1034273)
+(70,6,65.13,1035809)
+(71,7,75.15,1036097)
 (72,1,50.10,1034273)
 (73,2,5.01,1034273)
 (74,3,15.03,1034273)
@@ -164,39 +165,39 @@ INSERT INTO [dbo].[Order](Id,[Cust],[Total],[Date]) VALUES
 (81,3,50.10,1034273)
 (82,1,60.12,1034465)
 (83,2,70.14,1034273)
-(84,6,25.05,1034273)
-(85,7,35.07,1034273)
+(84,6,25.05,1035297)
+(85,7,35.07,1035297)
 (86,1,10.02,1034273)
 (87,2,20.04,1034273)
 (88,3,30.06,1034273)
 (89,4,40.08,1034273)
 (90,1,50.10,1034273)
-(91,6,60.12,1034273)
+(91,6,160.55,1034465)
 (92,1,70.14,1037195)
-(93,1,55.09,1034273)
+(93,1,55.09,1034285)
 (94,2,55.11,1034273)
 (95,3,10.02,1034273)
 (96,4,20.04,1034273)
 (97,5,30.06,1034273)
-(98,6,40.08,1034273)
-(99,7,50.10,1034273)
+(98,6,40.08,1034785)
+(99,7,50.10,1034785)
 (100,1,25.05,1034273)
 (101,1,99.85,1034273)
-(102,5,988999.00,1034273)
+(102,5,99.00,1034273)
 (103,4,111.11,1034273)
-(104,1,500.00,1034273)
+(104,1,50.00,1034273)
 (105,1,99.53,1034273)
-(106,1,56600.78,1034273)
-(107,1,566.77,1034273)
+(106,1,0.78,1034273)
+(107,1,56.77,1034273)
 (108,5,99.00,1034273)
-(109,5,123467.89,1034273)
-(110,5,2900.00,1034273)
-(111,1,11293899.22,1034273)
+(109,5,67.89,1034273)
+(110,5,29.00,1034273)
+(111,1,99.22,1034273)
 (112,4,19.99,1034273)
 (113,4,123.45,1034273)
-(114,1,123456.00,1034273)
+(114,1,56.00,1034273)
 (115,1,77.99,1034273)
-(116,1,999.00,1034461)
+(116,1,99.00,1034461)
 (117,1,99.00,1034465)
 GO
 CREATE INDEX ByRefersTo on [browse].[Column]([RefersTo])
@@ -360,7 +361,7 @@ begin
 
   SET schema = Schema, name = Name FROM sys.Table WHERE Id = table
 
-  if name = '' return 'null'
+  if name = '' return ''
 
   SET result = sys.Dot( Name, name ) 
   FROM sys.Schema WHERE Id = schema
@@ -430,9 +431,11 @@ CREATE FUNCTION [browse].[ChildSql]( colId int, k int ) RETURNS string AS
 BEGIN 
   /* Returns SQL to display a child table, with hyperlinks where a column refers to another table */
 
-  DECLARE table int SET table = Table FROM sys.Column WHERE Id = colId
+  DECLARE result string, col string, colid int, colName string, type int, th string, ob string
 
-  DECLARE result string, col string, colid int, colName string, type int, th string
+  DECLARE table int SET table = Table FROM sys.Column WHERE Id = colId
+  
+  SET ob = DefaultOrder FROM browse.Table WHERE Id = table
 
   FOR colid = Id, col = CASE 
     WHEN Type = 2 THEN 'htm.Encode(' | Name | ')'
@@ -441,7 +444,7 @@ BEGIN
   FROM sys.Column where Table = table AND Id != colId
   ORDER BY browse.ColPos(Id), Id
   BEGIN
-    DECLARE ref int, nf string, ob string, label string, df string
+    DECLARE ref int, nf string, label string, df string
     SET ref = 0, nf = '', df = ''
     SET ref = RefersTo, label = Label, df = DisplayFunction FROM browse.Column WHERE Id = colid
     IF ref > 0 SET nf = NameFunction FROM browse.Table WHERE Id = ref
@@ -457,6 +460,7 @@ BEGIN
         th = th | '<TH>' | CASE WHEN label != '' THEN label ELSE colName END
 
   END
+
   DECLARE kcol string SET kcol = sys.QuoteName(Name) FROM sys.Column WHERE Id = colId
   RETURN 
    'SELECT ''<TABLE><TR><TH>' | th | ''' '
@@ -912,30 +916,30 @@ CREATE FUNCTION [date].[DaysToYearDay]( days int ) returns int as
 begin
   -- Given a date represented by the number of days since 1 Jan 0000
   -- calculate a date in Year/Day representation stored as
-  -- y * 512 + d where d is 1..366
+  -- year * 512 + day where day is 1..366, the day in the year.
   
-  DECLARE y int, d int, cycle int
+  DECLARE year int, day int, cycle int
 
   -- 146097 is the number of the days in a 400 year cycle ( 400 * 365 + 97 leap years )
   SET cycle = days / 146097
   SET days = days % 146097
 
-  SET y = days / 365
-  SET d = days % 365
+  SET year = days / 365
+  SET day = days % 365
 
-  -- Need to adjust d to allow for leap years.
+  -- Need to adjust day to allow for leap years.
   -- Leap years are 0, 4, 8, 12 ... 96, not 100, 104 ... not 200... not 300, 400, 404 ... not 500.
   -- Adjustment as function of y is 0 => 0, 1 => 1, 2 =>1, 3 => 1, 4 => 1, 5 => 2 ..
 
-  SET d = d - ( y + 3 ) / 4 - ( y + 99 ) / 100 + ( y + 399 ) / 400
+  SET day = day - ( year + 3 ) / 4 - ( year + 99 ) / 100 + ( year + 399 ) / 400
   
-  IF d < 0
+  IF day < 0
   BEGIN
-    SET y = y - 1
-    SET d = d + CASE WHEN date.IsLeapYear( y ) THEN 366 ELSE 365 END
+    SET year = year - 1
+    SET day = day + CASE WHEN date.IsLeapYear( day ) THEN 366 ELSE 365 END
   END
 
-  RETURN date.YearDay( cycle * 400 + y, d + 1 )
+  RETURN 512 * ( cycle * 400 + year ) + day + 1
 END
 GO
 CREATE FUNCTION [date].[DaysToYearMonthDay]( days int ) returns int as
@@ -987,7 +991,7 @@ CREATE FUNCTION [date].[StringToDays]( s string ) RETURNS int AS
 BEGIN
   -- Typical input is 'Feb 2 2020'
 
-  declare ms string, month int
+  DECLARE ms string, month int
 
   SET ms = SUBSTRING( s, 1, 3 )
 
@@ -1096,7 +1100,7 @@ END
 GO
 CREATE FUNCTION [date].[YearDayToString]( yd int ) RETURNS string as
 BEGIN
-   RETURN date.DisplayYMD( date.YDtoYMD( yd ) )  
+   RETURN date.YearMonthDayToString( date.YearDayToYearMonthDay( yd ) )  
 END
 GO
 CREATE FUNCTION [date].[YearDayToYearMonthDay]( yd int ) returns int AS
@@ -1703,7 +1707,7 @@ SELECT '<h1>Manual</h1>
 <p>Brackets can be used where necessary, for example ( a + b ) * c.
 <h3>Pre-defined functions</h3>
 <ul>
-<li>MIN,MAX,SUM,COUNT : these are used in conjunction with GROUP BY to calculate the associated aggregate values. Only aggregates can appear in the SELECT expressions when GROUP BY is used, and if any aggregate function is used, all the expressions must be aggregates. The GROUP BY expressions are included in the result table ( and may be given names using AS ).</li>
+<li>MIN,MAX,SUM,COUNT : these are used in conjunction with GROUP BY to calculate an aggregate value. If the value of an expression in the SELECT list varies over the grouping, but no aggregate function is specified, the result will be computed from the first input row, prior to grouping - this is probably not useful, but is not an error.</li>
 <li>LEN( s string ) : returns the length of s, which must be a string or binary expression.</li>
 <li>SUBSTRING( s string, start int, len int ) : returns the substring of s from start (1-based) length len.</li>
 <li>REPLACE( s string, pat string, sub string ) : returns a copy of s where every occurrence of pat is replaced with sub.</li>
@@ -1742,8 +1746,7 @@ SELECT '<h1>Manual</h1>
 
 <p>Every table automatically gets an integer Id field ( it does not have to be specified ), which is automatically filled in if not specified in an INSERT statement. Id values must be unique ( an attempt to insert or assign a duplicate Id will raise an exception ). 
 
-<p>In an aggregate select, only aggregate functions are allowed as expressions, and GROUP BY expressions are added as columns automatically.
-Aggregate functions cannot be arguments. 
+<p>WHERE condition is not optional in UPDATE and DELETE statements - WHERE true can be used if you really want to UPDATE or DELETE all rows. This is a ""safety"" feature.
 
 <p>PROCEDURE parameters are in brackets, the procedure body must be enclosed by BEGIN ... END.
 
