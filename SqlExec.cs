@@ -1314,13 +1314,6 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     Add( B.GetGoto( label ) );
   }
 
-  void LabelStatement()
-  {
-    string label = Name();
-    Read( Token.Colon );
-    if ( B.SetLabel( label ) ) Error( "Label " + label + " already defined" );
-  }
-
   void Break()
   {
     int breakId = BreakId; // Need to take a copy of current value.
@@ -1358,31 +1351,40 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
   {
     if ( T == Token.Name ) 
     {
-      if ( Test( "EXEC" ) ) Exec();
-      else if ( Test( "SELECT" ) ) Select( true );
-      else if ( Test( "SET" ) ) Set();
-      else if ( Test( "DECLARE" ) ) Declare();
-      else if ( Test( "FOR" ) ) For();
-      else if ( Test( "WHILE" ) ) While();
-      else if ( Test( "IF" ) ) If();
-      else if ( Test( "BEGIN" ) ) Block();
-      else if ( Test( "RETURN" ) ) Return();
-      else if ( Test( "EXECUTE" ) ) Execute();
-      else if ( Test( "THROW" ) ) Throw();
-      else if ( Test( "INSERT" ) ) Insert();
-      else if ( Test( "UPDATE" ) ) Update();
-      else if ( Test( "DELETE" ) ) Delete();
-      else if ( Test( "BREAK" ) ) Break();
-      else if ( Test( "GOTO" ) ) Goto();
-      else if ( Test( "CREATE" ) ) Create();
-      else if ( Test( "ALTER" ) ) Alter();
-      else if ( Test( "DROP" ) ) Drop();
-      else if ( Test( "RENAME" ) ) Rename();
-      else LabelStatement();
+      string ts = TS;
+      ReadToken();
+      if ( Test( Token.Colon ) )
+      {
+        if ( B.SetLabel( ts ) ) Error( "Label " + ts + " already defined" );
+      }
+      else switch ( ts )
+      {  
+        case "EXEC": Exec(); break;
+        case "SELECT": Select( true ); break;
+        case "SET": Set(); break;
+        case "DECLARE": Declare(); break;
+        case "FOR": For(); break;
+        case "WHILE": While(); break;
+        case "IF": If(); break;
+        case "BEGIN": Block(); break;
+        case "RETURN": Return(); break;
+        case "EXECUTE": Execute(); break;
+        case "THROW": Throw(); break;
+        case "INSERT": Insert(); break;
+        case "UPDATE": Update(); break;
+        case "DELETE": Delete(); break;
+        case "BREAK": Break(); break;
+        case "GOTO": Goto(); break;
+        case "CREATE": Create(); break;
+        case "ALTER": Alter(); break;
+        case "DROP": Drop(); break;
+        case "RENAME": Rename(); break;
+        default: Error( "Statememt keyword expected" ); break;
+      }
     }
     else 
     {
-      Error("Statement expected");
+      Error("Statement keyword expected");
     }
   }
 } // end class SqlExec
