@@ -7,7 +7,6 @@ using DBNS;
 abstract class Exec // This allows for alternates to SQL in principle ( although none are anticipated ).
 {
   public abstract void Error( string Message );
-  public abstract TableExpression LoadView( string source, string viewname );
 }
 
 class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
@@ -18,20 +17,20 @@ class SqlExec : Exec // Parses and Executes ( Interprets ) SQL.
     new SqlExec( sql, d, null ).Batch( rs );
   }
 
-  public static Block LoadRoutine( bool func, string sql, DatabaseImp d, string name )
+  public static Block LoadRoutine( bool func, string source, string name, DatabaseImp d )
   {
-    // System.Console.WriteLine("LoadRoutine: " + name + " = " + sql );
-    SqlExec e = new SqlExec( sql, d, name );
+    // System.Console.WriteLine("LoadRoutine: " + name + " = " + source );
+    SqlExec e = new SqlExec( source, d, name );
     e.B = new Block( d, func );
     e.B.Params = e.RoutineDef( func, out e.B.ReturnType );
     e.B.Complete();
     return e.B;
   }
 
-  public override TableExpression LoadView( string source, string viewname )
+  public static TableExpression LoadView( string source, string name, DatabaseImp d )
   {
-    SqlExec e = new SqlExec( source, Db, viewname );
-    e.B = new Block( Db, false );
+    SqlExec e = new SqlExec( source, d, name );
+    e.B = new Block( d, false );
     return e.ViewDef();
   }
 

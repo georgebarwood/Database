@@ -249,7 +249,7 @@ class DatabaseImp : Database
 
     if ( isView )
     {
-      TableExpression te = e.LoadView( definition, schemaName + "." + name );
+      TableExpression te = SqlExec.LoadView( definition, schemaName + "." + name, this );
       te.TableId = tid;
       schema.TableDict[ name ] = te;
       return te;
@@ -472,7 +472,7 @@ class DatabaseImp : Database
 
     if ( sql == null ) e.Error( "Function " + schemaName + "." + name + " not found" );
 
-    result = SqlExec.LoadRoutine( func, sql, this, schemaName + "." + name );
+    result = SqlExec.LoadRoutine( func, sql, schemaName + "." + name, this );
 
     // System.Console.WriteLine( "Loaded " + schemaName + "." + name );
 
