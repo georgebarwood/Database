@@ -37,34 +37,35 @@ class Grouper : StoredResultSet, G.IEqualityComparer<Value[]>
 
   public override bool NewRow( Value [] row )
   {
-    Value [] v; // The output row, initialised from the first row with a given set of group values.
-    bool first = !Rows.TryGetValue( row, out v );
-    if ( first )
-    {
-      v = (Value[])row.Clone();
-      Rows.Add( v );
-    }
-    else for ( int i = 0; i < Agg.Length; i += 1 ) // Do the Aggregate calculation.
+    Value [] a; // The accumulator row, initialised from the first row with a given set of group values.
+
+    if ( Rows.TryGetValue( row, out a ) )
+    for ( int i = 0; i < Agg.Length; i += 1 ) // Do the Aggregate calculation.
     {
       int cix = Agg[ i ].ColIx;
       switch( Agg[ i ].Op )
       {
-        case AggOp.Count: v[ cix ].L += 1; break;
-
+        case AggOp.Count: 
+          a[ cix ].L += 1; 
+          break;
         case AggOp.Sum: 
           switch ( Agg[ i ].Type )
           {
-            case DataType.Double: v[ cix ].D += row[ cix ].D; break;
-            default: v[ cix ].L += row[ cix ].L; break;
+            case DataType.Double: a[ cix ].D += row[ cix ].D; break;
+            default: a[ cix ].L += row[ cix ].L; break;
           }
           break;  
         case AggOp.Min: 
-          if ( Util.Compare( row[ cix ], v[ cix ], Agg[ i ].Type ) < 0 ) v[ cix ] = row[ cix ];
+          if ( Util.Compare( row[ cix ], a[ cix ], Agg[ i ].Type ) < 0 ) a[ cix ] = row[ cix ];
           break;    
         case AggOp.Max: 
-          if ( Util.Compare( row[ cix ], v[ cix ], Agg[ i ].Type ) > 0 ) v[ cix ] = row[ cix ];
+          if ( Util.Compare( row[ cix ], a[ cix ], Agg[ i ].Type ) > 0 ) a[ cix ] = row[ cix ];
           break;     
       }
+    }
+    else
+    {
+      Rows.Add( (Value[])row.Clone() );
     }
     return true;
   }
