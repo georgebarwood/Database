@@ -1,37 +1,16 @@
-/* Plan for generating code.
+/* Plan for generating code using System.Reflection.Emit.
 
-A block ( batch, stored function or procedure ) will have an associated class and method.
+Local variables are allocated in Value array if they are used other in the context of a table expression.
 
-Implementation of SET assignment, IF, WHILE statements, local variables is all straight-forward.
+Otherwise they can be IL local variables ( as an optimisation, will need an extra pass ).
 
-How to implement something like
+Each Exp needs a virtual method "Generate" which outputs evaluation instructions to ILGenerator.
 
-SELECT exp1, exp2 ..... FROM <table> WHERE <condition involving local variables> ?
+Statements consisting of an "Action" are called by fetching the action from an array.
 
-If the result is grouped/sorted, introduce Sorter or Grouper ResultSet to do sorting/grouping.
-
-In general we need an iterator to fetch the rows.
-
-So first call is to GetAll, which returns the iterator.
-
-Start of loop:
-
-Call "MoveNext" on interator, and exit loop if it returns false.
-
-MoveNext returns a byte[] buffer and an offset.
-
-Next generate code to push the WHERE condition on the stack ( may reference the buffer and local variables ).
-
-If WHERE condition is true, evaluate the SELECT expressions, pushing them on the stack.
-
-Call the ResultSet output method with a variable number of parameters.
-
-Jump back to start of loop.
-
-Exit from the loop, call the ResultSet EndTable method.
+EvalEnv may need to be extended with an Action array.
 
 */
-
 
 namespace SQLNS
 {
