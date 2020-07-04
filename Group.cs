@@ -104,7 +104,7 @@ class Grouper : StoredResultSet, G.IEqualityComparer<Value[]>
     foreach ( GroupSpec s in Group )
     {
       int ix = s.ColIx;
-      if ( Util.Compare( a[ix], b[ix], s.Type ) != 0 ) return false;
+      if ( !Util.Equal( a[ix], b[ix], s.Type ) ) return false;
     }
     return true;
   }
