@@ -1,14 +1,20 @@
 /* Plan for generating code using System.Reflection.Emit.
 
-Local variables are allocated in Value array if they are used other in the context of a table expression.
+The tricky part is table expressions.
 
-Otherwise they can be IL local variables ( as an optimisation, will need an extra pass ).
+In some cases we need to sort or aggregate rows.
+In this case we need to define a class to hold the rows as they are sorted.
+This class will have fields corresponding to the table columns.
 
-Each Exp needs a virtual method "Generate" which outputs evaluation instructions to ILGenerator.
+The table to be sorted is built from a base table by:
 
-Statements consisting of an "Action" are called by fetching the action from an array.
-
-EvalEnv may need to be extended with an Action array.
+(a) Getting hold of a buffer which holds some number n of records.
+(b) For each row from the buffer:
+(c)   Check the WHERE condition ( if there is one )
+(d)   Evaluate the expressions that define the column tables.
+(e)   Call a constructor function to create the object.
+(f)   Add the constucted row to the list of rows ( which are to be sorted )
+(g)   Call the sort routine, passing a delegate which compares rows.
 
 */
 

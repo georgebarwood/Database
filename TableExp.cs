@@ -46,6 +46,7 @@ abstract class TableExpression
 
   // Atomic update.  
   public virtual void Commit( CommitStage c ) { }
+
 }
 
 abstract class StoredResultSet : ResultSet
@@ -69,6 +70,12 @@ class Select : TableExpression
 
   public Select( G.List<Exp> exps, TableExpression te, Exp where, Exp[] group, OrderByExp[] order, bool [] used, SqlExec x )
   {
+    /* There is more work to be done here, for example 2 * SUM(Total) is currently now allowed.
+       Also if there is a GROUP BY, SELECT expressions cannot access fields not in the group list,
+       unless thereis an enclosing aggregate function.
+       Also maybe common sub-expression analysis, and perhaps constant folding, could be done?
+    */ 
+
     Exps = exps; TE = te; Where = where; Order = order; 
 
     ColumnCount = exps.Count; 
@@ -181,6 +188,7 @@ class Select : TableExpression
       if ( conv == null ) e.Error( "Assign data type error" );
       Exps[ i ] = conv;
     }
+    Dvs = Util.GetDVList( Exps.ToArray() ); // Not very elegant that this operation is done twice.
   }
 
   public override G.IEnumerable<bool> GetAll( Value[] final, int [] cols, EvalEnv e )
