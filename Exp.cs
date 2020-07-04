@@ -641,7 +641,7 @@ class ExpList : Exp // Implements the list of expressions in an SQL conditional 
     for ( int i=0; i < List.Length; i += 1 )
     {
       Value y = Dvs[ i ]( e );
-      if ( Util.Equal( x, y, Type ) ) return true;
+      if ( Util.Equals( x, y, Type ) ) return true;
     }
     return false;
   }
@@ -712,7 +712,7 @@ class TestInResultSet : ResultSet
   public TestInResultSet ( Value x, DataType t ) { X = x; Type = t; }
   public override bool NewRow( Value [] row )
   {
-    if ( Util.Equal( row[0], X, Type ) ) { Found = true; return false; }
+    if ( Util.Equals( row[0], X, Type ) ) { Found = true; return false; }
     return true;
   }
 }

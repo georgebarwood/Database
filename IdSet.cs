@@ -150,7 +150,7 @@ class IndexFrom : IdSet
     V = K( ee );
     foreach ( IndexFileRecord r in F.From( Compare, Op <= Token.LessEqual  ) )
     {
-      if ( Op == Token.Equal && !Util.Equal( r.Col[0], V, Type ) ) yield break;
+      if ( Op == Token.Equal && !Util.Equals( r.Col[0], V, Type ) ) yield break;
       yield return r.Col[ F.Inf.KeyCount-1 ].L;
     }
   }

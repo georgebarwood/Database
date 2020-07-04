@@ -167,7 +167,7 @@ class Util
     }
   }
 
-  public static bool Equal( Value x, Value y, DataType t )
+  public static bool Equals( Value x, Value y, DataType t )
   {
     return 
       t == DataType.Bigint ? x.L == y.L
