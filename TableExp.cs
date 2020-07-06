@@ -70,8 +70,8 @@ class Select : TableExpression
 
   public Select( G.List<Exp> exps, TableExpression te, Exp where, Exp[] group, OrderByExp[] order, bool [] used, SqlExec x )
   {
-    /* There is more work to be done here, for example 2 * SUM(Total) is currently now allowed.
-       Also if there is a GROUP BY, SELECT expressions cannot access fields not in the group list,
+    /* There is more work to be done here, for example 2 * SUM(Total) is currently not allowed.
+       Also if there is a GROUP BY, SELECT expressions should not be allowed to access fields not in the group list,
        unless thereis an enclosing aggregate function.
        Also maybe common sub-expression analysis, and perhaps constant folding, could be done?
     */ 
